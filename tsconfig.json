@@ -1,0 +1,15 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "types": ["svelte"],
+    "strict": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+  },
+  "include": ["lib/**/*", "demo/**/*", "types/**/*", "node_modules/@types/dom-webcodecs/*.d.ts"]
+}
