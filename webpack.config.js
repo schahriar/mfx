@@ -29,7 +29,7 @@ const lib = {
   },
   performance: {
     maxEntrypointSize: 1024000,
-    maxAssetSize: 512000
+    maxAssetSize: 1024000
   }
 };
 

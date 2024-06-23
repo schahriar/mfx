@@ -4,153 +4,183 @@ import paintShaderSource from "!!raw-loader!./shaders/paint.glsl";
 import { MFXTransformStream } from "../stream";
 
 const checkStatus = (gl: WebGL2RenderingContext) => {
-  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-  if (status !== gl.FRAMEBUFFER_COMPLETE) {
-    switch (status) {
-      case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-        console.error('Framebuffer incomplete: FRAMEBUFFER_INCOMPLETE_ATTACHMENT');
-        break;
-      case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-        console.error('Framebuffer incomplete: FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT');
-        break;
-      case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-        console.error('Framebuffer incomplete: FRAMEBUFFER_INCOMPLETE_DIMENSIONS');
-        break;
-      case gl.FRAMEBUFFER_UNSUPPORTED:
-        console.error('Framebuffer incomplete: FRAMEBUFFER_UNSUPPORTED');
-        break;
-      default:
-        console.error('Framebuffer incomplete: Unknown error');
-    }
-  }
-}
+	const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+	if (status !== gl.FRAMEBUFFER_COMPLETE) {
+		switch (status) {
+			case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+				console.error(
+					"Framebuffer incomplete: FRAMEBUFFER_INCOMPLETE_ATTACHMENT",
+				);
+				break;
+			case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+				console.error(
+					"Framebuffer incomplete: FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT",
+				);
+				break;
+			case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+				console.error(
+					"Framebuffer incomplete: FRAMEBUFFER_INCOMPLETE_DIMENSIONS",
+				);
+				break;
+			case gl.FRAMEBUFFER_UNSUPPORTED:
+				console.error("Framebuffer incomplete: FRAMEBUFFER_UNSUPPORTED");
+				break;
+			default:
+				console.error("Framebuffer incomplete: Unknown error");
+		}
+	}
+};
 
 export interface Effect {
-  id: string;
-  shader: string;
-  uniforms?: Record<string, any>;
+	id: string;
+	shader: string;
+	uniforms?: Record<string, any> | ((frame: VideoFrame) => Record<string, any>);
 }
 
 export class WebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame> {
-  constructor(pipeline: Effect[], canvas: HTMLCanvasElement = document.createElement("canvas")) {
-    const gl = canvas.getContext("webgl2");
-    const programmedPipeline = pipeline.reduce((accu, v) => ({
-      ...accu,
-      [v.id]: {
-        shaders: [vertexShaderSource, v.shader],
-        uniforms: v.uniforms,
-      }
-    }), {});
-    const programInfos =  twgl.createProgramInfos(gl, programmedPipeline);
-    const paintProgramInfo = twgl.createProgramInfo(gl, [
-      vertexShaderSource,
-      paintShaderSource
-    ]);
+	constructor(
+		pipeline: Effect[],
+		canvas: HTMLCanvasElement = document.createElement("canvas"),
+	) {
+		const gl = canvas.getContext("webgl2");
+		const programmedPipeline = pipeline.reduce(
+			(accu, v) => ({
+				...accu,
+				[v.id]: {
+					shaders: [vertexShaderSource, v.shader],
+					uniforms: v.uniforms,
+				},
+			}),
+			{},
+		);
+		const programInfos = twgl.createProgramInfos(gl, programmedPipeline);
+		const paintProgramInfo = twgl.createProgramInfo(gl, [
+			vertexShaderSource,
+			paintShaderSource,
+		]);
 
-    const arrays = {
-      texcoord: {
-        numComponents: 2,
-        data: [
-          -1, -1,
-          -1, +1,
-          +1, +1,
-          +1, -1,
-        ],
-      },
-    };
+		const arrays = {
+			texcoord: {
+				numComponents: 2,
+				data: [-1, -1, -1, +1, +1, +1, +1, -1],
+			},
+		};
 
-    const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
-    let frameBufferInfo: twgl.FramebufferInfo;
-    let textureIn: WebGLTexture;
-    let textureOut: WebGLTexture;
+		const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+		let frameBufferInfo: twgl.FramebufferInfo;
+		let textureIn: WebGLTexture;
+		let textureOut: WebGLTexture;
 
-    const attachTextureToFramebuffer = (texture: WebGLTexture) => {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferInfo.framebuffer);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-      checkStatus(gl);
-    };
+		const attachTextureToFramebuffer = (texture: WebGLTexture) => {
+			gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferInfo.framebuffer);
+			gl.framebufferTexture2D(
+				gl.FRAMEBUFFER,
+				gl.COLOR_ATTACHMENT0,
+				gl.TEXTURE_2D,
+				texture,
+				0,
+			);
+			checkStatus(gl);
+		};
 
-    super({
-      transform: async (frame, controller) => {
-        const width = frame.displayWidth;
-        const height = frame.displayHeight;
-        canvas.width = width;
-        canvas.height = height;
+		super({
+			transform: async (frame, controller) => {
+				const width = frame.displayWidth;
+				const height = frame.displayHeight;
+				canvas.width = width;
+				canvas.height = height;
 
-        if (!frameBufferInfo) {
-          textureIn = twgl.createTexture(gl, {
-            min: gl.NEAREST,
-            mag: gl.NEAREST,
-            wrapS: gl.CLAMP_TO_EDGE,
-            wrapT: gl.CLAMP_TO_EDGE,
-            width,
-            height,
-          });
-          textureOut = twgl.createTexture(gl, {
-            min: gl.NEAREST,
-            mag: gl.NEAREST,
-            wrapS: gl.CLAMP_TO_EDGE,
-            wrapT: gl.CLAMP_TO_EDGE,
-            width,
-            height,
-          });
+				if (!frameBufferInfo) {
+					textureIn = twgl.createTexture(gl, {
+						min: gl.NEAREST,
+						mag: gl.NEAREST,
+						wrapS: gl.CLAMP_TO_EDGE,
+						wrapT: gl.CLAMP_TO_EDGE,
+						width,
+						height,
+					});
+					textureOut = twgl.createTexture(gl, {
+						min: gl.NEAREST,
+						mag: gl.NEAREST,
+						wrapS: gl.CLAMP_TO_EDGE,
+						wrapT: gl.CLAMP_TO_EDGE,
+						width,
+						height,
+					});
 
-          frameBufferInfo = twgl.createFramebufferInfo(gl, [textureIn], width, height);
+					frameBufferInfo = twgl.createFramebufferInfo(
+						gl,
+						[textureIn],
+						width,
+						height,
+					);
 
-          // Clear frame only at start
-          gl.clearColor(1.0, 0.0, 0.0, 1.0);
-          gl.clear(gl.COLOR_BUFFER_BIT);
-        }
+					// Clear frame only at start
+					gl.clearColor(1.0, 0.0, 0.0, 1.0);
+					gl.clear(gl.COLOR_BUFFER_BIT);
+				}
 
-        twgl.bindFramebufferInfo(gl, frameBufferInfo);
-        gl.bindTexture(gl.TEXTURE_2D, textureIn);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame);
+				twgl.bindFramebufferInfo(gl, frameBufferInfo);
+				gl.bindTexture(gl.TEXTURE_2D, textureIn);
+				gl.texImage2D(
+					gl.TEXTURE_2D,
+					0,
+					gl.RGBA,
+					gl.RGBA,
+					gl.UNSIGNED_BYTE,
+					frame,
+				);
 
-        attachTextureToFramebuffer(textureIn);
-        gl.viewport(0, 0, width, height);
+				attachTextureToFramebuffer(textureIn);
+				gl.viewport(0, 0, width, height);
 
-        // Free resource after GPU paint
-        frame.close();
+				// Free resource after GPU paint
+				frame.close();
 
-        Object.keys(programInfos).map((programId, i) => {
-          const programInfo = programInfos[programId];
-          const { uniforms } = programmedPipeline[programId];
-          gl.activeTexture(gl.TEXTURE0);
-          gl.bindTexture(gl.TEXTURE_2D, textureIn);
-          attachTextureToFramebuffer(textureOut);
-          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
-          gl.viewport(0, 0, width, height);
+				Object.keys(programInfos).map((programId, i) => {
+					const programInfo = programInfos[programId];
+					const pipeline = programmedPipeline[programId];
+					gl.activeTexture(gl.TEXTURE0);
+					gl.bindTexture(gl.TEXTURE_2D, textureIn);
+					attachTextureToFramebuffer(textureOut);
+					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
+					gl.viewport(0, 0, width, height);
 
-          gl.useProgram(programInfo.program);
-          twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-          twgl.setUniforms(programInfo, {
-            ...uniforms,
-            frame: textureIn,
-            frameSize: [width, height],
-          });
-          twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
+					const uniforms =
+						typeof pipeline.uniforms === "function"
+							? pipeline.uniforms(frame)
+							: pipeline.uniforms;
 
-          [textureIn, textureOut] = [textureOut, textureIn];
-        });
+					gl.useProgram(programInfo.program);
+					twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+					twgl.setUniforms(programInfo, {
+						...uniforms,
+						frame: textureIn,
+						frameSize: [width, height],
+					});
+					twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.viewport(0, 0, canvas.width, canvas.height);
+					[textureIn, textureOut] = [textureOut, textureIn];
+				});
 
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, textureIn);
+				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+				gl.viewport(0, 0, canvas.width, canvas.height);
 
-        gl.useProgram(paintProgramInfo.program);
-        twgl.setBuffersAndAttributes(gl, paintProgramInfo, bufferInfo);
-        twgl.setUniforms(paintProgramInfo, {
-          frame: textureIn,
-          frameSize: [width, height],
-        });
-        twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, textureIn);
 
-        controller.enqueue(
-          new VideoFrame(canvas, { timestamp: frame.timestamp })
-        );
-      },
-    });
-  }
+				gl.useProgram(paintProgramInfo.program);
+				twgl.setBuffersAndAttributes(gl, paintProgramInfo, bufferInfo);
+				twgl.setUniforms(paintProgramInfo, {
+					frame: textureIn,
+					frameSize: [width, height],
+				});
+				twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
+
+				controller.enqueue(
+					new VideoFrame(canvas, { timestamp: frame.timestamp }),
+				);
+			},
+		});
+	}
 }

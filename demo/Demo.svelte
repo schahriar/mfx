@@ -1,7 +1,8 @@
 <script lang="ts">
   import Dropzone from "svelte-file-dropzone";
-  import { WebGLRenderer, MFXFrameVoid, MFXVideoDecoder, MFXVideoContainerDecoder, Scaler, PaintToCanvas } from "../lib/mfx";
+  import { WebGLRenderer, MFXWebMMuxer, MFXVideoDecoder, MFXMP4VideoContainerDecoder, Scaler, PaintToCanvas, Compositor, createContainerDecoder, MFXFPSDebugger, MFXVideoEncoder } from "../lib/mfx";
   import adjustmentShaderSource from "!!raw-loader!../lib/renderers/shaders/adjustment.glsl";
+  import zoomShaderSource from "!!raw-loader!../lib/renderers/shaders/zoom.glsl";
   import convShaderSource from "!!raw-loader!../lib/renderers/shaders/convolution.glsl";
   import blueShaderSource from "!!raw-loader!../lib/renderers/shaders/blur.glsl";
 
@@ -21,74 +22,144 @@
     files.accepted = [...files.accepted, ...acceptedFiles];
   };
 
+  const fpsCounter = new MFXFPSDebugger();
+
+  const program1 = async (resolved) => {
+    const pass1 = new WebGLRenderer([...[...new Array(12)].map((_, i) => ({
+      id: `blur_${i}`,
+      shader: blueShaderSource,
+    })), {
+      id: "gblur",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
+      }
+    }]);
+
+    const pass2 = new WebGLRenderer([{
+      id: "conv3",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
+      }
+    }, {
+      id: "conv4",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
+      }
+    }, {
+      id: "conv",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [-2, 0, -1, -2, 8.025, -2, -1, 1, -1]
+      }
+    }, {
+      id: "conv2",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1]
+      }
+    }, {
+      id: "conv5",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
+      }
+    }, {
+      id: "conv6",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [-2, -1, 0, -1, 1, 1, 0, 1, 2]
+      }
+    }, {
+      id: 'adj',
+      shader: adjustmentShaderSource,
+      uniforms: {
+        contrast: 1.5,
+        brightness: 1,
+        saturation: 0.8
+      }
+    }]);
+    const compositor = new Compositor([{
+      id: "c2",
+      texture: resolved[1]?.body
+        .pipeThrough(createContainerDecoder(resolved[1].file.name))
+        .pipeThrough(new MFXVideoDecoder())
+        .pipeThrough(pass2),
+      textureSize: [],
+    }]);
+
+    resolved[0].body
+      .pipeThrough(new MFXMP4VideoContainerDecoder())
+      .pipeThrough(new MFXVideoDecoder())
+      .pipeThrough(new Scaler(1))
+      .pipeThrough(pass1)
+      .pipeThrough(new Scaler(1))
+      .pipeThrough(fpsCounter)
+      //.pipeThrough(compositor)
+      .pipeThrough(zoomPass)
+      .pipeTo(new PaintToCanvas(canvasEl));
+  };
+
+  const program2 = async (resolved) => {
+    const zoomPass = new WebGLRenderer([{
+      id: "zoom",
+      shader: zoomShaderSource,
+      uniforms: (frame) => {
+        if (frame.timestamp > 10200000) {
+          return { zoomFactor: 1 };
+        }
+
+        return {
+          zoomFactor: 1 * (frame.timestamp / 620000)
+        }
+      }
+    }]);
+
+    const config = {
+      codec: 'vp8',
+      width: 640,
+      height: 360,
+      bitrate: 1e6
+    };
+
+    const output = new MFXWebMMuxer({
+      codec: 'V_VP8',
+			width: 640,
+      height: 360,
+			frameRate: 60
+    });
+
+    await output.ready;
+
+    (resolved[0].body as ReadableStream<Uint8Array>)
+      .pipeThrough(createContainerDecoder(resolved[0].file.name))
+      .pipeThrough(new MFXVideoDecoder())
+      .pipeThrough(new Scaler(0.2))
+      .pipeThrough(zoomPass)
+      .pipeThrough(fpsCounter)
+      .pipeThrough(new MFXVideoEncoder(config))
+      .pipeTo(output)
+  };
+
+  setInterval(() => {
+    console.log("FPS", fpsCounter.getFPS());
+  }, 1000);
+
   $: {
     if (files.accepted?.length) {
       file = files.accepted[0];
 
       (async () => {
-        const url = URL.createObjectURL(file);
-        const res = await fetch(url);
+        const resolved = await Promise.all(files.accepted.map(async (file) => {
+          const url = URL.createObjectURL(file);
+          const res = await fetch(url);
 
-        const pass1 = new WebGLRenderer([...[...new Array(16)].map((_, i) => ({
-          id: `blur_${i}`,
-          shader: blueShaderSource,
-        }))]);
+          return { body: res.body, file };
+        }));
 
-        const pass2 = new WebGLRenderer([{
-          id: "conv3",
-          shader: convShaderSource,
-          uniforms: {
-            kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
-          }
-        }, {
-          id: "conv4",
-          shader: convShaderSource,
-          uniforms: {
-            kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
-          }
-        }, {
-          id: "conv",
-          shader: convShaderSource,
-          uniforms: {
-            kernel: [-2, 0, -1, -2, 8.025, -2, -1, 1, -1]
-          }
-        }, {
-          id: "conv2",
-          shader: convShaderSource,
-          uniforms: {
-            kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1]
-          }
-        }, {
-          id: "conv5",
-          shader: convShaderSource,
-          uniforms: {
-            kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
-          }
-        }, {
-          id: "conv6",
-          shader: convShaderSource,
-          uniforms: {
-            kernel: [-2, -1, 0, -1, 1, 1, 0, 1, 2]
-          }
-        }, {
-          id: 'adj',
-          shader: adjustmentShaderSource,
-          uniforms: {
-            contrast: 1.5,
-            brightness: 1,
-            saturation: 0.8
-          }
-        }]);
-        const container = new MFXVideoContainerDecoder();
-        const decoder = new MFXVideoDecoder();
-
-        res.body
-          .pipeThrough(container)
-          .pipeThrough(decoder)
-          .pipeThrough(new Scaler(0.1))
-          .pipeThrough(pass1)
-          .pipeThrough(new Scaler(10))
-          .pipeTo(new PaintToCanvas(canvasEl));
+        program2(resolved);
       })();
     }
   }
@@ -98,7 +169,7 @@
   <section class="dropzone-container" class:dropzone-highlight={fileOver}>
     <Dropzone
       accept="video/*"
-      multiple={false}
+      multiple={true}
       disableDefaultStyles={true}
       on:dragenter={() => (fileOver = true)}
       on:dragleave={() => (fileOver = false)}

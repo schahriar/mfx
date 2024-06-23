@@ -11,6 +11,7 @@ uniform sampler2D layer;
 uniform vec2 layerSize;
 
 void main() {
-  vec4 color = texture(frame, uv);
-  fragColor = color;
+  vec4 c1 = texture(frame, uv);
+  vec4 c2 = texture(layer, uv);
+  fragColor = (c1 + c2) / 2.0;
 }

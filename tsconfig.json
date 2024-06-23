@@ -11,5 +11,11 @@
     "skipLibCheck": true,
     "isolatedModules": true,
   },
-  "include": ["lib/**/*", "demo/**/*", "types/**/*", "node_modules/@types/dom-webcodecs/*.d.ts"]
+  "include": [
+    "lib/**/*",
+    "demo/**/*",
+    "types/**/*",
+    "node_modules/@types/wicg-file-system-access/*.d.ts",
+    "node_modules/@types/dom-webcodecs/*.d.ts",
+  ]
 }
