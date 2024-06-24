@@ -1,10 +1,10 @@
 <script lang="ts">
   import Dropzone from "svelte-file-dropzone";
   import { WebGLRenderer, MFXWebMMuxer, MFXVideoDecoder, MFXMP4VideoContainerDecoder, Scaler, PaintToCanvas, Compositor, createContainerDecoder, MFXFPSDebugger, MFXVideoEncoder } from "../lib/mfx";
-  import adjustmentShaderSource from "!!raw-loader!../lib/renderers/shaders/adjustment.glsl";
-  import zoomShaderSource from "!!raw-loader!../lib/renderers/shaders/zoom.glsl";
-  import convShaderSource from "!!raw-loader!../lib/renderers/shaders/convolution.glsl";
-  import blueShaderSource from "!!raw-loader!../lib/renderers/shaders/blur.glsl";
+  import adjustmentShaderSource from "!!raw-loader!../lib/effects/shaders/adjustment.glsl";
+  import zoomShaderSource from "!!raw-loader!../lib/effects/shaders/zoom.glsl";
+  import convShaderSource from "!!raw-loader!../lib/effects/shaders/convolution.glsl";
+  import blueShaderSource from "!!raw-loader!../lib/effects/shaders/blur.glsl";
 
   let canvasEl: HTMLCanvasElement;
   let fileOver = false;
@@ -103,6 +103,17 @@
   };
 
   const program2 = async (resolved) => {
+    const blurPass = new WebGLRenderer([...[...new Array(12)].map((_, i) => ({
+      id: `blur_${i}`,
+      shader: blueShaderSource,
+    })), {
+      id: "gblur",
+      shader: convShaderSource,
+      uniforms: {
+        kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
+      }
+    }]);
+
     const zoomPass = new WebGLRenderer([{
       id: "zoom",
       shader: zoomShaderSource,
@@ -128,7 +139,7 @@
       codec: 'V_VP8',
 			width: 640,
       height: 360,
-			frameRate: 60
+			frameRate: 30
     });
 
     await output.ready;
@@ -137,7 +148,8 @@
       .pipeThrough(createContainerDecoder(resolved[0].file.name))
       .pipeThrough(new MFXVideoDecoder())
       .pipeThrough(new Scaler(0.2))
-      .pipeThrough(zoomPass)
+      .pipeThrough(blurPass)
+      .pipeThrough(new Scaler(5))
       .pipeThrough(fpsCounter)
       .pipeThrough(new MFXVideoEncoder(config))
       .pipeTo(output)

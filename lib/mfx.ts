@@ -2,12 +2,12 @@ import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { MFXTransformStream } from "./stream";
 
 export * from "./convolution";
-export { WebGLRenderer } from "./renderers/WebGLRenderer";
-export { Scaler } from "./renderers/Scaler";
-export { PaintToCanvas } from "./renderers/Draw";
-export { Compositor } from "./renderers/Compositor";
+export { WebGLRenderer } from "./effects/WebGLRenderer";
+export { Scaler } from "./effects/Scaler";
+export { PaintToCanvas } from "./effects/Draw";
+export { Compositor } from "./effects/Compositor";
 export { MFXFPSDebugger, ConsoleWritableStream } from "./debug";
-export { MFXWebMMuxer } from "./Encode";
+export { MFXWebMMuxer } from "./encode";
 
 export const nextTask = () =>
 	new Promise((resolve) => queueMicrotask(resolve as any));

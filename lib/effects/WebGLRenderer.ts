@@ -122,6 +122,7 @@ export class WebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame> {
 
 				twgl.bindFramebufferInfo(gl, frameBufferInfo);
 				gl.bindTexture(gl.TEXTURE_2D, textureIn);
+				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
 				gl.texImage2D(
 					gl.TEXTURE_2D,
 					0,
