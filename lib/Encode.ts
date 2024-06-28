@@ -1,15 +1,19 @@
-import { Muxer, FileSystemWritableFileStreamTarget } from "webm-muxer";
+import { Muxer, StreamTarget } from "webm-muxer";
 import { type MFXEncodedVideoChunk } from "./mfx";
+import { MFXTransformStream } from "./stream";
 
-export class MFXWebMMuxer extends WritableStream<MFXEncodedVideoChunk> {
-	ready: Promise<any>;
-	constructor(
-		config: any,
-		fileName: string = "video.webm",
-		description = "Video File",
-	) {
-		let fileStreamRef: any;
-		const muxerPromise = (async () => {
+export class MFXFileWriter extends WritableStream<[Uint8Array, number]> {
+	writer: Promise<FileSystemWritableFileStream>;
+	constructor(fileName: string, description = "Video File") {
+		super({
+			write: async ([chunk, pos]) => {
+				const writer = await this.writer;
+				await writer.seek(pos);
+				await writer.write(chunk);
+			}
+		});
+
+		this.writer = (async () => {
 			const fileHandle = await window.showSaveFilePicker({
 				suggestedName: fileName,
 				startIn: "videos",
@@ -20,32 +24,44 @@ export class MFXWebMMuxer extends WritableStream<MFXEncodedVideoChunk> {
 					},
 				],
 			});
-			const fileStream = await fileHandle.createWritable();
-			fileStreamRef = fileStream;
-			return new Muxer({
-				video: config as any,
-				firstTimestampBehavior: "permissive",
-				type: "matroska",
-				streaming: true,
-				target: new FileSystemWritableFileStreamTarget(fileStream),
-			});
+		
+			return await fileHandle.createWritable();
 		})();
+	}
+};
+
+export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, [Uint8Array, number]> {
+	ready: Promise<any>;
+	constructor(
+		config: any,
+		chunkSize?: number,
+	) {
+		const muxer = new Muxer({
+			video: config as any,
+			firstTimestampBehavior: "permissive",
+			type: "matroska",
+			streaming: true,
+			target: new StreamTarget({
+				chunked: true,
+				onData: (data, position) => {
+					this.queue([data, position]);
+				},
+				...Number.isInteger(chunkSize) ? {
+					chunkSize
+				} : {},
+			}),
+		});
 
 		super({
-			write: async (encodedVideoChunk) => {
-				const muxer = await muxerPromise;
+			transform: async (encodedVideoChunk) => {
 				muxer.addVideoChunk(
 					encodedVideoChunk.videoChunk,
 					encodedVideoChunk.videoMetadata,
 				);
 			},
-			close: async () => {
-				const muxer = await muxerPromise;
+			flush: async () => {
 				muxer.finalize();
-				await fileStreamRef?.close();
 			},
 		});
-
-		this.ready = muxerPromise;
 	}
 }

@@ -14,13 +14,18 @@ npm start
 ```
 
 ### Roadmap
+- Compositor texture masks
 - Wrap VideoFrame to provide shared downsampled video
+  - Total video duration
+  - Pipeline-assigned frame metadata
 - Trim
-- Reduce CPU → GPU → CPU copy times using texture atlas
-- Multi-track support
+- Clips view (similar to QuickTime)
 - Audio support
   - Audio waveform
   - Audio effects
+- Seek
+- Reduce CPU → GPU → CPU copy times using texture atlas
+- Multi-track support
 - Integrate debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)
 
 ##### Disclaimer on Sample Videos

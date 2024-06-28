@@ -32,21 +32,20 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 };
 
 export interface Effect {
-	id: string;
 	shader: string;
 	uniforms?: Record<string, any> | ((frame: VideoFrame) => Record<string, any>);
 }
 
-export class WebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class MFXWebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame> {
 	constructor(
 		pipeline: Effect[],
 		canvas: HTMLCanvasElement = document.createElement("canvas"),
 	) {
 		const gl = canvas.getContext("webgl2");
 		const programmedPipeline = pipeline.reduce(
-			(accu, v) => ({
+			(accu, v, i) => ({
 				...accu,
-				[v.id]: {
+				[i]: {
 					shaders: [vertexShaderSource, v.shader],
 					uniforms: v.uniforms,
 				},

@@ -1,24 +1,31 @@
 import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { MFXTransformStream } from "./stream";
 
+import * as shaders from "./effects/shaders/index";
+
 export * from "./convolution";
-export { WebGLRenderer } from "./effects/WebGLRenderer";
+export { MFXWebGLRenderer } from "./effects/WebGLRenderer";
 export { Scaler } from "./effects/Scaler";
-export { PaintToCanvas } from "./effects/Draw";
+export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
 export { Compositor } from "./effects/Compositor";
-export { MFXFPSDebugger, ConsoleWritableStream } from "./debug";
-export { MFXWebMMuxer } from "./encode";
+export { MFXFrameSampler } from "./sampler";
+export { MFXFPSDebugger, ConsoleWritableStream, MFXDigest } from "./debug";
+export { MFXWebMMuxer, MFXFileWriter } from "./encode";
+export { MFXFrameTee, MFXTransformStream } from "./stream";
+export { shaders };
 
 export const nextTask = () =>
 	new Promise((resolve) => queueMicrotask(resolve as any));
 export const nextAnimationFrame = () =>
 	new Promise((resolve) => requestAnimationFrame(resolve as any));
 
-export class MFXFrameVoid extends WritableStream<VideoFrame> {
+export class MFXVoid extends WritableStream<any> {
 	constructor() {
 		super({
-			write: (frame) => {
-				frame.close();
+			write: (chunk) => {
+				if (chunk instanceof VideoFrame) {
+					chunk.close();
+				}
 			},
 		});
 	}
@@ -27,7 +34,7 @@ export class MFXFrameVoid extends WritableStream<VideoFrame> {
 export interface MFXEncodedVideoChunk {
 	videoChunk: EncodedVideoChunk;
 	videoMetadata: EncodedVideoChunkMetadata;
-}
+};
 
 export class MFXVideoEncoder extends MFXTransformStream<
 	VideoFrame,
@@ -55,20 +62,25 @@ export class MFXVideoEncoder extends MFXTransformStream<
 				await backpressure;
 
 				// Prevent backwards backpressure
-				if (encoder.encodeQueueSize > 5) {
+				while (encoder.encodeQueueSize > 10) {
 					await nextAnimationFrame();
 				}
 
 				encoder.encode(frame, {
 					keyFrame: frame.timestamp % (1e6 * 30) === 0, // Keyframe every 30 seconds for matroska
 				});
+
 				frame.close();
 			},
 			flush: async () => {
 				await encoder.flush();
 				encoder.close();
 			},
-		});
+		}, new CountQueuingStrategy({
+			highWaterMark: 10 // Input chunks (tuned for low memory usage)
+		}), new CountQueuingStrategy({
+			highWaterMark: 10 // Input chunks (tuned for low memory usage)
+		}));
 	}
 }
 
@@ -95,7 +107,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 				if (!configured) {
 					decoder.configure({
 						hardwareAcceleration: "prefer-hardware",
-						optimizeForLatency: true,
+						optimizeForLatency: false,
 						...chunk.config,
 					});
 					configured = true;
@@ -105,7 +117,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 				await backpressure;
 
 				// Prevent backwards backpressure
-				if (decoder.decodeQueueSize > 5) {
+				while (decoder.decodeQueueSize > 10) {
 					await nextAnimationFrame();
 				}
 
@@ -115,7 +127,11 @@ export class MFXVideoDecoder extends MFXTransformStream<
 				await decoder.flush();
 				decoder.close();
 			},
-		});
+		}, new CountQueuingStrategy({
+			highWaterMark: 10 // Input chunks (tuned for low memory usage)
+		}), new CountQueuingStrategy({
+			highWaterMark: 10 // Output frames (tuned for low memory usage)
+		}));
 	}
 }
 

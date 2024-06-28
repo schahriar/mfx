@@ -5,12 +5,12 @@ export class MFXTransformStream<I, O> extends TransformStream {
 	protected _eventTarget: EventTarget;
 	protected _controller: TransformStreamDefaultController<O>;
 	constructor(
-		transformer: Transformer<I, O>,
+		transformer: Transformer<I, O> = {},
 		writableStrategy: QueuingStrategy<I> = new CountQueuingStrategy({
-			highWaterMark: 100,
+			highWaterMark: 60,
 		}),
 		readableStrategy: QueuingStrategy<O> = new CountQueuingStrategy({
-			highWaterMark: 100,
+			highWaterMark: 60,
 		}),
 	) {
 		super(
@@ -94,4 +94,26 @@ export class MFXTransformStream<I, O> extends TransformStream {
 	) {
 		this._eventTarget.removeEventListener(type, callback, options);
 	}
-}
+};
+
+export class MFXFrameTee extends MFXTransformStream<VideoFrame, VideoFrame> {
+  constructor(ctx: (stream: ReadableStream<VideoFrame>) => void) {
+		const stream = new TransformStream();
+
+    super({
+      transform: async (chunk, controller) => {
+				const clone = chunk.clone();
+				const writer = stream.writable.getWriter();
+				await writer.write(clone);
+				writer.releaseLock();
+
+        controller.enqueue(chunk);
+      },
+			flush: async () => {
+				await stream.writable.close();
+			}
+    });
+
+		ctx(stream.readable);
+  }
+};

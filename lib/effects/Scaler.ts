@@ -27,7 +27,12 @@ export class Scaler extends MFXTransformStream<VideoFrame, VideoFrame> {
 				frame.close();
 
 				controller.enqueue(
-					new VideoFrame(canvas, { timestamp: frame.timestamp }),
+					new VideoFrame(canvas, {
+						displayHeight: height,
+						displayWidth: width,
+						timestamp: frame.timestamp,
+						duration: frame.duration,
+					}),
 				);
 			},
 		});

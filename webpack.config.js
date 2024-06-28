@@ -33,12 +33,12 @@ const lib = {
   }
 };
 
-const demo = {
-  entry: "./demo/demo.ts",
+const tests = {
+  entry: "./tests/router.ts",
   mode: "production",
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "demo.js",
+    filename: "test.js",
   },
   module: {
     rules: [
@@ -77,6 +77,7 @@ const demo = {
   },
   resolve: {
     alias: {
+      mfx: path.resolve(__dirname, './lib/mfx'),
       svelte: path.resolve("node_modules", "svelte/src/runtime"),
     },
     extensions: [".js", ".ts", ".svelte"],
@@ -84,7 +85,7 @@ const demo = {
     conditionNames: ["svelte", "browser", "import"],
     fullySpecified: false,
   },
-  plugins: [new HtmlWebpackPlugin({ template: "./demo/index.html" })],
+  plugins: [new HtmlWebpackPlugin({ template: "./tests/index.html" })],
   optimization: {
     minimize: true,
     minimizer: [new TerserPlugin()],
@@ -92,7 +93,14 @@ const demo = {
   performance: {
     hints: false,
     maxEntrypointSize: 1024000,
-  }
+  },
+  devServer: {
+    static: {
+      directory: path.join(__dirname, 'samples'),
+    },
+    historyApiFallback: true,
+    compress: true,
+  },
 };
 
-module.exports = [lib, demo];
+module.exports = [lib, tests];

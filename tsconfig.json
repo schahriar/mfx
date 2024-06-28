@@ -10,12 +10,15 @@
     "strict": false,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "paths": {
+      "mfx": ["./lib/mfx"],
+    }
   },
   "include": [
     "lib/**/*",
-    "demo/**/*",
+    "tests/**/*",
     "types/**/*",
     "node_modules/@types/wicg-file-system-access/*.d.ts",
-    "node_modules/@types/dom-webcodecs/*.d.ts",
+    "node_modules/@types/dom-webcodecs/*.d.ts", "tests/router.ts",
   ]
 }
