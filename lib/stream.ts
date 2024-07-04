@@ -1,9 +1,12 @@
 import { nextAnimationFrame } from "./mfx";
 
-export class MFXTransformStream<I, O> extends TransformStream {
+export abstract class MFXTransformStream<I, O> extends TransformStream {
 	protected _buffer: O[];
 	protected _eventTarget: EventTarget;
 	protected _controller: TransformStreamDefaultController<O>;
+
+	abstract get identifier();
+
 	constructor(
 		transformer: Transformer<I, O> = {},
 		writableStrategy: QueuingStrategy<I> = new CountQueuingStrategy({
@@ -13,6 +16,21 @@ export class MFXTransformStream<I, O> extends TransformStream {
 			highWaterMark: 60,
 		}),
 	) {
+		let lastMetDesiredSize = Date.now();
+		const streamMonitor = setInterval(() => {
+			if (!this._controller) return;
+
+			if (this._controller.desiredSize === 0) {
+				if (lastMetDesiredSize < (Date.now() - 10000)) {
+					console.warn(`Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new MFXVoid()) at the end of your stream`);
+					lastMetDesiredSize = Date.now() + 30 * 60 * 1000; // Already reported, check in 30 seconds
+				}
+				return;
+			}
+
+			lastMetDesiredSize = Date.now();
+		}, 1000);
+
 		super(
 			{
 				...transformer,
@@ -28,6 +46,8 @@ export class MFXTransformStream<I, O> extends TransformStream {
 					}
 				},
 				flush: async (controller) => {
+					console.info(`<flushed:${this.identifier}>`);
+					clearInterval(streamMonitor);
 					this._controller = controller;
 					if (this._buffer.length) {
 						this._copy_buffer(controller);
@@ -41,6 +61,9 @@ export class MFXTransformStream<I, O> extends TransformStream {
 			writableStrategy,
 			readableStrategy,
 		);
+		setTimeout(() => {
+			console.info(`<defined:${this.identifier}>`);
+		}, 0);
 		this._buffer = [];
 		this._eventTarget = new EventTarget();
 	}
@@ -97,6 +120,10 @@ export class MFXTransformStream<I, O> extends TransformStream {
 };
 
 export class MFXFrameTee extends MFXTransformStream<VideoFrame, VideoFrame> {
+	get identifier() {
+		return "MFXFrameTee";
+	}
+
   constructor(ctx: (stream: ReadableStream<VideoFrame>) => void) {
 		const stream = new TransformStream();
 

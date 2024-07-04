@@ -1,6 +1,6 @@
 import TestWrapper from "./TestWrapper.svelte";
 import NotFound from "./NotFound.svelte";
-import definitions from "./definitions";
+import definitions from "../definitions";
 
 const url = new URL(window.location.href);
 
@@ -10,9 +10,7 @@ if (def) {
   new (TestWrapper as any)({
     target: document.body,
     props: {
-      input: def.input,
-      process: def.process,
-      output: def.output,
+      definition: def,
     }
   });
 } else {

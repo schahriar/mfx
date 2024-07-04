@@ -1,12 +1,22 @@
-import { MFXVideoEncoder, MFXWebMMuxer, shaders } from "mfx";
-import { MFXWebGLRenderer } from "../../lib/effects/WebGLRenderer";
+import { convolution3x3, MFXVideoEncoder, MFXWebGLRenderer, MFXWebMMuxer, shaders } from "mfx";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
+  id: "webm_encoding",
   title: "WebM Encoding",
   description: "Converts sample mp4 file to WebM encoding",
   path: "/webm",
-  input: "bunny4k.mp4",
+  input: "AI.mp4",
+  process: async () => {
+    return [
+      new MFXWebGLRenderer([{
+        shader: shaders.convolution,
+        uniforms: {
+          kernel: convolution3x3.emboss
+        }
+      }])
+    ]
+  },
   output: async () => {
     const config = {
       codec: "vp8",
@@ -16,10 +26,10 @@ export const definitions: TestDefinition[] = [{
     };
 
     const output = new MFXWebMMuxer({
-      codec: "V_VP8",
+      codec: "vp8",
       width: 640,
       height: 360,
-      frameRate: 30,
+      framerate: 30,
     });
 
     await output.ready;

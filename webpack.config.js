@@ -25,7 +25,11 @@ const lib = {
   },
   optimization: {
     minimize: true,
-    minimizer: [new TerserPlugin()],
+    minimizer: [new TerserPlugin({
+      terserOptions: {
+        keep_classnames: true,
+      }
+    })],
   },
   performance: {
     maxEntrypointSize: 1024000,
@@ -34,7 +38,7 @@ const lib = {
 };
 
 const tests = {
-  entry: "./tests/router.ts",
+  entry: "./tests/environment/router.ts",
   mode: "production",
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -85,10 +89,14 @@ const tests = {
     conditionNames: ["svelte", "browser", "import"],
     fullySpecified: false,
   },
-  plugins: [new HtmlWebpackPlugin({ template: "./tests/index.html" })],
+  plugins: [new HtmlWebpackPlugin({ template: "./tests/environment/index.html" })],
   optimization: {
     minimize: true,
-    minimizer: [new TerserPlugin()],
+    minimizer: [new TerserPlugin({
+      terserOptions: {
+        keep_classnames: true
+      }
+    })],
   },
   performance: {
     hints: false,

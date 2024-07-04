@@ -21,6 +21,10 @@ export class PaintToCanvas extends WritableStream<VideoFrame> {
 };
 
 export class PassthroughCanvas extends MFXTransformStream<VideoFrame, VideoFrame> {
+	get identifier() {
+		return "PassthroughCanvas";
+	}
+
 	constructor(canvas: HTMLCanvasElement) {
 		const ctx = canvas.getContext("2d");
 

@@ -34,9 +34,13 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 export interface Effect {
 	shader: string;
 	uniforms?: Record<string, any> | ((frame: VideoFrame) => Record<string, any>);
-}
+};
 
 export class MFXWebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame> {
+	get identifier() {
+		return "MFXWebGLRenderer";
+	}
+
 	constructor(
 		pipeline: Effect[],
 		canvas: HTMLCanvasElement = document.createElement("canvas"),
@@ -121,7 +125,7 @@ export class MFXWebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame>
 
 				twgl.bindFramebufferInfo(gl, frameBufferInfo);
 				gl.bindTexture(gl.TEXTURE_2D, textureIn);
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, Object.keys(programInfos).length % 2);
 				gl.texImage2D(
 					gl.TEXTURE_2D,
 					0,
@@ -183,4 +187,4 @@ export class MFXWebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame>
 			},
 		});
 	}
-}
+};

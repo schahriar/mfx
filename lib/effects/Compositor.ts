@@ -38,6 +38,10 @@ export interface Layer {
 }
 
 export class Compositor extends MFXTransformStream<VideoFrame, VideoFrame> {
+	get identifier() {
+		return "Compositor";
+	}
+
 	drained: boolean = false;
 
 	constructor(

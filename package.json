@@ -7,7 +7,7 @@
     "build": "NODE_ENV=production webpack",
     "start": "webpack serve",
     "format": "npx @biomejs/biome format --write ./lib",
-    "test": "node --loader ts-node/esm tests/main.mts"
+    "test": "node --loader ts-node/esm tests/runner.mts"
   },
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "bwip-js": "^4.4.0",
+    "herb": "^2.2.6",
     "mp4box": "^0.5.2",
     "ring-buffer-ts": "^1.2.0",
     "twgl.js": "^5.5.4",

@@ -1,7 +1,11 @@
 <script lang="ts">
-  import type { TestDefinition } from "./types";
+  import type { TestDefinition } from "../types";
 
   export let definitions: TestDefinition[] = [];
+
+  $: {
+    window["definitions"] = definitions;
+  }
 </script>
 
 <div class="container">

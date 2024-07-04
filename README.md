@@ -14,11 +14,12 @@ npm start
 ```
 
 ### Roadmap
-- Compositor texture masks
 - Wrap VideoFrame to provide shared downsampled video
   - Total video duration
   - Pipeline-assigned frame metadata
 - Trim
+  - Should update frame information
+- Compositor texture alpha masks
 - Clips view (similar to QuickTime)
 - Audio support
   - Audio waveform

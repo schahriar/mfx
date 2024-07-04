@@ -32,8 +32,12 @@ export class ConsoleWritableStream<T = any> {
 
 // Expensive function, sample frames before piping for digest
 export class MFXDigest extends MFXTransformStream<VideoFrame | MFXEncodedVideoChunk, VideoFrame | MFXEncodedVideoChunk> {
+	get identifier() {
+		return "MFXDigest";
+	}
+
 	globalChecksum = "";
-	constructor(cb: (sum: string) => void) {
+	constructor(cb: (sum: string) => void, final: (sum: string) => void = () => {/** noop */}) {
 		const calculateChecksum = async (buffer: BufferSource) => {
 			const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
 
@@ -52,6 +56,8 @@ export class MFXDigest extends MFXTransformStream<VideoFrame | MFXEncodedVideoCh
 				} else if (chunk instanceof VideoFrame) {
 					buffer = new Uint8Array(chunk.allocationSize());
 					await chunk.copyTo(buffer);
+				} else if (chunk instanceof Blob) {
+					buffer = new Uint8Array(await chunk.arrayBuffer());
 				} else {
 					buffer = new Uint8Array(chunk.videoChunk.byteLength);
 					await chunk.videoChunk.copyTo(buffer);
@@ -70,11 +76,18 @@ export class MFXDigest extends MFXTransformStream<VideoFrame | MFXEncodedVideoCh
 
 				controller.enqueue(chunk);
 			},
+			flush: () => {
+				final(value);
+			}
 		})
 	}
 };
 
 export class MFXFPSDebugger extends MFXTransformStream<VideoFrame, VideoFrame> {
+	get identifier() {
+		return "MFXFPSDebugger";
+	}
+
 	ringBuffer: RingBuffer<number>;
 	lookupWindow: number;
 	lastRecordedTime = performance.now();

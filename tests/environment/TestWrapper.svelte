@@ -1,47 +1,58 @@
 <script lang="ts">
   import {
-    MFXWebMMuxer,
     MFXVideoDecoder,
     PassthroughCanvas,
     createContainerDecoder,
     MFXFPSDebugger,
-    MFXVideoEncoder,
     MFXDigest,
-    MFXWebGLRenderer,
     MFXFrameSampler,
     MFXFrameTee,
     MFXVoid,
     Scaler,
-    shaders,
-    MFXTransformStream,
   } from "mfx";
   import bwipjs from "bwip-js";
   import { onMount } from "svelte";
-  import { openURL } from "./utils";
+  import { openURL } from "../utils";
   import FramePreview from "./FramePreview.svelte";
-  import { circIn, circInOut, elasticIn } from "svelte/easing";
+  import { circInOut } from "svelte/easing";
+  import { MFXMediaSourceStream } from "../../lib/encode";
+  import type { TestDefinition } from "../types";
 
-  export let input: string;
-  export let process: () => MFXTransformStream<VideoFrame, VideoFrame>[] = () => [];
-  export let output: () => MFXTransformStream<VideoFrame, VideoFrame>[] = () => [];
+  export let definition: TestDefinition;
 
   let canvasEl: HTMLCanvasElement;
   let barcodeEl: HTMLCanvasElement;
   let outputIntegrityEl: HTMLCanvasElement;
+  let outputVideo = new MFXMediaSourceStream();
   let hash = "";
-  let outputHash = "";
+  let snapshot = [];
   let samples: {
     frame: VideoFrame;
     id: number;
   }[] = [];
   const fpsCounter = new MFXFPSDebugger();
   const digest = new MFXDigest((value) => {
-    hash = value;
+    snapshot.push(value);
+  });
+
+  let completionCallback: () => void;
+  const done = new Promise<void>((resolve) => {
+    completionCallback = resolve;
   });
 
   const outputDigest = new MFXDigest((value) => {
-    outputHash = value;
+    hash = value;
+  }, () => {
+    completionCallback();
   });
+
+  $: {
+    window["results"] = {
+      hash,
+      snapshot,
+      done
+    };
+  }
 
   setInterval(() => {
     console.log("FPS", fpsCounter.getFPS());
@@ -70,8 +81,8 @@
   }
 
   onMount(async () => {
-    const stream = await openURL(input);
-    const computedPipeline = await process();
+    const stream = await openURL(definition.input);
+    const computedPipeline = await definition.process();
 
     const decodeStream = stream
       .pipeThrough(createContainerDecoder("AI.mp4"))
@@ -79,7 +90,9 @@
       .pipeThrough(
         new MFXFrameTee((stream) => {
           stream
-            .pipeThrough(new MFXFrameSampler(async (f, i) => !Boolean(i % 30)))
+            .pipeThrough(
+              new MFXFrameSampler(async (f, i) => i === 0 || !Boolean(i % 30))
+            )
             .pipeThrough(new Scaler(0.1))
             .pipeThrough(digest)
             .pipeThrough(
@@ -117,17 +130,19 @@
       .pipeThrough(new PassthroughCanvas(canvasEl))
       .pipeThrough(fpsCounter);
 
-    const outputPipeline = await output();
-    const outputStream = outputPipeline.length
-      ? outputPipeline.reduce(
-          (stream, pipe) => stream.pipeThrough(pipe),
-          displayStream
-        )
-      : displayStream;
+    if (definition.output) {
+      const outputPipeline = await definition.output();
+      const outputStream = outputPipeline.reduce(
+        (stream, pipe) => stream.pipeThrough(pipe),
+        displayStream
+      );
 
-    outputStream
-      .pipeThrough(outputDigest)
-      .pipeTo(new MFXVoid());
+      outputStream.pipeThrough(outputDigest).pipeTo(outputVideo);
+
+      return;
+    }
+
+    displayStream.pipeThrough(outputDigest).pipeTo(new MFXVoid());
   });
 
   $: {
@@ -148,10 +163,10 @@
   }
 
   $: {
-    if (outputHash && outputIntegrityEl) {
+    if (hash && outputIntegrityEl) {
       (bwipjs as any).toCanvas(outputIntegrityEl, {
         bcid: "codablockf",
-        text: outputHash,
+        text: hash,
         scaleX: 8,
         scaleY: 1,
         height: 1,
@@ -166,6 +181,9 @@
 </script>
 
 <section class="container">
+  <h2>{definition.title}</h2>
+  <h4 style="opacity: 0.7">{definition.description}</h4>
+  <br/>
   <canvas class="video" bind:this={canvasEl} width="500px" />
   <div class="preview">
     {#each samples as sample (sample.id)}
@@ -176,10 +194,22 @@
   </div>
   <div style:width="60vw" class="barcode-container">
     <canvas class="barcode" bind:this={barcodeEl} />
-    {#if outputHash.length}
-      <canvas in:appear={{ duration: 300 }} class="barcode" bind:this={outputIntegrityEl} />
+    {#if hash.length}
+      <canvas
+        in:appear={{ duration: 300 }}
+        class="barcode"
+        bind:this={outputIntegrityEl}
+      />
     {/if}
   </div>
+  {#if definition.output}
+    <div class="compare">
+      <!-- svelte-ignore a11y-media-has-caption -->
+      <video controls autoplay muted loop src={definition.input} />
+      <!-- svelte-ignore a11y-media-has-caption -->
+      <video controls autoplay muted loop src={outputVideo.getSource()} />
+    </div>
+  {/if}
 </section>
 
 <style>
@@ -195,6 +225,14 @@
     justify-content: center;
     overflow: hidden;
     overflow-x: scroll;
+  }
+
+  .compare {
+    display: flex;
+  }
+
+  .compare video {
+    width: 50%;
   }
 
   .inner {

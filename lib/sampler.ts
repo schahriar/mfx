@@ -1,6 +1,10 @@
 import { MFXTransformStream } from "./stream";
 
 export class MFXFrameSampler extends MFXTransformStream<VideoFrame, VideoFrame> {
+  get identifier() {
+    return "MFXFrameSampler";
+  }
+
   constructor(filter = (frame: VideoFrame, i: number) => Promise.resolve(true), { closer = true } = {}) {
     let i = 0;
     super({

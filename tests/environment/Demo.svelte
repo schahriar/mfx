@@ -1,6 +1,6 @@
 <script lang="ts">
   import Dropzone from "svelte-file-dropzone";
-  import { WebGLRenderer, MFXWebMMuxer, MFXVideoDecoder, MFXMP4VideoContainerDecoder, Scaler, PaintToCanvas, Compositor, createContainerDecoder, MFXFPSDebugger, MFXVideoEncoder } from "../lib/mfx";
+  import { MFXWebGLRenderer, MFXWebMMuxer, MFXVideoDecoder, MFXMP4VideoContainerDecoder, Scaler, PaintToCanvas, Compositor, createContainerDecoder, MFXFPSDebugger, MFXVideoEncoder } from "mfx";
   import adjustmentShaderSource from "!!raw-loader!../lib/effects/shaders/adjustment.glsl";
   import zoomShaderSource from "!!raw-loader!../lib/effects/shaders/zoom.glsl";
   import convShaderSource from "!!raw-loader!../lib/effects/shaders/convolution.glsl";
@@ -25,55 +25,47 @@
   const fpsCounter = new MFXFPSDebugger();
 
   const program1 = async (resolved) => {
-    const pass1 = new WebGLRenderer([...[...new Array(12)].map((_, i) => ({
+    const pass1 = new MFXWebGLRenderer([...[...new Array(12)].map((_, i) => ({
       id: `blur_${i}`,
       shader: blueShaderSource,
     })), {
-      id: "gblur",
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
       }
     }]);
 
-    const pass2 = new WebGLRenderer([{
-      id: "conv3",
+    const pass2 = new MFXWebGLRenderer([{
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
       }
     }, {
-      id: "conv4",
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
       }
     }, {
-      id: "conv",
       shader: convShaderSource,
       uniforms: {
         kernel: [-2, 0, -1, -2, 8.025, -2, -1, 1, -1]
       }
     }, {
-      id: "conv2",
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1]
       }
     }, {
-      id: "conv5",
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
       }
     }, {
-      id: "conv6",
       shader: convShaderSource,
       uniforms: {
         kernel: [-2, -1, 0, -1, 1, 1, 0, 1, 2]
       }
     }, {
-      id: 'adj',
       shader: adjustmentShaderSource,
       uniforms: {
         contrast: 1.5,
@@ -98,24 +90,21 @@
       .pipeThrough(new Scaler(1))
       .pipeThrough(fpsCounter)
       //.pipeThrough(compositor)
-      .pipeThrough(zoomPass)
       .pipeTo(new PaintToCanvas(canvasEl));
   };
 
   const program2 = async (resolved) => {
-    const blurPass = new WebGLRenderer([...[...new Array(12)].map((_, i) => ({
+    const blurPass = new MFXWebGLRenderer([...[...new Array(12)].map((_, i) => ({
       id: `blur_${i}`,
       shader: blueShaderSource,
     })), {
-      id: "gblur",
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
       }
     }]);
 
-    const zoomPass = new WebGLRenderer([{
-      id: "zoom",
+    const zoomPass = new MFXWebGLRenderer([{
       shader: zoomShaderSource,
       uniforms: (frame) => {
         if (frame.timestamp > 10200000) {
@@ -139,7 +128,7 @@
       codec: 'V_VP8',
 			width: 640,
       height: 360,
-			frameRate: 30
+			framerate: 30
     });
 
     await output.ready;
@@ -152,7 +141,7 @@
       .pipeThrough(new Scaler(5))
       .pipeThrough(fpsCounter)
       .pipeThrough(new MFXVideoEncoder(config))
-      .pipeTo(output)
+      .pipeTo(output.writable)
   };
 
   setInterval(() => {

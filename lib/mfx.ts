@@ -16,6 +16,8 @@ export { shaders };
 
 export const nextTask = () =>
 	new Promise((resolve) => queueMicrotask(resolve as any));
+export const nextTick = () =>
+	new Promise((resolve) => setTimeout(resolve as any, 1));
 export const nextAnimationFrame = () =>
 	new Promise((resolve) => requestAnimationFrame(resolve as any));
 
@@ -40,6 +42,10 @@ export class MFXVideoEncoder extends MFXTransformStream<
 	VideoFrame,
 	MFXEncodedVideoChunk
 > {
+	get identifier() {
+		return "MFXVideoEncoder";
+	}
+
 	constructor(config: VideoEncoderConfig) {
 		let backpressure = Promise.resolve();
 		const encoder = new VideoEncoder({
@@ -63,7 +69,7 @@ export class MFXVideoEncoder extends MFXTransformStream<
 
 				// Prevent backwards backpressure
 				while (encoder.encodeQueueSize > 10) {
-					await nextAnimationFrame();
+					await nextTick();
 				}
 
 				encoder.encode(frame, {
@@ -90,6 +96,10 @@ export class MFXVideoDecoder extends MFXTransformStream<
 	MFXDecodableChunk,
 	VideoFrame
 > {
+	get identifier() {
+		return "MFXVideoDecoder";
+	}
+
 	constructor() {
 		let backpressure = Promise.resolve();
 		let configured = false;
@@ -118,7 +128,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 
 				// Prevent backwards backpressure
 				while (decoder.decodeQueueSize > 10) {
-					await nextAnimationFrame();
+					await nextTick();
 				}
 
 				decoder.decode(chunk.chunk);
@@ -153,6 +163,10 @@ export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
 	Uint8Array,
 	MFXDecodableChunk
 > {
+	get identifier() {
+		return "MFXMP4VideoContainerDecoder";
+	}
+
 	constructor() {
 		const file = MP4Box.createFile();
 		let position = 0;

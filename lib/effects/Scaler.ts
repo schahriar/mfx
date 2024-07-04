@@ -5,6 +5,10 @@ import { MFXTransformStream } from "../stream";
 // Used for scaling in the same aspect-ratio or to crop
 // Note: Faster than MipMaps per frame as in/out is downscaled in the entire pipeline
 export class Scaler extends MFXTransformStream<VideoFrame, VideoFrame> {
+	get identifier() {
+		return "Scaler";
+	}
+
 	constructor(
 		ratio: number,
 		canvas: HTMLCanvasElement = document.createElement("canvas"),
@@ -37,4 +41,4 @@ export class Scaler extends MFXTransformStream<VideoFrame, VideoFrame> {
 			},
 		});
 	}
-}
+};
