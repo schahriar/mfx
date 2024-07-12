@@ -1,4 +1,5 @@
-import { nextAnimationFrame } from "./mfx";
+import { ExtendedVideoFrame } from "./frame";
+import { next } from "./mfx";
 
 export abstract class MFXTransformStream<I, O> extends TransformStream {
 	protected _buffer: O[];
@@ -35,8 +36,8 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 			{
 				...transformer,
 				transform: async (chunk, controller) => {
-					while (!controller.desiredSize) {
-						await nextAnimationFrame();
+					while (!controller?.desiredSize) {
+						await next();
 					}
 
 					await transformer.transform(chunk, controller);
@@ -83,8 +84,8 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 		}
 
 		return new Promise<void>(async (resolve) => {
-			while (this._controller.desiredSize <= 0) {
-				await nextAnimationFrame();
+			while (this._controller?.desiredSize <= 0) {
+				await next();
 			}
 
 			resolve();
@@ -96,7 +97,7 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 	}
 
 	dispatchError(error: Error) {
-		console.trace(error);
+		console.error(error);
 		this._eventTarget.dispatchEvent(
 			new CustomEvent("error", { detail: { error } }),
 		);
@@ -119,12 +120,12 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 	}
 };
 
-export class MFXFrameTee extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class MFXFrameTee extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "MFXFrameTee";
 	}
 
-  constructor(ctx: (stream: ReadableStream<VideoFrame>) => void) {
+  constructor(ctx: (stream: ReadableStream<ExtendedVideoFrame>) => void) {
 		const stream = new TransformStream();
 
     super({

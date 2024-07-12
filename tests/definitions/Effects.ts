@@ -12,7 +12,8 @@ export const definitions: TestDefinition[] = [{
     new MFXWebGLRenderer([{
       shader: shaders.zoom,
       uniforms: {
-        zoomFactor: 3
+        zoomFactor: 2,
+        position: [0.1, 0.5]
       }
     }])
   ]

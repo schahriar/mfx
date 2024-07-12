@@ -13,10 +13,12 @@
   import bwipjs from "bwip-js";
   import { onMount } from "svelte";
   import { openURL } from "../utils";
+  import sinon from "sinon";
   import FramePreview from "./FramePreview.svelte";
   import { circInOut } from "svelte/easing";
   import { MFXMediaSourceStream } from "../../lib/encode";
   import type { TestDefinition } from "../types";
+  import type { ExtendedVideoFrame } from "../../lib/frame";
 
   export let definition: TestDefinition;
 
@@ -27,7 +29,7 @@
   let hash = "";
   let snapshot = [];
   let samples: {
-    frame: VideoFrame;
+    frame: ExtendedVideoFrame;
     id: number;
   }[] = [];
   const fpsCounter = new MFXFPSDebugger();
@@ -40,17 +42,31 @@
     completionCallback = resolve;
   });
 
-  const outputDigest = new MFXDigest((value) => {
-    hash = value;
-  }, () => {
-    completionCallback();
+  onMount(() => {
+    const clock = sinon.useFakeTimers({
+      now: 1720756812695,
+      shouldAdvanceTime: true,
+    });
+
+    return () => {
+      clock.restore();
+    };
   });
+
+  const outputDigest = new MFXDigest(
+    (value) => {
+      hash = value;
+    },
+    () => {
+      completionCallback();
+    }
+  );
 
   $: {
     window["results"] = {
       hash,
       snapshot,
-      done
+      done,
     };
   }
 
@@ -183,7 +199,7 @@
 <section class="container">
   <h2>{definition.title}</h2>
   <h4 style="opacity: 0.7">{definition.description}</h4>
-  <br/>
+  <br />
   <canvas class="video" bind:this={canvasEl} width="500px" />
   <div class="preview">
     {#each samples as sample (sample.id)}

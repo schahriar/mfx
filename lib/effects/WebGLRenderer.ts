@@ -2,6 +2,7 @@ import * as twgl from "twgl.js";
 import vertexShaderSource from "!!raw-loader!./shaders/vertex.glsl";
 import paintShaderSource from "!!raw-loader!./shaders/paint.glsl";
 import { MFXTransformStream } from "../stream";
+import { ExtendedVideoFrame } from "../frame";
 
 const checkStatus = (gl: WebGL2RenderingContext) => {
 	const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -33,10 +34,10 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 
 export interface Effect {
 	shader: string;
-	uniforms?: Record<string, any> | ((frame: VideoFrame) => Record<string, any>);
+	uniforms?: Record<string, any> | ((frame: ExtendedVideoFrame) => Record<string, any>);
 };
 
-export class MFXWebGLRenderer extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class MFXWebGLRenderer extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "MFXWebGLRenderer";
 	}

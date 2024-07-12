@@ -1,10 +1,11 @@
+import { ExtendedVideoFrame } from "../frame";
 import { MFXTransformStream } from "../stream";
 
 // TODO: Implement x, y position for cropping
 
 // Used for scaling in the same aspect-ratio or to crop
 // Note: Faster than MipMaps per frame as in/out is downscaled in the entire pipeline
-export class Scaler extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class Scaler extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "Scaler";
 	}

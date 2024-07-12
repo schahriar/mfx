@@ -7,6 +7,7 @@
     "build": "NODE_ENV=production webpack",
     "start": "webpack serve",
     "format": "npx @biomejs/biome format --write ./lib",
+    "snapshot": "CREATE_SNAPSHOTS=true npm test",
     "test": "node --loader ts-node/esm tests/runner.mts"
   },
   "repository": {
@@ -34,9 +35,12 @@
     "@types/dom-webcodecs": "^0.1.11",
     "@types/wicg-file-system-access": "^2023.10.5",
     "babel-loader": "^9.1.3",
+    "bwip-js": "^4.5.0",
+    "herb": "^2.2.6",
     "html-webpack-plugin": "^5.6.0",
     "puppeteer": "^22.12.0",
     "raw-loader": "^4.0.2",
+    "sinon": "^18.0.0",
     "svelte": "^4.2.17",
     "svelte-file-dropzone": "^2.0.7",
     "svelte-loader": "^3.2.0",
@@ -50,8 +54,7 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
-    "bwip-js": "^4.4.0",
-    "herb": "^2.2.6",
+    "mp4-muxer": "^4.3.3",
     "mp4box": "^0.5.2",
     "ring-buffer-ts": "^1.2.0",
     "twgl.js": "^5.5.4",

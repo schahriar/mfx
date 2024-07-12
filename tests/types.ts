@@ -1,3 +1,4 @@
+import { ExtendedVideoFrame } from "../lib/frame";
 import type { MFXTransformStream } from "../lib/stream";
 
 export interface TestDefinition {
@@ -6,6 +7,6 @@ export interface TestDefinition {
   title: string;
   description: string;
   input: string;
-  process?: () => Promise<MFXTransformStream<VideoFrame, VideoFrame>[]>,
-  output?: () => Promise<MFXTransformStream<VideoFrame, any>[]>,
+  process?: () => Promise<MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame>[]>,
+  output?: () => Promise<MFXTransformStream<ExtendedVideoFrame, any>[]>,
 };

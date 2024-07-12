@@ -25,12 +25,7 @@ export const definitions: TestDefinition[] = [{
       bitrate: 1e6,
     };
 
-    const output = new MFXWebMMuxer({
-      codec: "vp8",
-      width: 640,
-      height: 360,
-      framerate: 30,
-    });
+    const output = new MFXWebMMuxer(config);
 
     await output.ready;
 

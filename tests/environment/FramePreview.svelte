@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { ExtendedVideoFrame } from "../../lib/frame";
 
-  export let frame: VideoFrame;
+  export let frame: ExtendedVideoFrame;
 
   let canvas: HTMLCanvasElement;
   const width = frame.displayWidth;

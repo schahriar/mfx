@@ -1,6 +1,7 @@
+import { ExtendedVideoFrame } from "../frame";
 import { MFXTransformStream } from "../stream";
 
-export class PaintToCanvas extends WritableStream<VideoFrame> {
+export class PaintToCanvas extends WritableStream<ExtendedVideoFrame> {
 	constructor(canvas: HTMLCanvasElement) {
 		const ctx = canvas.getContext("2d");
 
@@ -20,7 +21,7 @@ export class PaintToCanvas extends WritableStream<VideoFrame> {
 	}
 };
 
-export class PassthroughCanvas extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class PassthroughCanvas extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "PassthroughCanvas";
 	}

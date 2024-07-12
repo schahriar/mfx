@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "geforcelegend.vscode-glsl",
+    "esbenp.prettier-vscode",
+    "slevesque.shader"
+  ]
+}

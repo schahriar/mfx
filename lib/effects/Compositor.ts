@@ -2,6 +2,7 @@ import * as twgl from "twgl.js";
 import vertexShaderSource from "!!raw-loader!./shaders/vertex.glsl";
 import compositorShaderSource from "!!raw-loader!./shaders/compositor.glsl";
 import { MFXTransformStream } from "../stream";
+import { ExtendedVideoFrame } from "../frame";
 
 const checkStatus = (gl: WebGL2RenderingContext) => {
 	const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -33,11 +34,11 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 
 export interface Layer {
 	id: string;
-	texture: ReadableStream<VideoFrame>;
+	texture: ReadableStream<ExtendedVideoFrame>;
 	textureSize: number[];
 }
 
-export class Compositor extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class Compositor extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "Compositor";
 	}

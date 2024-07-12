@@ -1,6 +1,7 @@
 import type { MFXEncodedVideoChunk } from "./mfx";
 import { RingBuffer } from "ring-buffer-ts";
 import { MFXTransformStream } from "./stream";
+import { ExtendedVideoFrame } from "./frame";
 
 export class ConsoleWritableStream<T = any> {
 	writable: WritableStream<T>;
@@ -31,7 +32,7 @@ export class ConsoleWritableStream<T = any> {
 }
 
 // Expensive function, sample frames before piping for digest
-export class MFXDigest extends MFXTransformStream<VideoFrame | MFXEncodedVideoChunk, VideoFrame | MFXEncodedVideoChunk> {
+export class MFXDigest extends MFXTransformStream<ExtendedVideoFrame | MFXEncodedVideoChunk, ExtendedVideoFrame | MFXEncodedVideoChunk> {
 	get identifier() {
 		return "MFXDigest";
 	}
@@ -53,7 +54,7 @@ export class MFXDigest extends MFXTransformStream<VideoFrame | MFXEncodedVideoCh
 				let buffer: Uint8Array;
 				if (Array.isArray(chunk) && chunk[0] instanceof Uint8Array) {
 					buffer = chunk[0];
-				} else if (chunk instanceof VideoFrame) {
+				} else if (chunk instanceof ExtendedVideoFrame || chunk instanceof VideoFrame) {
 					buffer = new Uint8Array(chunk.allocationSize());
 					await chunk.copyTo(buffer);
 				} else if (chunk instanceof Blob) {
@@ -83,7 +84,7 @@ export class MFXDigest extends MFXTransformStream<VideoFrame | MFXEncodedVideoCh
 	}
 };
 
-export class MFXFPSDebugger extends MFXTransformStream<VideoFrame, VideoFrame> {
+export class MFXFPSDebugger extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "MFXFPSDebugger";
 	}

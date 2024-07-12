@@ -1,5 +1,6 @@
-import { Muxer, StreamTarget } from "webm-muxer";
+import { Muxer as WebMMuxer, StreamTarget as WebMStreamTarget } from "webm-muxer";
 import { type MFXEncodedVideoChunk } from "./mfx";
+import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from 'mp4-muxer';
 import { MFXTransformStream } from "./stream";
 
 export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
@@ -36,7 +37,7 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 				mediaSource.endOfStream();
 			},
 		});
-		
+
 		this.mediaSource = mediaSource;
 		this.sourcePromise = source;
 	}
@@ -73,7 +74,7 @@ export class MFXFileWriter extends WritableStream<MFXBlob> {
 					},
 				],
 			});
-		
+
 			return await fileHandle.createWritable();
 		})();
 	}
@@ -95,6 +96,65 @@ export class MFXBlob extends Blob {
 		return `${this.type}; codecs="${this.videoEncodingConfig.codec}"`;
 	}
 };
+
+export class MFXMP4Muxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlob> {
+	get identifier() {
+		return "MFXMP4Muxer";
+	}
+
+	ready: Promise<any>;
+	constructor(
+		config: VideoEncoderConfig,
+		chunkSize?: number,
+	) {
+		const codecMapper = (codec: VideoEncoderConfig["codec"]): ("avc" | "hevc" | "vp9" | "av1") => {
+			const targets: ("avc" | "hevc" | "vp9" | "av1")[] = ["avc", "hevc", "vp9", "av1"];
+			for (let i = 0; i < targets.length; i++) {
+				if (codec.startsWith(targets[i])) {
+					return targets[i];
+				}
+			}
+
+			throw new Error(`Unsupported MP4 codec ${codec}`);
+		};
+		let muxer: MP4Muxer<MP4StreamTarget>;
+
+		super({
+			transform: async (encodedVideoChunk) => {
+				muxer.addVideoChunk(
+					encodedVideoChunk.videoChunk,
+					encodedVideoChunk.videoMetadata,
+				);
+			},
+			flush: async () => {
+				muxer.finalize();
+			},
+		});
+
+		muxer = new MP4Muxer({
+			video: {
+				height: config.height,
+				width: config.width,
+				codec: codecMapper(config.codec),
+			},
+			firstTimestampBehavior: "offset",
+			fastStart: "fragmented",
+			target: new MP4StreamTarget({
+				onData: (data, position) => {
+					this.queue(new MFXBlob([data], {
+						type: "video/mp4",
+						position,
+						videoEncodingConfig: config
+					}));
+				},
+				...Number.isInteger(chunkSize) ? {
+					chunked: true,
+					chunkSize
+				} : {},
+			}),
+		})
+	}
+}
 
 export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlob> {
 	get identifier() {
@@ -119,31 +179,7 @@ export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBl
 
 			throw new Error(`Unsupported webM codec ${codec}`);
 		};
-		const muxer = new Muxer({
-			video: {
-				height: config.height,
-				width: config.width,
-				frameRate: config.framerate,
-				alpha: config.alpha !== "discard" || Boolean(config.alpha),
-				codec: codecMapper(config.codec)
-			},
-			firstTimestampBehavior: "permissive",
-			type: "matroska",
-			streaming: true,
-			target: new StreamTarget({
-				chunked: true,
-				onData: (data, position) => {
-					this.queue(new MFXBlob([data], {
-						type: "video/webm",
-						position,
-						videoEncodingConfig: config
-					}));
-				},
-				...Number.isInteger(chunkSize) ? {
-					chunkSize
-				} : {},
-			}),
-		});
+		let muxer: WebMMuxer<WebMStreamTarget>;
 
 		super({
 			transform: async (encodedVideoChunk) => {
@@ -155,6 +191,32 @@ export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBl
 			flush: async () => {
 				muxer.finalize();
 			},
+		});
+
+		muxer = new WebMMuxer({
+			video: {
+				height: config.height,
+				width: config.width,
+				frameRate: config.framerate,
+				alpha: config.alpha !== "discard" || Boolean(config.alpha),
+				codec: codecMapper(config.codec)
+			},
+			firstTimestampBehavior: "offset",
+			type: "matroska",
+			streaming: true,
+			target: new WebMStreamTarget({
+				onData: (data, position) => {
+					this.queue(new MFXBlob([data], {
+						type: "video/webm",
+						position,
+						videoEncodingConfig: config
+					}));
+				},
+				...Number.isInteger(chunkSize) ? {
+					chunked: true,
+					chunkSize
+				} : {},
+			}),
 		});
 	}
 }
