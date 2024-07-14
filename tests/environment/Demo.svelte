@@ -131,8 +131,6 @@
 			framerate: 30
     });
 
-    await output.ready;
-
     (resolved[0].body as ReadableStream<Uint8Array>)
       .pipeThrough(createContainerDecoder(resolved[0].file.name))
       .pipeThrough(new MFXVideoDecoder())

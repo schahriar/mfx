@@ -25,13 +25,9 @@ export const definitions: TestDefinition[] = [{
       bitrate: 1e6,
     };
 
-    const output = new MFXWebMMuxer(config);
-
-    await output.ready;
-
     return [
       new MFXVideoEncoder(config),
-      output
+      new MFXWebMMuxer(config)
     ];
   }
 }];

@@ -22,13 +22,9 @@ export const definitions: TestDefinition[] = [{
       bitrate: 1e6,
     };
 
-    const output = new MFXMP4Muxer(config);
-
-    await output.ready;
-
     return [
       new MFXVideoEncoder(config),
-      output
+      new MFXMP4Muxer(config)
     ];
   }
 }, {
@@ -72,13 +68,9 @@ export const definitions: TestDefinition[] = [{
       bitrate: 1e6 * 4,
     };
 
-    const output = new MFXMP4Muxer(config);
-
-    await output.ready;
-
     return [
       new MFXVideoEncoder(config),
-      output
+      new MFXMP4Muxer(config)
     ];
   }
 }];
