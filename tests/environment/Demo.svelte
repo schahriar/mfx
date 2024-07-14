@@ -1,6 +1,6 @@
 <script lang="ts">
   import Dropzone from "svelte-file-dropzone";
-  import { MFXWebGLRenderer, MFXWebMMuxer, MFXVideoDecoder, MFXMP4VideoContainerDecoder, Scaler, PaintToCanvas, Compositor, createContainerDecoder, MFXFPSDebugger, MFXVideoEncoder } from "mfx";
+  import { MFXGLEffect, MFXWebMMuxer, MFXVideoDecoder, MFXMP4VideoContainerDecoder, Scaler, PaintToCanvas, Compositor, createContainerDecoder, MFXFPSDebugger, MFXVideoEncoder } from "mfx";
   import adjustmentShaderSource from "!!raw-loader!../lib/effects/shaders/adjustment.glsl";
   import zoomShaderSource from "!!raw-loader!../lib/effects/shaders/zoom.glsl";
   import convShaderSource from "!!raw-loader!../lib/effects/shaders/convolution.glsl";
@@ -25,7 +25,7 @@
   const fpsCounter = new MFXFPSDebugger();
 
   const program1 = async (resolved) => {
-    const pass1 = new MFXWebGLRenderer([...[...new Array(12)].map((_, i) => ({
+    const pass1 = new MFXGLEffect([...[...new Array(12)].map((_, i) => ({
       id: `blur_${i}`,
       shader: blueShaderSource,
     })), {
@@ -35,7 +35,7 @@
       }
     }]);
 
-    const pass2 = new MFXWebGLRenderer([{
+    const pass2 = new MFXGLEffect([{
       shader: convShaderSource,
       uniforms: {
         kernel: [1, 2, 1, 2, 4, 2, 1, 2, 1].map((v) => v * 0.0625)
@@ -94,7 +94,7 @@
   };
 
   const program2 = async (resolved) => {
-    const blurPass = new MFXWebGLRenderer([...[...new Array(12)].map((_, i) => ({
+    const blurPass = new MFXGLEffect([...[...new Array(12)].map((_, i) => ({
       id: `blur_${i}`,
       shader: blueShaderSource,
     })), {
@@ -104,7 +104,7 @@
       }
     }]);
 
-    const zoomPass = new MFXWebGLRenderer([{
+    const zoomPass = new MFXGLEffect([{
       shader: zoomShaderSource,
       uniforms: (frame) => {
         if (frame.timestamp > 10200000) {

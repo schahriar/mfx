@@ -1,4 +1,4 @@
-import { convolution3x3, MFXVideoEncoder, MFXWebGLRenderer, MFXWebMMuxer, shaders } from "mfx";
+import { convolution3x3, MFXVideoEncoder, MFXGLEffect, MFXWebMMuxer, rawShaders } from "mfx";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
@@ -9,8 +9,8 @@ export const definitions: TestDefinition[] = [{
   input: "AI.mp4",
   process: async () => {
     return [
-      new MFXWebGLRenderer([{
-        shader: shaders.convolution,
+      new MFXGLEffect([{
+        shader: rawShaders.convolution,
         uniforms: {
           kernel: convolution3x3.emboss
         }

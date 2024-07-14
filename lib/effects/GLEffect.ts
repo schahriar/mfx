@@ -3,6 +3,7 @@ import vertexShaderSource from "!!raw-loader!./shaders/vertex.glsl";
 import paintShaderSource from "!!raw-loader!./shaders/paint.glsl";
 import { MFXTransformStream } from "../stream";
 import { ExtendedVideoFrame } from "../frame";
+import type { Uniform } from "./shaders";
 
 const checkStatus = (gl: WebGL2RenderingContext) => {
 	const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -32,14 +33,30 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 	}
 };
 
-export interface Effect {
+export interface Effect<T = any> {
 	shader: string;
-	uniforms?: Record<string, any> | ((frame: ExtendedVideoFrame) => Record<string, any>);
+	uniforms?: Record<string, Uniform<T>>;
 };
 
-export class MFXWebGLRenderer extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+const resolveUniforms = (o: any, frame: ExtendedVideoFrame) => {
+	if (["string", "number", "boolean"].includes(typeof o)) {
+		return o;
+	}
+
+	if (typeof o === "function") {
+		return o(frame);
+	}
+
+	if (Array.isArray(o)) {
+		return o.map((v) => resolveUniforms(v, frame));
+	}
+
+	throw new Error(`Invalid uniform type ${typeof o}`);
+}
+
+export class MFXGLEffect extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
-		return "MFXWebGLRenderer";
+		return "MFXGLEffect";
 	}
 
 	constructor(
@@ -151,10 +168,10 @@ export class MFXWebGLRenderer extends MFXTransformStream<ExtendedVideoFrame, Ext
 					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
 					gl.viewport(0, 0, width, height);
 
-					const uniforms =
-						typeof pipeline.uniforms === "function"
-							? pipeline.uniforms(frame)
-							: pipeline.uniforms;
+					const uniforms = Object.keys(pipeline.uniforms || {}).reduce((accu, key) => ({
+						...accu,
+						[key]: resolveUniforms(pipeline.uniforms[key], frame)
+					}), {});
 
 					gl.useProgram(programInfo.program);
 					twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);

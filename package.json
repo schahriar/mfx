@@ -57,6 +57,7 @@
     "mp4-muxer": "^4.3.3",
     "mp4box": "^0.5.2",
     "ring-buffer-ts": "^1.2.0",
+    "ts-easing": "^0.2.0",
     "twgl.js": "^5.5.4",
     "webm-muxer": "^4.0.1"
   }

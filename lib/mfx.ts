@@ -1,10 +1,11 @@
 import { MFXTransformStream } from "./stream";
-import * as shaders from "./effects/shaders/index";
+import * as rawShaders from "./effects/shaders/raw";
+import * as shaders from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { avc } from "./codec/avc";
 
 export * from "./convolution";
-export { MFXWebGLRenderer } from "./effects/WebGLRenderer";
+export { MFXGLEffect } from "./effects/GLEffect";
 export { MFXCutter } from "./effects/Cutter";
 export { Scaler } from "./effects/Scaler";
 export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
@@ -14,7 +15,8 @@ export { MFXFPSDebugger, ConsoleWritableStream, MFXDigest } from "./debug";
 export * from "./encode";
 export * from "./decode";
 export { MFXFrameTee, MFXTransformStream } from "./stream";
-export { shaders };
+export { keyframes } from "./keyframes";
+export { rawShaders, shaders };
 
 export const codecs = {
 	avc

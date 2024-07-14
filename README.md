@@ -14,12 +14,11 @@ npm start
 ```
 
 ### Roadmap
-- Timeline for effects (keyframes)
-- Easing for uniforms
-- Compositor texture alpha masks
-  - Blend mode and opacity as compositor functions
+- Run tests on Github actions
 - API Documentation
 - Contribution Guide
+- Compositor texture alpha masks
+  - Blend mode and opacity as compositor functions
 - Canvas frame generator
   - Add threejs demo
 - Audio support
@@ -27,6 +26,7 @@ npm start
   - Audio effects
 - Seek
   - Clips view (similar to QuickTime)
+- GIF (https://github.com/jnordberg/gif.js)
 - Reduce CPU → GPU → CPU copy times using texture atlas
 - Benchmarks (during test) against ffmpeg (AVC https://trac.ffmpeg.org/wiki/Encode/H.264#FAQ and possibly WebM)
 - Integrate debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)

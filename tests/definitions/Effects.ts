@@ -1,5 +1,5 @@
-import { convolution3x3, Scaler, shaders } from "mfx";
-import { MFXWebGLRenderer } from "../../lib/effects/WebGLRenderer";
+import { convolution3x3, Scaler, rawShaders, shaders } from "mfx";
+import { MFXGLEffect } from "../../lib/effects/GLEffect";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
@@ -9,13 +9,9 @@ export const definitions: TestDefinition[] = [{
   path: "/zoom",
   input: "AI.mp4",
   process: async () => [
-    new MFXWebGLRenderer([{
-      shader: shaders.zoom,
-      uniforms: {
-        zoomFactor: 2,
-        position: [0.1, 0.5]
-      }
-    }])
+    new MFXGLEffect([
+      shaders.zoom({ factor: 2, x: 0.5, y: 0.5 }),
+    ])
   ]
 }, {
   id: "effect_blur",
@@ -25,17 +21,17 @@ export const definitions: TestDefinition[] = [{
   input: "boats.mp4",
   process: async () => [
     new Scaler(0.2),
-    new MFXWebGLRenderer([{
-      shader: shaders.blur,
+    new MFXGLEffect([{
+      shader: rawShaders.blur,
     }, {
-      shader: shaders.convolution,
+      shader: rawShaders.convolution,
       uniforms: {
         kernel: convolution3x3.gaussianBlur
       }
     }, {
-      shader: shaders.blur,
+      shader: rawShaders.blur,
     }, , {
-      shader: shaders.blur,
+      shader: rawShaders.blur,
     }]),
     new Scaler(5),
   ]
