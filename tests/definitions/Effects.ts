@@ -14,6 +14,17 @@ export const definitions: TestDefinition[] = [{
     ])
   ]
 }, {
+  id: "effect_zoom_out",
+  title: "Zoom Out",
+  description: "Zoom out adjusting the alpha channel on area out of zoom",
+  path: "/zoom_out",
+  input: "AI.mp4",
+  process: async () => [
+    new MFXGLEffect([
+      shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
+    ])
+  ]
+}, {
   id: "effect_blur",
   title: "Blur",
   description: "Blur video using fast gaussian and convolution",
