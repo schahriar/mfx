@@ -59,3 +59,9 @@
   font-size: 0.8em;
   z-index: 10;
 }
+
+@media screen and (max-width: 600px) {
+  .disclaimer {
+    display: none;
+  }
+}
