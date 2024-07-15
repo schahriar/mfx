@@ -10,6 +10,7 @@
     MFXVoid,
     Scaler,
   } from "mfx";
+  import * as mfx from "mfx";
   import bwipjs from "bwip-js";
   import { onMount } from "svelte";
   import { openURL } from "../utils";
@@ -41,6 +42,13 @@
   const done = new Promise<void>((resolve) => {
     completionCallback = resolve;
   });
+
+
+  onMount(() => {
+    console.log({mfx})
+    window["mfx"] = mfx;
+  });
+
 
   onMount(() => {
     const clock = sinon.useFakeTimers({

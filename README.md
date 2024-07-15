@@ -34,7 +34,7 @@ video.body
     shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
   ]))
   .pipeThrough(new MFXVideoEncoder(output))
-  .pipeThrough(new MFXWebMMuxer(config)) // Returns a Blob type that can be piped to a backend if needed
+  .pipeThrough(new MFXWebMMuxer(output)) // Returns a Blob type that can be piped to a backend if needed
   .pipeTo(new MFXFileWriter("output.webm")) // Opens a save dialog in the browser
 
 ```
@@ -52,8 +52,8 @@ npm start
 ```
 
 ### Roadmap
-- Run tests on Github actions
 - API Documentation
+- Run tests on Github actions
 - Contribution Guide
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions

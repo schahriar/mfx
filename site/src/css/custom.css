@@ -1,0 +1,61 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+:root {
+  --ifm-font-family-base: "Inter", sans-serif;
+  --ifm-heading-font-family: "Inter", sans-serif;
+
+  --ifm-color-primary: #292929;
+  --ifm-color-primary-dark: #292929;
+  --ifm-color-primary-darker: #121212;
+  --ifm-color-primary-darkest: #000000;
+  --ifm-color-primary-light: #ababab;
+  --ifm-color-primary-lighter: #c7c7c7;
+  --ifm-color-primary-lightest: #f4f4f4;
+  --ifm-button-border-radius: 25px;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme="dark"] {
+  --ifm-color-primary: #ababab;
+  --ifm-color-primary-dark: #ababab;
+  --ifm-color-primary-darker: #c7c7c7;
+  --ifm-color-primary-darkest: #f4f4f4;
+  --ifm-color-primary-light: #292929;
+  --ifm-color-primary-lighter: #121212;
+  --ifm-color-primary-lightest: #000000;
+  --ifm-background-color: var(--ifm-color-primary-lightest);
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+[data-page="home"] {
+  color: white;
+  --ifm-navbar-background-color: #000000 !important;
+  --ifm-footer-background-color: #000000 !important;
+  --ifm-navbar-link-color: #ffffff;
+  --ifm-color-primary: #ababab;
+  --ifm-color-primary-dark: #ababab;
+  --ifm-color-primary-darker: #c7c7c7;
+  --ifm-color-primary-darkest: #f4f4f4;
+  --ifm-color-primary-light: #292929;
+  --ifm-color-primary-lighter: #121212;
+  --ifm-color-primary-lightest: #000000;
+}
+
+[data-page="home"] .toggleButton_node_modules-\@docusaurus-theme-classic-lib-theme-ColorModeToggle-styles-module {
+  display: none;
+}
+
+.disclaimer {
+  position: absolute;
+  bottom: 0px;
+  right: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8em;
+  z-index: 10;
+}

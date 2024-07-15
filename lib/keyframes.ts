@@ -29,7 +29,6 @@ export const keyframes = <T>(defs: {
       const diff = (windowEnd.value as number) - (windowStart.value as number);
       const value = ((windowStart.value as number) + (diff * delta)) as T;
 
-      console.log({value})
       return value;
     }
 
