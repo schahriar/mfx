@@ -4,6 +4,8 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import video from "@site/static/img/video.webm";
+import "../css/custom.css";
+import "@site/static/img/Logo.png";
 
 import styles from './index.module.css';
 import { useEffect } from 'react';
