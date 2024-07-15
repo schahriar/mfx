@@ -1,3 +1,4 @@
+import React from "react";
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
@@ -13,7 +14,7 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div>
-        <video src={video} autoPlay muted/>
+        <video src={video} autoPlay muted loop/>
         <p className="disclaimer">
           video generated using MFX (edge detection convolution filter)
         </p>
