@@ -29,7 +29,7 @@
   "homepage": "https://github.com/schahriar/mfx#readme",
   "devDependencies": {
     "@babel/core": "^7.24.6",
-    "@babel/preset-env": "^7.24.6",
+    "@babel/preset-env": "^7.24.8",
     "@biomejs/biome": "1.8.2",
     "@tsconfig/svelte": "^5.0.4",
     "@types/dom-webcodecs": "^0.1.11",
