@@ -50,8 +50,8 @@ export default function Home(): JSX.Element {
 
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`MFX: Video Editing in the Browser`}
+      description="Hardware-accelerated video editing right in the browser using javascript">
       <HomepageHeader />
     </Layout>
   );
