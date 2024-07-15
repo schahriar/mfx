@@ -1,5 +1,16 @@
-# mfx
-In-browser video editing toolkit
+<div style="display: flex; align-items: center;">
+  <img src="./Logo.png" width="100">
+  <div style="padding-left: 12px; font-weight: 700;">
+    <h2 style="margin: 0">MFX</h2>
+    <p style="font-weight: 300; margin-top: -5px">
+      In-browser video editing toolkit
+    </p>
+  </div>
+</div>
+
+<br/>
+<hr/>
+
 
 ## Usage
 Decode MP4 Video -> zoom out -> encode to WebM (vp8):
