@@ -33,6 +33,7 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 	}
 };
 
+/** @group GPU Effects */
 export interface Effect<T = any> {
 	shader: string;
 	uniforms?: Record<string, Uniform<T>>;
@@ -54,6 +55,7 @@ const resolveUniforms = (o: any, frame: ExtendedVideoFrame) => {
 	throw new Error(`Invalid uniform type ${typeof o}`);
 }
 
+/** @group GPU Effects */
 export class MFXGLEffect extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "MFXGLEffect";

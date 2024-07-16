@@ -32,12 +32,18 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 	}
 };
 
+/**
+ * @group Advanced
+ */
 export interface Layer {
 	id: string;
 	texture: ReadableStream<ExtendedVideoFrame>;
 	textureSize: number[];
 }
 
+/**
+ * @group Advanced
+ */
 export class Compositor extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "Compositor";

@@ -3,6 +3,9 @@ import { RingBuffer } from "ring-buffer-ts";
 import { MFXTransformStream } from "./stream";
 import { ExtendedVideoFrame } from "./frame";
 
+/**
+ * @group Debug
+ */
 export class ConsoleWritableStream<T = any> {
 	writable: WritableStream<T>;
 
@@ -32,6 +35,9 @@ export class ConsoleWritableStream<T = any> {
 }
 
 // Expensive function, sample frames before piping for digest
+/**
+ * @group Debug
+ */
 export class MFXDigest extends MFXTransformStream<ExtendedVideoFrame | MFXEncodedVideoChunk, ExtendedVideoFrame | MFXEncodedVideoChunk> {
 	get identifier() {
 		return "MFXDigest";
@@ -84,6 +90,9 @@ export class MFXDigest extends MFXTransformStream<ExtendedVideoFrame | MFXEncode
 	}
 };
 
+/**
+ * @group Debug
+ */
 export class MFXFPSDebugger extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "MFXFPSDebugger";

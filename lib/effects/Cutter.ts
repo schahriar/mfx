@@ -1,6 +1,9 @@
 import { ExtendedVideoFrame } from "../frame";
 import { MFXFrameSampler } from "../sampler";
 
+/**
+ * @group Effects
+ */
 export class MFXCutter extends MFXFrameSampler {
   get identifier() {
     return "MFXCutter";

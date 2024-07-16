@@ -3,12 +3,18 @@ import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
 
+/**
+ * @group Decode
+ */
 export interface MFXDecodableChunk {
   context: ContainerContext;
   config: VideoDecoderConfig;
   chunk: EncodedVideoChunk;
 }
 
+/**
+ * @group Decode
+ */
 export class MFXVideoDecoder extends MFXTransformStream<
   MFXDecodableChunk,
   ExtendedVideoFrame
@@ -62,6 +68,9 @@ export class MFXVideoDecoder extends MFXTransformStream<
   }
 }
 
+/**
+ * @group Decode
+ */
 export const createContainerDecoder = (filename: string) => {
   const ext = filename.slice(filename.lastIndexOf("."));
   if (ext === ".webm") {
@@ -71,6 +80,9 @@ export const createContainerDecoder = (filename: string) => {
   return new MFXMP4VideoContainerDecoder();
 };
 
+/**
+ * @group Decode
+ */
 export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
   Uint8Array,
   MFXDecodableChunk

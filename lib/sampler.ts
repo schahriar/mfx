@@ -1,6 +1,9 @@
 import { ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
 
+/**
+ * @group Stream
+ */
 export class MFXFrameSampler extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
   get identifier() {
     return "MFXFrameSampler";

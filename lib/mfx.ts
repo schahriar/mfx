@@ -16,18 +16,22 @@ export * from "./encode";
 export * from "./decode";
 export { MFXFrameTee, MFXTransformStream } from "./stream";
 export { keyframes } from "./keyframes";
-export { rawShaders, shaders };
+/** @ignore */
+export { rawShaders };
+/** @group GPU Effects */
+export { shaders };
 
 export const codecs = {
 	avc
 };
 
-export const nextTask = () =>
-	new Promise((resolve) => queueMicrotask(resolve as any));
+/** @ignore */
 export const nextTick = () =>
 	new Promise((resolve) => setTimeout(resolve as any, 1));
+/** @ignore */
 export const next = nextTick;
 
+/** @group Stream */
 export class MFXVoid extends WritableStream<any> {
 	constructor() {
 		super({
@@ -40,11 +44,17 @@ export class MFXVoid extends WritableStream<any> {
 	}
 }
 
+/**
+ * @group Encode
+ */
 export interface MFXEncodedVideoChunk {
 	videoChunk: EncodedVideoChunk;
 	videoMetadata: EncodedVideoChunkMetadata;
 };
 
+/**
+ * @group Encode
+ */
 export class MFXVideoEncoder extends MFXTransformStream<
 	ExtendedVideoFrame,
 	MFXEncodedVideoChunk
@@ -97,6 +107,5 @@ export class MFXVideoEncoder extends MFXTransformStream<
 	}
 }
 
-const createEncoder = (config: VideoEncoderConfig, fileName: string) => { };
-
+/** @ignore */
 export default {};

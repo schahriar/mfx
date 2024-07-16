@@ -5,6 +5,9 @@ import { MFXTransformStream } from "../stream";
 
 // Used for scaling in the same aspect-ratio or to crop
 // Note: Faster than MipMaps per frame as in/out is downscaled in the entire pipeline
+/**
+ * @group Effects
+ */
 export class Scaler extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "Scaler";

@@ -1,5 +1,8 @@
 import { type UniformProducer } from "./effects/shaders";
 
+/**
+ * @group Animation
+ */
 export const keyframes = <T>(defs: {
   time: number;
   easing?: (number) => number;

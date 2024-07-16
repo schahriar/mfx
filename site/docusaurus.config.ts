@@ -1,3 +1,4 @@
+import path from "path";
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
@@ -47,7 +48,20 @@ const config: Config = {
     ],
   ],
 
-  plugins: [require.resolve('docusaurus-lunr-search')],
+  plugins: [
+    [
+      'docusaurus-plugin-typedoc-api',
+      {
+        minimal: true,
+        projectRoot: path.join(__dirname, '..'),
+        packages: [{
+          path: 'lib',
+          entry: 'mfx.ts',
+        }],
+      },
+    ],
+    require.resolve('docusaurus-lunr-search')
+  ],
 
   themeConfig: {
     colorMode: {
@@ -68,6 +82,11 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Tutorial',
+        },
+        {
+          to: 'api',
+          label: 'API',
+          position: 'left',
         },
         {
           href: 'https://github.com/schahriar/mfx',

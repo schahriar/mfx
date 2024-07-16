@@ -3,6 +3,9 @@ import { type MFXEncodedVideoChunk } from "./mfx";
 import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from 'mp4-muxer';
 import { MFXTransformStream } from "./stream";
 
+/**
+ * @group Encode
+ */
 export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 	mediaSource: MediaSource;
 	sourcePromise: Promise<void>;
@@ -48,6 +51,9 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 	}
 };
 
+/**
+ * @group Encode
+ */
 export class MFXFileWriter extends WritableStream<MFXBlob> {
 	writer: Promise<FileSystemWritableFileStream>;
 	constructor(fileName: string, description = "Video File") {
@@ -80,6 +86,7 @@ export class MFXFileWriter extends WritableStream<MFXBlob> {
 	}
 };
 
+/** @group Stream */
 export class MFXBlob extends Blob {
 	position?: number;
 	videoEncodingConfig: VideoEncoderConfig;
@@ -97,6 +104,9 @@ export class MFXBlob extends Blob {
 	}
 };
 
+/**
+ * @group Encode
+ */
 export class MFXMP4Muxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlob> {
 	get identifier() {
 		return "MFXMP4Muxer";
@@ -156,6 +166,9 @@ export class MFXMP4Muxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlo
 	}
 }
 
+/**
+ * @group Encode
+ */
 export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlob> {
 	get identifier() {
 		return "MFXWebMMuxer";

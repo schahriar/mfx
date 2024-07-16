@@ -1,6 +1,9 @@
 import { ExtendedVideoFrame } from "./frame";
 import { next } from "./mfx";
 
+/**
+ * @group Stream
+ */
 export abstract class MFXTransformStream<I, O> extends TransformStream {
 	protected _buffer: O[];
 	protected _eventTarget: EventTarget;
@@ -120,6 +123,9 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 	}
 };
 
+/**
+ * @group Stream
+ */
 export class MFXFrameTee extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
 	get identifier() {
 		return "MFXFrameTee";
