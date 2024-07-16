@@ -1,7 +1,8 @@
-import { nextTick } from "./mfx";
+import { next, nextTask, nextTick } from "./mfx";
 import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
+import JsWebm from "jswebm";
 
 /**
  * @group Decode
@@ -74,11 +75,72 @@ export class MFXVideoDecoder extends MFXTransformStream<
 export const createContainerDecoder = (filename: string) => {
   const ext = filename.slice(filename.lastIndexOf("."));
   if (ext === ".webm") {
-    throw new Error("Unsupported container format (webM)");
+    return new MFXWebMVideoContainerDecoder();
   }
 
   return new MFXMP4VideoContainerDecoder();
 };
+
+/**
+ * @group Decode
+ */
+export class MFXWebMVideoContainerDecoder extends MFXTransformStream<
+  Uint8Array,
+  MFXDecodableChunk
+> {
+  get identifier() {
+    return "MFXWebMVideoContainerDecoder";
+  }
+
+  constructor() {
+    const demuxer = new JsWebm();
+
+    super({
+      transform: async (chunk) => {
+        demuxer.queueData(chunk.buffer);
+      },
+      flush: async () => {
+        await demuxer.demux();
+        let idx = 0;
+
+        const context = {
+          duration: demuxer?.duration,
+          createdAt: new Date(0),
+        };
+
+        const config = {
+          codec: {
+            "V_VP9": "vp09.00.31.08", // TODO: Generate codec dynamically based on required bitrate
+            "V_VP8": "vp8",
+          }[demuxer.videoTrack.codecID],
+          codedHeight: demuxer.videoTrack.height,
+          codedWidth: demuxer.videoTrack.width,
+        };
+
+        while (!demuxer.eof) {
+          await demuxer.demux();
+          await next(0);
+          
+          while (idx < demuxer.videoPackets.length) {
+            const packet = demuxer.videoPackets[idx];
+            const decodableChunk: MFXDecodableChunk = {
+              config,
+              context,
+              chunk: new EncodedVideoChunk({
+                type: packet.isKeyframe ? "key" : "delta",
+                timestamp: packet.timestamp * demuxer.segmentInfo.timecodeScale,
+                data: packet.data,
+                transfer: [packet.data],
+              }),
+            };
+            this.queue(decodableChunk);
+            idx++;
+          }
+        }
+      },
+    });
+  }
+}
 
 /**
  * @group Decode

@@ -109,7 +109,7 @@
     const computedPipeline = await definition.process();
 
     const decodeStream = stream
-      .pipeThrough(createContainerDecoder("AI.mp4"))
+      .pipeThrough(createContainerDecoder(definition.input))
       .pipeThrough(new MFXVideoDecoder())
       .pipeThrough(
         new MFXFrameTee((stream) => {

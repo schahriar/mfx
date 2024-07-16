@@ -54,6 +54,7 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
+    "jswebm": "^0.1.2",
     "mp4-muxer": "^4.3.3",
     "mp4box": "^0.5.2",
     "ring-buffer-ts": "^1.2.0",
