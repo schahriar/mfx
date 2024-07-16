@@ -18,7 +18,6 @@
     "lib/**/*",
     "tests/**/*",
     "types/**/*",
-    "site/**/*",
     "node_modules/@types/wicg-file-system-access/*.d.ts",
     "node_modules/@types/dom-webcodecs/*.d.ts",
     "tests/environment/router.ts"

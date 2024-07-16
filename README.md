@@ -74,6 +74,9 @@ npm start
 - Benchmarks (during test) against ffmpeg (AVC https://trac.ffmpeg.org/wiki/Encode/H.264#FAQ and possibly WebM)
 - Integrate debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)
 
+### License
+MIT [License](LICENSE)
+
 ##### Disclaimer on Sample Videos
 Some test videos are sourced from `coverr.co` yet they are only used for testing and will not be built into the `MFX` package.
 These videos are under a permissive license (https://coverr.co/license).
