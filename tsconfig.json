@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "paths": {
-      "mfx": ["./lib/mfx"],
+      "mfx": ["./lib/mfx"]
     }
   },
   "include": [
@@ -20,6 +20,7 @@
     "types/**/*",
     "site/**/*",
     "node_modules/@types/wicg-file-system-access/*.d.ts",
-    "node_modules/@types/dom-webcodecs/*.d.ts", "tests/environment/router.ts",
+    "node_modules/@types/dom-webcodecs/*.d.ts",
+    "tests/environment/router.ts"
   ]
 }
