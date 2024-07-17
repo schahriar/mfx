@@ -38,13 +38,21 @@ export class ConsoleWritableStream<T = any> {
 /**
  * @group Debug
  */
-export class MFXDigest extends MFXTransformStream<ExtendedVideoFrame | MFXEncodedVideoChunk, ExtendedVideoFrame | MFXEncodedVideoChunk> {
+export class MFXDigest extends MFXTransformStream<
+	ExtendedVideoFrame | MFXEncodedVideoChunk,
+	ExtendedVideoFrame | MFXEncodedVideoChunk
+> {
 	get identifier() {
 		return "MFXDigest";
 	}
 
 	globalChecksum = "";
-	constructor(cb: (sum: string) => void, final: (sum: string) => void = () => {/** noop */}) {
+	constructor(
+		cb: (sum: string) => void,
+		final: (sum: string) => void = () => {
+			/** noop */
+		},
+	) {
 		const calculateChecksum = async (buffer: BufferSource) => {
 			const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
 
@@ -60,7 +68,10 @@ export class MFXDigest extends MFXTransformStream<ExtendedVideoFrame | MFXEncode
 				let buffer: Uint8Array;
 				if (Array.isArray(chunk) && chunk[0] instanceof Uint8Array) {
 					buffer = chunk[0];
-				} else if (chunk instanceof ExtendedVideoFrame || chunk instanceof VideoFrame) {
+				} else if (
+					chunk instanceof ExtendedVideoFrame ||
+					chunk instanceof VideoFrame
+				) {
 					buffer = new Uint8Array(chunk.allocationSize());
 					await chunk.copyTo(buffer);
 				} else if (chunk instanceof Blob) {
@@ -85,15 +96,18 @@ export class MFXDigest extends MFXTransformStream<ExtendedVideoFrame | MFXEncode
 			},
 			flush: () => {
 				final(value);
-			}
-		})
+			},
+		});
 	}
-};
+}
 
 /**
  * @group Debug
  */
-export class MFXFPSDebugger extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class MFXFPSDebugger extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "MFXFPSDebugger";
 	}

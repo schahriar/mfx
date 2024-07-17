@@ -108,8 +108,7 @@
     const stream = await openURL(definition.input);
     const computedPipeline = await definition.process();
 
-    const decodeStream = stream
-      .pipeThrough(createContainerDecoder(definition.input))
+    const decodeStream = (await createContainerDecoder(stream, definition.input))
       .pipeThrough(new MFXVideoDecoder())
       .pipeThrough(
         new MFXFrameTee((stream) => {

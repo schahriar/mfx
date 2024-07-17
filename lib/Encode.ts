@@ -1,6 +1,9 @@
-import { Muxer as WebMMuxer, StreamTarget as WebMStreamTarget } from "webm-muxer";
+import {
+	Muxer as WebMMuxer,
+	StreamTarget as WebMStreamTarget,
+} from "webm-muxer";
 import { type MFXEncodedVideoChunk } from "./mfx";
-import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from 'mp4-muxer';
+import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from "mp4-muxer";
 import { MFXTransformStream } from "./stream";
 
 /**
@@ -21,12 +24,16 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 			write: async (chunk) => {
 				await source;
 				if (typeof chunk.getMimeType !== "function") {
-					throw new Error("Invalid stream piped to MFXMediaSourceStream, expected MFXBlob as chunks");
+					throw new Error(
+						"Invalid stream piped to MFXMediaSourceStream, expected MFXBlob as chunks",
+					);
 				}
 
 				if (!sourceBuffer) {
 					if (!MediaSource.isTypeSupported(chunk.getMimeType())) {
-						throw new Error(`Unsupported mime type piped to MFXMediaSourceStream ${chunk.getMimeType()}`);
+						throw new Error(
+							`Unsupported mime type piped to MFXMediaSourceStream ${chunk.getMimeType()}`,
+						);
 					}
 					sourceBuffer = mediaSource.addSourceBuffer(chunk.getMimeType());
 				}
@@ -34,7 +41,9 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 				const arrayBuffer = await chunk.arrayBuffer();
 				sourceBuffer.appendBuffer(arrayBuffer);
 
-				await new Promise(resolve => sourceBuffer.addEventListener("updateend", resolve, { once: true }));
+				await new Promise((resolve) =>
+					sourceBuffer.addEventListener("updateend", resolve, { once: true }),
+				);
 			},
 			close: () => {
 				mediaSource.endOfStream();
@@ -46,10 +55,10 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 	}
 
 	getSource() {
-		console.log("get source", (this.mediaSource))
+		console.log("get source", this.mediaSource);
 		return URL.createObjectURL(this.mediaSource);
 	}
-};
+}
 
 /**
  * @group Encode
@@ -65,7 +74,7 @@ export class MFXFileWriter extends WritableStream<MFXBlob> {
 				}
 
 				await writer.write(blob);
-			}
+			},
 		});
 
 		// TODO: Read one chunk to determine type before initializing saver
@@ -84,16 +93,19 @@ export class MFXFileWriter extends WritableStream<MFXBlob> {
 			return await fileHandle.createWritable();
 		})();
 	}
-};
+}
 
 /** @group Stream */
 export class MFXBlob extends Blob {
 	position?: number;
 	videoEncodingConfig: VideoEncoderConfig;
-	constructor(parts: BlobPart[], opt: BlobPropertyBag & {
-		position?: number;
-		videoEncodingConfig: VideoEncoderConfig;
-	}) {
+	constructor(
+		parts: BlobPart[],
+		opt: BlobPropertyBag & {
+			position?: number;
+			videoEncodingConfig: VideoEncoderConfig;
+		},
+	) {
 		super(parts, opt);
 		this.position = opt.position;
 		this.videoEncodingConfig = opt.videoEncodingConfig;
@@ -102,23 +114,30 @@ export class MFXBlob extends Blob {
 	getMimeType() {
 		return `${this.type}; codecs="${this.videoEncodingConfig.codec}"`;
 	}
-};
+}
 
 /**
  * @group Encode
  */
-export class MFXMP4Muxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlob> {
+export class MFXMP4Muxer extends MFXTransformStream<
+	MFXEncodedVideoChunk,
+	MFXBlob
+> {
 	get identifier() {
 		return "MFXMP4Muxer";
 	}
 
 	ready: Promise<any>;
-	constructor(
-		config: VideoEncoderConfig,
-		chunkSize?: number,
-	) {
-		const codecMapper = (codec: VideoEncoderConfig["codec"]): ("avc" | "hevc" | "vp9" | "av1") => {
-			const targets: ("avc" | "hevc" | "vp9" | "av1")[] = ["avc", "hevc", "vp9", "av1"];
+	constructor(config: VideoEncoderConfig, chunkSize?: number) {
+		const codecMapper = (
+			codec: VideoEncoderConfig["codec"],
+		): "avc" | "hevc" | "vp9" | "av1" => {
+			const targets: ("avc" | "hevc" | "vp9" | "av1")[] = [
+				"avc",
+				"hevc",
+				"vp9",
+				"av1",
+			];
 			for (let i = 0; i < targets.length; i++) {
 				if (codec.startsWith(targets[i])) {
 					return targets[i];
@@ -151,34 +170,38 @@ export class MFXMP4Muxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlo
 			fastStart: "fragmented",
 			target: new MP4StreamTarget({
 				onData: (data, position) => {
-					this.queue(new MFXBlob([data], {
-						type: "video/mp4",
-						position,
-						videoEncodingConfig: config
-					}));
+					this.queue(
+						new MFXBlob([data], {
+							type: "video/mp4",
+							position,
+							videoEncodingConfig: config,
+						}),
+					);
 				},
-				...Number.isInteger(chunkSize) ? {
-					chunked: true,
-					chunkSize
-				} : {},
+				...(Number.isInteger(chunkSize)
+					? {
+							chunked: true,
+							chunkSize,
+						}
+					: {}),
 			}),
-		})
+		});
 	}
 }
 
 /**
  * @group Encode
  */
-export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBlob> {
+export class MFXWebMMuxer extends MFXTransformStream<
+	MFXEncodedVideoChunk,
+	MFXBlob
+> {
 	get identifier() {
 		return "MFXWebMMuxer";
 	}
 
 	ready: Promise<any>;
-	constructor(
-		config: VideoEncoderConfig,
-		chunkSize?: number,
-	) {
+	constructor(config: VideoEncoderConfig, chunkSize?: number) {
 		const codecMapper = (codec: VideoEncoderConfig["codec"]) => {
 			if (codec.startsWith("vp08") || codec === "vp8") {
 				return "V_VP8";
@@ -212,23 +235,27 @@ export class MFXWebMMuxer extends MFXTransformStream<MFXEncodedVideoChunk, MFXBl
 				width: config.width,
 				frameRate: config.framerate,
 				alpha: config.alpha !== "discard" || Boolean(config.alpha),
-				codec: codecMapper(config.codec)
+				codec: codecMapper(config.codec),
 			},
 			firstTimestampBehavior: "offset",
 			type: "matroska",
 			streaming: true,
 			target: new WebMStreamTarget({
 				onData: (data, position) => {
-					this.queue(new MFXBlob([data], {
-						type: "video/webm",
-						position,
-						videoEncodingConfig: config
-					}));
+					this.queue(
+						new MFXBlob([data], {
+							type: "video/webm",
+							position,
+							videoEncodingConfig: config,
+						}),
+					);
 				},
-				...Number.isInteger(chunkSize) ? {
-					chunked: true,
-					chunkSize
-				} : {},
+				...(Number.isInteger(chunkSize)
+					? {
+							chunked: true,
+							chunkSize,
+						}
+					: {}),
 			}),
 		});
 	}

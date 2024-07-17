@@ -22,12 +22,15 @@ export class PaintToCanvas extends WritableStream<ExtendedVideoFrame> {
 			},
 		});
 	}
-};
+}
 
 /**
  * @group Visualization
  */
-export class PassthroughCanvas extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class PassthroughCanvas extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "PassthroughCanvas";
 	}
@@ -48,4 +51,4 @@ export class PassthroughCanvas extends MFXTransformStream<ExtendedVideoFrame, Ex
 			},
 		});
 	}
-};
+}

@@ -44,7 +44,10 @@ export interface Layer {
 /**
  * @group Advanced
  */
-export class Compositor extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class Compositor extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "Compositor";
 	}

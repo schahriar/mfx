@@ -57,6 +57,7 @@ npm start
 ```
 
 ### Roadmap
+- Add note on VP9 probe
 - API Documentation
 - Run tests on Github actions
 - Contribution Guide

@@ -3,6 +3,7 @@ import * as rawShaders from "./effects/shaders/raw";
 import * as shaders from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { avc } from "./codec/avc";
+import { vp9 } from "./codec/vp9";
 
 export * from "./convolution";
 export { MFXGLEffect } from "./effects/GLEffect";
@@ -22,7 +23,8 @@ export { rawShaders };
 export { shaders };
 
 export const codecs = {
-	avc
+	avc,
+	vp9,
 };
 
 /** @ignore */
@@ -40,7 +42,10 @@ export class MFXVoid extends WritableStream<any> {
 	constructor() {
 		super({
 			write: (chunk) => {
-				if (chunk instanceof ExtendedVideoFrame || chunk instanceof VideoFrame) {
+				if (
+					chunk instanceof ExtendedVideoFrame ||
+					chunk instanceof VideoFrame
+				) {
 					chunk.close();
 				}
 			},
@@ -54,7 +59,7 @@ export class MFXVoid extends WritableStream<any> {
 export interface MFXEncodedVideoChunk {
 	videoChunk: EncodedVideoChunk;
 	videoMetadata: EncodedVideoChunkMetadata;
-};
+}
 
 /**
  * @group Encode
@@ -83,31 +88,35 @@ export class MFXVideoEncoder extends MFXTransformStream<
 
 		encoder.configure(config);
 
-		super({
-			transform: async (frame) => {
-				// Prevent forward backpressure
-				await backpressure;
+		super(
+			{
+				transform: async (frame) => {
+					// Prevent forward backpressure
+					await backpressure;
 
-				// Prevent backwards backpressure
-				while (encoder.encodeQueueSize > 10) {
-					await nextTick();
-				}
+					// Prevent backwards backpressure
+					while (encoder.encodeQueueSize > 10) {
+						await nextTick();
+					}
 
-				encoder.encode(frame, {
-					keyFrame: frame.timestamp % (1e6 * 30) === 0, // Keyframe every 30 seconds for matroska
-				});
+					encoder.encode(frame, {
+						keyFrame: frame.timestamp % (1e6 * 30) === 0, // Keyframe every 30 seconds for matroska
+					});
 
-				frame.close();
+					frame.close();
+				},
+				flush: async () => {
+					await encoder.flush();
+					encoder.close();
+				},
 			},
-			flush: async () => {
-				await encoder.flush();
-				encoder.close();
-			},
-		}, new CountQueuingStrategy({
-			highWaterMark: 10 // Input chunks (tuned for low memory usage)
-		}), new CountQueuingStrategy({
-			highWaterMark: 10 // Input chunks (tuned for low memory usage)
-		}));
+			new CountQueuingStrategy({
+				highWaterMark: 10, // Input chunks (tuned for low memory usage)
+			}),
+			new CountQueuingStrategy({
+				highWaterMark: 10, // Input chunks (tuned for low memory usage)
+			}),
+		);
 	}
 }
 

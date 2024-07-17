@@ -37,7 +37,7 @@ const checkStatus = (gl: WebGL2RenderingContext) => {
 export interface Effect<T = any> {
 	shader: string;
 	uniforms?: Record<string, Uniform<T>>;
-};
+}
 
 const resolveUniforms = (o: any, frame: ExtendedVideoFrame) => {
 	if (["string", "number", "boolean"].includes(typeof o)) {
@@ -53,10 +53,13 @@ const resolveUniforms = (o: any, frame: ExtendedVideoFrame) => {
 	}
 
 	throw new Error(`Invalid uniform type ${typeof o}`);
-}
+};
 
 /** @group GPU Effects */
-export class MFXGLEffect extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class MFXGLEffect extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "MFXGLEffect";
 	}
@@ -145,7 +148,10 @@ export class MFXGLEffect extends MFXTransformStream<ExtendedVideoFrame, Extended
 
 				twgl.bindFramebufferInfo(gl, frameBufferInfo);
 				gl.bindTexture(gl.TEXTURE_2D, textureIn);
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, Object.keys(programInfos).length % 2);
+				gl.pixelStorei(
+					gl.UNPACK_FLIP_Y_WEBGL,
+					Object.keys(programInfos).length % 2,
+				);
 				gl.texImage2D(
 					gl.TEXTURE_2D,
 					0,
@@ -170,10 +176,13 @@ export class MFXGLEffect extends MFXTransformStream<ExtendedVideoFrame, Extended
 					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
 					gl.viewport(0, 0, width, height);
 
-					const uniforms = Object.keys(pipeline.uniforms || {}).reduce((accu, key) => ({
-						...accu,
-						[key]: resolveUniforms(pipeline.uniforms[key], frame)
-					}), {});
+					const uniforms = Object.keys(pipeline.uniforms || {}).reduce(
+						(accu, key) => ({
+							...accu,
+							[key]: resolveUniforms(pipeline.uniforms[key], frame),
+						}),
+						{},
+					);
 
 					gl.useProgram(programInfo.program);
 					twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
@@ -207,4 +216,4 @@ export class MFXGLEffect extends MFXTransformStream<ExtendedVideoFrame, Extended
 			},
 		});
 	}
-};
+}

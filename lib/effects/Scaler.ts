@@ -8,7 +8,10 @@ import { MFXTransformStream } from "../stream";
 /**
  * @group Effects
  */
-export class Scaler extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class Scaler extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "Scaler";
 	}
@@ -45,4 +48,4 @@ export class Scaler extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideo
 			},
 		});
 	}
-};
+}

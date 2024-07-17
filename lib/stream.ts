@@ -4,6 +4,55 @@ import { next } from "./mfx";
 /**
  * @group Stream
  */
+export abstract class MFXWritableStream<I> extends WritableStream {
+	protected _eventTarget: EventTarget;
+
+	abstract get identifier();
+
+	constructor(
+		underlyingSink?: UnderlyingSink<I>,
+		strategy: QueuingStrategy<I> = new CountQueuingStrategy({
+			highWaterMark: 60,
+		}),
+	) {
+		super(underlyingSink, strategy);
+		setTimeout(() => {
+			console.info(`<defined:${this.identifier}>`);
+		}, 0);
+		this._eventTarget = new EventTarget();
+	}
+
+	dispatchEvent(event: Event) {
+		this._eventTarget.dispatchEvent(event);
+	}
+
+	dispatchError(error: Error) {
+		console.error(error);
+		this._eventTarget.dispatchEvent(
+			new CustomEvent("error", { detail: { error } }),
+		);
+	}
+
+	addEventListener(
+		type: string,
+		callback: EventListenerOrEventListenerObject,
+		options?: boolean | AddEventListenerOptions,
+	) {
+		this._eventTarget.addEventListener(type, callback, options);
+	}
+
+	removeEventListener(
+		type: string,
+		callback: EventListenerOrEventListenerObject,
+		options?: boolean | EventListenerOptions,
+	) {
+		this._eventTarget.removeEventListener(type, callback, options);
+	}
+}
+
+/**
+ * @group Stream
+ */
 export abstract class MFXTransformStream<I, O> extends TransformStream {
 	protected _buffer: O[];
 	protected _eventTarget: EventTarget;
@@ -25,8 +74,10 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 			if (!this._controller) return;
 
 			if (this._controller.desiredSize === 0) {
-				if (lastMetDesiredSize < (Date.now() - 10000)) {
-					console.warn(`Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new MFXVoid()) at the end of your stream`);
+				if (lastMetDesiredSize < Date.now() - 10000) {
+					console.warn(
+						`Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new MFXVoid()) at the end of your stream`,
+					);
 					lastMetDesiredSize = Date.now() + 30 * 60 * 1000; // Already reported, check in 30 seconds
 				}
 				return;
@@ -121,33 +172,64 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 	) {
 		this._eventTarget.removeEventListener(type, callback, options);
 	}
-};
+}
 
 /**
  * @group Stream
  */
-export class MFXFrameTee extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class MFXBufferCopy<T> extends MFXWritableStream<T> {
+	get identifier() {
+		return "MFXBufferCopy";
+	}
+
+	constructor(a: WritableStream<T>, b: WritableStream<T>) {
+		super({
+			write: async (chunk) => {
+				const aw = a.getWriter();
+				const bw = b.getWriter();
+
+				aw.write(chunk);
+				aw.releaseLock();
+
+				bw.write(chunk);
+				bw.releaseLock();
+			},
+			close: () => {
+				a.close();
+				b.close();
+			},
+		});
+	}
+}
+
+/**
+ * @group Stream
+ */
+export class MFXFrameTee extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "MFXFrameTee";
 	}
 
-  constructor(ctx: (stream: ReadableStream<ExtendedVideoFrame>) => void) {
+	constructor(ctx: (stream: ReadableStream<ExtendedVideoFrame>) => void) {
 		const stream = new TransformStream();
 
-    super({
-      transform: async (chunk, controller) => {
+		super({
+			transform: async (chunk, controller) => {
 				const clone = chunk.clone();
 				const writer = stream.writable.getWriter();
 				await writer.write(clone);
 				writer.releaseLock();
 
-        controller.enqueue(chunk);
-      },
+				controller.enqueue(chunk);
+			},
 			flush: async () => {
 				await stream.writable.close();
-			}
-    });
+			},
+		});
 
 		ctx(stream.readable);
-  }
-};
+	}
+}
