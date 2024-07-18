@@ -19,7 +19,7 @@ Videos are structured in form of:
 A container wraps encoded data of multiple types and can support multiple codecs. MFX primarily focuses on supporting `MP4` and `WebM (aka Matroska)` video containers and a subset of codecs supported by these containers that are natively available in the browser WebCodecs API:
 
 
-## Support Table
+## Video Support Table
 While `codec` support heavily depends on the browser, `mfx` aims to provide support for the following container / codec pairs:
 
 | Container | Codec       | Encode / Decode |
