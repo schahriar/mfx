@@ -35,6 +35,14 @@
   --ifm-color-primary-lightest: #000000;
 }
 
+footer {
+  display: none;
+}
+
+[data-page="home"] footer {
+  display: block;
+}
+
 [data-page="home"] .toggleButton_node_modules-\@docusaurus-theme-classic-lib-theme-ColorModeToggle-styles-module {
   display: none;
 }
