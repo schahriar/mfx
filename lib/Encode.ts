@@ -2,9 +2,11 @@ import {
 	Muxer as WebMMuxer,
 	StreamTarget as WebMStreamTarget,
 } from "webm-muxer";
-import { type MFXEncodedVideoChunk } from "./mfx";
+import { next } from "./utils";
 import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from "mp4-muxer";
 import { MFXTransformStream } from "./stream";
+import { ExtendedVideoFrame } from "./frame";
+import { vp9 } from "./codec/vp9";
 
 /**
  * @group Encode
@@ -55,7 +57,6 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 	}
 
 	getSource() {
-		console.log("get source", this.mediaSource);
 		return URL.createObjectURL(this.mediaSource);
 	}
 }
@@ -258,5 +259,92 @@ export class MFXWebMMuxer extends MFXTransformStream<
 					: {}),
 			}),
 		});
+	}
+}
+
+/**
+ * @group Encode
+ */
+export interface MFXEncodedVideoChunk {
+	videoChunk: EncodedVideoChunk;
+	videoMetadata: EncodedVideoChunkMetadata;
+}
+
+/**
+ * @group Encode
+ * Only use in a worker, alternatively utilize MFXWorkerVideoEncoder in a main thread video pipeline
+ */
+export class MFXVideoEncoder extends MFXTransformStream<
+	ExtendedVideoFrame,
+	MFXEncodedVideoChunk
+> {
+	get identifier() {
+		return "MFXVideoEncoder";
+	}
+
+	constructor(config: VideoEncoderConfig) {
+		let backpressure = Promise.resolve();
+		const encoder = new VideoEncoder({
+			output: async (chunk, metadata) => {
+				backpressure = this.queue({
+					videoChunk: chunk,
+					videoMetadata: metadata,
+				});
+			},
+			error: (e) => {
+				console.trace(e);
+				this.dispatchError(e);
+			},
+		});
+
+		encoder.configure({
+			...config,
+			...(config.codec === "vp9"
+				? {
+						codec: vp9.autoSelectCodec({
+							width: config.width,
+							height: config.height,
+							bitrate: config.bitrate,
+							bitDepth: 8,
+						}),
+					}
+				: {}),
+		});
+
+		super(
+			{
+				transform: async (frame) => {
+					// Prevent forward backpressure
+					await backpressure;
+
+					// Prevent backwards backpressure
+					while (encoder.encodeQueueSize > 10) {
+						await next();
+					}
+
+					if (encoder.state !== "configured") {
+						throw new Error(
+							`VideoEncoder is in invalid state ${encoder.state}`,
+						);
+					}
+
+					encoder.encode(frame, {
+						keyFrame: frame.timestamp % (1e6 * 30) === 0, // Keyframe every 30 seconds for matroska
+					});
+
+					frame.close();
+				},
+				flush: async () => {
+					await encoder.flush();
+					encoder.close();
+				},
+			},
+			new CountQueuingStrategy({
+				highWaterMark: 10, // Input chunks (tuned for low memory usage)
+			}),
+			new CountQueuingStrategy({
+				highWaterMark: 10, // Input chunks (tuned for low memory usage)
+			}),
+		);
 	}
 }

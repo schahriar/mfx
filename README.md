@@ -57,10 +57,12 @@ npm start
 ```
 
 ### Roadmap
+- Offload stream steps to WebWorkers to catch 10bit errors
 - Add note on VP9 probe
 - API Documentation
 - Run tests on Github actions
 - Contribution Guide
+- Utilize (https://github.com/dmnsgn/media-codecs?tab=readme-ov-file) for codec string generation
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions
 - Canvas frame generator

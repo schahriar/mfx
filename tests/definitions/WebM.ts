@@ -1,4 +1,14 @@
-import { convolution3x3, MFXVideoEncoder, MFXGLEffect, MFXWebMMuxer, rawShaders, codecs, MFXMP4Muxer } from "mfx";
+import {
+  convolution3x3,
+  MFXVideoEncoder,
+  MFXGLEffect,
+  MFXWebMMuxer,
+  rawShaders,
+  codecs,
+  MFXMP4Muxer,
+  MFXWorkerVideoEncoder
+} from "mfx";
+import { ExtendedVideoFrame } from "../../lib/frame";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
@@ -21,6 +31,53 @@ export const definitions: TestDefinition[] = [{
     return [
       new MFXVideoEncoder(config),
       new MFXMP4Muxer(config)
+    ];
+  }
+}, {
+  id: "webm_codec",
+  title: "WebM Codec",
+  description: "Coding / Decoding WebM file",
+  path: "/webm_codec",
+  input: "beach.webm",
+  process: async () => {
+    return []
+  },
+  output: async () => {
+    const config = {
+      codec: "vp9",
+      width: 640 * 3,
+      height: 360 * 3,
+      bitrate: 1e6 * 3,
+    };
+
+    return [
+      new MFXWorkerVideoEncoder(config),
+      new MFXWebMMuxer(config)
+    ];
+  }
+}, {
+  id: "webm_codec_10bit",
+  title: "WebM Codec 10Bit",
+  description: "Coding / Decoding 10Bit WebM file",
+  path: "/webm_codec_10bit",
+  input: "beach10bit.webm",
+  expect: async () => {
+    return true;
+  },
+  process: async () => {
+    return []
+  },
+  output: async () => {
+    const config = {
+      codec: "vp9",
+      width: 640 * 3,
+      height: 360 * 3,
+      bitrate: 1e6 * 3,
+    };
+
+    return [
+      new MFXWorkerVideoEncoder(config),
+      new MFXWebMMuxer(config)
     ];
   }
 }, {

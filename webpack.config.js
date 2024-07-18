@@ -2,6 +2,7 @@ const path = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const sveltePreprocess = require('svelte-preprocess');
+const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 const lib = {
   entry: "./lib/mfx.ts",
@@ -89,7 +90,10 @@ const tests = {
     conditionNames: ["svelte", "browser", "import"],
     fullySpecified: false,
   },
-  plugins: [new HtmlWebpackPlugin({ template: "./tests/environment/index.html" })],
+  plugins: [
+    new HtmlWebpackPlugin({ template: "./tests/environment/index.html" }),
+    new CircularDependencyPlugin()
+  ],
   optimization: {
     minimize: true,
     minimizer: [new TerserPlugin({

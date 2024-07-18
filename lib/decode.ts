@@ -1,4 +1,4 @@
-import { next, nextTask, nextTick } from "./mfx";
+import { next, nextTask, nextTick } from "./utils";
 import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXBufferCopy, MFXTransformStream, MFXWritableStream } from "./stream";
@@ -16,6 +16,7 @@ export interface MFXDecodableChunk {
 
 /**
  * @group Decode
+ * Only use in a worker, alternatively utilize MFXWorkerVideoEncoder in a main thread video pipeline
  */
 export class MFXVideoDecoder extends MFXTransformStream<
 	MFXDecodableChunk,
@@ -33,6 +34,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 				backpressure = this.queue(frame);
 			},
 			error: (e) => {
+				console.trace(e);
 				this.dispatchError(e);
 			},
 		});
@@ -109,9 +111,13 @@ export class MFXWebMVideoContainerProbe extends MFXWritableStream<Uint8Array> {
 	}
 
 	async getCodec(): Promise<string> {
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			this.addEventListener("codec", (ev: CustomEvent) =>
 				resolve(ev.detail.codec as string),
+			);
+
+			this.addEventListener("error", (ev: CustomEvent) =>
+				reject(ev.detail.error as string),
 			);
 		});
 	}
@@ -141,11 +147,6 @@ export class MFXWebMVideoContainerProbe extends MFXWritableStream<Uint8Array> {
 						}
 					}
 
-					console.log({
-						size,
-						bitrate: (size * 8) / demuxer.duration,
-						duration: demuxer.duration,
-					});
 					this.dispatchEvent(
 						new CustomEvent("codec", {
 							detail: {

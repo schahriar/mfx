@@ -1,5 +1,5 @@
 import { ExtendedVideoFrame } from "./frame";
-import { next } from "./mfx";
+import { next } from "./utils";
 
 /**
  * @group Stream
@@ -231,5 +231,21 @@ export class MFXFrameTee extends MFXTransformStream<
 		});
 
 		ctx(stream.readable);
+	}
+}
+
+/** @group Stream */
+export class MFXVoid extends WritableStream<any> {
+	constructor() {
+		super({
+			write: (chunk) => {
+				if (
+					chunk instanceof ExtendedVideoFrame ||
+					chunk instanceof VideoFrame
+				) {
+					chunk.close();
+				}
+			},
+		});
 	}
 }

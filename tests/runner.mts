@@ -26,10 +26,9 @@ const delay = (timeout = 1000) => {
 
 const main = async () => {
   const browser = await puppeteer.launch({
-    headless: true
+    headless: true,
   });
   const page = await browser.newPage();
-
   const build = cp.spawn("npm", ["start"]);
 
   const [buildURL] = await new Promise<RegExpMatchArray>(async (resolve, reject) => {

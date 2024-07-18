@@ -1,0 +1,25 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "types": ["svelte"],
+    "strict": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "paths": {
+      "mfx": ["../lib/mfx"]
+    }
+  },
+  "include": [
+    "../lib/**/*",
+    "./**/*",
+    "../types/**/*",
+    "../node_modules/@types/wicg-file-system-access/*.d.ts",
+    "../node_modules/@types/dom-webcodecs/*.d.ts",
+    "./environment/router.ts"
+  ]
+}

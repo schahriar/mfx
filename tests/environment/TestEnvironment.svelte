@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    MFXVideoDecoder,
+    MFXWorkerVideoDecoder,
     PassthroughCanvas,
     createContainerDecoder,
     MFXFPSDebugger,
@@ -43,12 +43,20 @@
     completionCallback = resolve;
   });
 
+  onMount(async () => {
+    if (definition.expect) {
+      const stop = await definition.expect();
+
+      if (stop) {
+        completionCallback();
+      }
+    }
+  })
 
   onMount(() => {
-    console.log({mfx})
+    window["openURL"] = openURL;
     window["mfx"] = mfx;
   });
-
 
   onMount(() => {
     const clock = sinon.useFakeTimers({
@@ -109,7 +117,7 @@
     const computedPipeline = await definition.process();
 
     const decodeStream = (await createContainerDecoder(stream, definition.input))
-      .pipeThrough(new MFXVideoDecoder())
+      .pipeThrough(new MFXWorkerVideoDecoder())
       .pipeThrough(
         new MFXFrameTee((stream) => {
           stream
@@ -160,12 +168,16 @@
         displayStream
       );
 
-      outputStream.pipeThrough(outputDigest).pipeTo(outputVideo);
+      outputStream
+        .pipeThrough(outputDigest)
+        .pipeTo(outputVideo);
 
       return;
     }
-
-    displayStream.pipeThrough(outputDigest).pipeTo(new MFXVoid());
+  
+    displayStream
+      .pipeThrough(outputDigest)
+      .pipeTo(new MFXVoid());
   });
 
   $: {

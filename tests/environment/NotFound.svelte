@@ -23,6 +23,12 @@
 <style>
   .container {
     padding: 40px;
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+    padding: 2em 0;
+    height: 100vh;
+    gap: 8px;
   }
 
   a {
