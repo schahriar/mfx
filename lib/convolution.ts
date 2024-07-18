@@ -1,4 +1,4 @@
-/** @group GPU Effects */
+/** @group Effects */
 export const convolution3x3 = {
 	edge0: [1, 0, -1, 0, 0, 0, -1, 0, 1],
 	edge1: [0, 1, 0, 1, -4, 1, 0, 1, 0],

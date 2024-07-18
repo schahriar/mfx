@@ -15,8 +15,8 @@ export interface MFXDecodableChunk {
 }
 
 /**
- * @group Decode
  * Only use in a worker, alternatively utilize MFXWorkerVideoEncoder in a main thread video pipeline
+ * @group Decode
  */
 export class MFXVideoDecoder extends MFXTransformStream<
 	MFXDecodableChunk,
@@ -105,11 +105,16 @@ export const createContainerDecoder = async (
 	return root.pipeThrough(decoder);
 };
 
+/**
+ * Probes codec information about a WebM container
+ * @group Decode
+ */
 export class MFXWebMVideoContainerProbe extends MFXWritableStream<Uint8Array> {
 	get identifier() {
 		return "MFXWebMVideoContainerProbe";
 	}
 
+	// Returns codec string after container is fully processed
 	async getCodec(): Promise<string> {
 		return new Promise((resolve, reject) => {
 			this.addEventListener("codec", (ev: CustomEvent) =>

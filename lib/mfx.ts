@@ -18,9 +18,10 @@ export { keyframes } from "./keyframes";
 export * from "./workers";
 /** @ignore */
 export { rawShaders };
-/** @group GPU Effects */
+/** @group Effects */
 export { shaders };
 
+/** @group Advanced */
 export const codecs = {
 	avc,
 	vp9,

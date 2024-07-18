@@ -57,10 +57,12 @@ npm start
 ```
 
 ### Roadmap
-- Offload stream steps to WebWorkers to catch 10bit errors
 - Add note on VP9 probe
+- Provide wrapper encode / decode interfaces
 - API Documentation
 - Run tests on Github actions
+- NPM Publish Github action
+  - should version docs
 - Contribution Guide
 - Utilize (https://github.com/dmnsgn/media-codecs?tab=readme-ov-file) for codec string generation
 - Compositor texture alpha masks

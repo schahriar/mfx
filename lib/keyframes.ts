@@ -1,7 +1,7 @@
 import { type UniformProducer } from "./effects/shaders";
 
 /**
- * @group Animation
+ * @group Advanced
  */
 export const keyframes = <T>(
 	defs: {

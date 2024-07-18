@@ -271,8 +271,8 @@ export interface MFXEncodedVideoChunk {
 }
 
 /**
- * @group Encode
  * Only use in a worker, alternatively utilize MFXWorkerVideoEncoder in a main thread video pipeline
+ * @group Encode
  */
 export class MFXVideoEncoder extends MFXTransformStream<
 	ExtendedVideoFrame,

@@ -20,7 +20,7 @@ A container wraps encoded data of multiple types and can support multiple codecs
 
 
 ## Support Table
-While support heavily depends on the browser, here is a sample support table:
+While `codec` support heavily depends on the browser, `mfx` aims to provide support for the following container / codec pairs:
 
 | Container | Codec       | Encode / Decode |
 | --------  | ---------   | --------------- 
@@ -28,9 +28,5 @@ While support heavily depends on the browser, here is a sample support table:
 | MP4       | H.265/HEVC  | Both            |
 | MP4       | VP8         | Both            |
 | MP4       | VP9         | Both            |
-| WebM      | VP8         | Both*           |
-| WebM      | VP9         | Both*           |
-
-:::danger[*Encoding limitations]
-WebM containers decoded from VP8/VP9 and re-encoded as VP8/VP9 profiles may cause a crash. 
-:::
+| WebM      | VP8         | Both            |
+| WebM      | VP9         | Both            |
