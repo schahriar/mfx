@@ -75,6 +75,7 @@ npm start
 - Seek
   - Clips view (similar to QuickTime)
 - GIF (https://github.com/jnordberg/gif.js)
+- Log WebCodec bug (https://chromium.googlesource.com/chromium/src/+/7786d34a4e7771725b85f354247ad1bb1902c556/third_party/blink/renderer/modules/webcodecs/video_encoder.cc#939)
 - Reduce CPU → GPU → CPU copy times using texture atlas
 - Benchmarks (during test) against ffmpeg (AVC https://trac.ffmpeg.org/wiki/Encode/H.264#FAQ and possibly WebM)
 - Integrate debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)
