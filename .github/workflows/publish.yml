@@ -28,7 +28,7 @@ jobs:
         run: |
           jq '.version = "${{ github.event.inputs.version }}"' -M package.json > tmp.json && mv tmp.json package.json
 
-      - run: npm ci
+      - run: npm install
       - run: npm run format
       - run: npm run build
       - run: npm test
