@@ -13,6 +13,7 @@ export { MFXFrameSampler } from "./sampler";
 export { MFXFPSDebugger, ConsoleWritableStream, MFXDigest } from "./debug";
 export * from "./encode";
 export * from "./decode";
+export { MFXVideoSource } from "./frame";
 export { MFXFrameTee, MFXTransformStream, MFXVoid } from "./stream";
 export { keyframes } from "./keyframes";
 export * from "./workers";

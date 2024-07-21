@@ -51,7 +51,7 @@
         completionCallback();
       }
     }
-  })
+  });
 
   onMount(() => {
     window["openURL"] = openURL;
@@ -113,42 +113,52 @@
   }
 
   onMount(async () => {
-    const stream = await openURL(definition.input);
-    const computedPipeline = await definition.process();
+    let inputStream: ReadableStream<ExtendedVideoFrame>;
 
-    const decodeStream = (await createContainerDecoder(stream, definition.input))
-      .pipeThrough(new MFXWorkerVideoDecoder())
-      .pipeThrough(
-        new MFXFrameTee((stream) => {
-          stream
-            .pipeThrough(
-              new MFXFrameSampler(async (f, i) => i === 0 || !Boolean(i % 30))
-            )
-            .pipeThrough(new Scaler(0.1))
-            .pipeThrough(digest)
-            .pipeThrough(
-              new MFXFrameSampler(
-                async (frame, i) => {
-                  samples = [
-                    ...samples,
-                    {
-                      frame,
-                      id: i,
-                    },
-                  ];
+    if (typeof definition.decode === "function") {
+      inputStream = await definition.decode(definition.input);
+    } else {
+      const stream = await openURL(definition.input);
+      inputStream = (
+        await createContainerDecoder(stream, definition.input)
+      ).pipeThrough(new MFXWorkerVideoDecoder());
+    }
 
-                  if (samples.length >= 10) {
-                    const extra = samples.shift();
-                    extra.frame.close();
-                  }
-                  return true;
-                },
-                { closer: false }
-              )
+    const computedPipeline = definition.process
+      ? await definition.process()
+      : [];
+
+    const decodeStream = inputStream.pipeThrough(
+      new MFXFrameTee((stream) => {
+        stream
+          .pipeThrough(
+            new MFXFrameSampler(async (f, i) => i === 0 || !Boolean(i % 30))
+          )
+          .pipeThrough(new Scaler(0.1))
+          .pipeThrough(digest)
+          .pipeThrough(
+            new MFXFrameSampler(
+              async (frame, i) => {
+                samples = [
+                  ...samples,
+                  {
+                    frame,
+                    id: i,
+                  },
+                ];
+
+                if (samples.length >= 10) {
+                  const extra = samples.shift();
+                  extra.frame.close();
+                }
+                return true;
+              },
+              { closer: false }
             )
-            .pipeTo(new MFXVoid());
-        })
-      );
+          )
+          .pipeTo(new MFXVoid());
+      })
+    );
 
     const processStream = computedPipeline.length
       ? computedPipeline.reduce(
@@ -168,16 +178,12 @@
         displayStream
       );
 
-      outputStream
-        .pipeThrough(outputDigest)
-        .pipeTo(outputVideo);
+      outputStream.pipeThrough(outputDigest).pipeTo(outputVideo);
 
       return;
     }
-  
-    displayStream
-      .pipeThrough(outputDigest)
-      .pipeTo(new MFXVoid());
+
+    displayStream.pipeThrough(outputDigest).pipeTo(new MFXVoid());
   });
 
   $: {

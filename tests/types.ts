@@ -8,6 +8,7 @@ export interface TestDefinition {
   title: string;
   description: string;
   input: string;
+  decode?: (input: string) => Promise<ReadableStream<ExtendedVideoFrame>>,
   expect?: () => Promise<boolean>;
   process?: () => Promise<MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame>[]>,
   output?: () => Promise<MFXTransformStream<ExtendedVideoFrame, any>[]>,

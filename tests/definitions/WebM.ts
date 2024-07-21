@@ -8,7 +8,6 @@ import {
   MFXMP4Muxer,
   MFXWorkerVideoEncoder
 } from "mfx";
-import { ExtendedVideoFrame } from "../../lib/frame";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
