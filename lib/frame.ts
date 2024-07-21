@@ -8,7 +8,11 @@ export interface ContainerContext {
 
 export class ExtendedVideoFrame extends VideoFrame {
 	containerContext?: ContainerContext;
-	constructor(source: CanvasImageSource, init?: VideoFrameInit, container?: ContainerContext) {
+	constructor(
+		source: CanvasImageSource,
+		init?: VideoFrameInit,
+		container?: ContainerContext,
+	) {
 		super(source, init);
 		this.containerContext = container;
 	}
@@ -31,21 +35,31 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
 		let handle = -1;
 		const start = new Date();
 		const callback = () => {
-			buffer.push(new ExtendedVideoFrame(source, {
-				timestamp: source.currentTime * 1e6,
-				displayHeight: source.videoHeight,
-				displayWidth: source.videoWidth,
-			}, {
-				duration: source.duration,
-				createdAt: start
-			}));
+			buffer.push(
+				new ExtendedVideoFrame(
+					source,
+					{
+						timestamp: source.currentTime * 1e6,
+						displayHeight: source.videoHeight,
+						displayWidth: source.videoWidth,
+					},
+					{
+						duration: source.duration,
+						createdAt: start,
+					},
+				),
+			);
 			handle = source.requestVideoFrameCallback(callback);
 		};
 
-		source.addEventListener("ended", () => {
-			ended = true;
-			source.cancelVideoFrameCallback(handle);
-		}, { once: true });
+		source.addEventListener(
+			"ended",
+			() => {
+				ended = true;
+				source.cancelVideoFrameCallback(handle);
+			},
+			{ once: true },
+		);
 
 		super({
 			start: () => {
@@ -66,7 +80,7 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
 			},
 			cancel: () => {
 				source.cancelVideoFrameCallback(handle);
-			}
+			},
 		});
 	}
 }
