@@ -1,4 +1,4 @@
-import type { MFXEncodedVideoChunk } from "./mfx";
+import type { MFXEncodedVideoChunk } from "./encode";
 import { RingBuffer } from "ring-buffer-ts";
 import { MFXTransformStream } from "./stream";
 import { ExtendedVideoFrame } from "./frame";
