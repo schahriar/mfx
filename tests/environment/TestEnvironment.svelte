@@ -8,6 +8,8 @@
     MFXFrameSampler,
     MFXFrameTee,
     MFXVoid,
+    MFXMediaSourceStream,
+    ExtendedVideoFrame,
     Scaler,
   } from "mfx";
   import * as mfx from "mfx";
@@ -17,9 +19,7 @@
   import sinon from "sinon";
   import FramePreview from "./FramePreview.svelte";
   import { circInOut } from "svelte/easing";
-  import { MFXMediaSourceStream } from "../../lib/encode";
   import type { TestDefinition } from "../types";
-  import type { ExtendedVideoFrame } from "../../lib/frame";
 
   export let definition: TestDefinition;
 

@@ -23,6 +23,7 @@ const lib = {
   },
   resolve: {
     extensions: [".ts", ".js"],
+    fullySpecified: false,
   },
   optimization: {
     minimize: true,
