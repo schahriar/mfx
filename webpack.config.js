@@ -10,13 +10,23 @@ const lib = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
+    library: {
+      name: "MFX",
+      type: "umd",
+    },
   },
   module: {
     rules: [
       { test: /\.glsl$/, use: "raw-loader" },
       {
-        test: /\.ts?$/,
-        use: "ts-loader",
+        test: /\.ts|.js?$/,
+        use: {
+          loader: "ts-loader",
+          options: {
+            transpileOnly: true,
+            configFile: path.resolve(__dirname, 'tsconfig.json')
+          },
+        },
         exclude: /node_modules/,
       },
     ],
@@ -116,4 +126,4 @@ const tests = {
   },
 };
 
-module.exports = [lib, tests];
+module.exports = [lib, ...process.env["NODE_ENV"] !== "production" ? [tests] : []];

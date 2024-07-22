@@ -4,6 +4,8 @@
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "Node",
+    "declaration": true,
+    "declarationDir": "./dist/types",
     "allowJs": true,
     "strict": false,
     "skipLibCheck": true,
@@ -16,6 +18,7 @@
   },
   "exclude": ["./tests/**"],
   "include": [
+    "lib/*",
     "lib/**/*",
     "types/**/*",
     "node_modules/@types/wicg-file-system-access/*.d.ts",
