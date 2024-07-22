@@ -52,5 +52,6 @@ jobs:
         run: |
           git config --local user.email "hello@schahriar.com"
           git config --local user.name "GitHub Action"
-          git commit -am "Published v${{ github.event.inputs.version }}"
+          git add .
+          git commit -m "Published v${{ github.event.inputs.version }}"
           git push
