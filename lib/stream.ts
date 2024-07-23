@@ -99,7 +99,7 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 					try {
 						await transformer.transform(chunk, controller);
 					} catch (error) {
-						if (error) {
+						if (error && !isVoid) {
 							// On Chrome an invalid sync can crash the entire browser
 							// void-mode effectively reads the entire pipeline into nothing
 							// to prevent side-effects
