@@ -181,9 +181,9 @@ export class MFXMP4Muxer extends MFXTransformStream<
 				},
 				...(Number.isInteger(chunkSize)
 					? {
-							chunked: true,
-							chunkSize,
-						}
+						chunked: true,
+						chunkSize,
+					}
 					: {}),
 			}),
 		});
@@ -253,9 +253,9 @@ export class MFXWebMMuxer extends MFXTransformStream<
 				},
 				...(Number.isInteger(chunkSize)
 					? {
-							chunked: true,
-							chunkSize,
-						}
+						chunked: true,
+						chunkSize,
+					}
 					: {}),
 			}),
 		});
@@ -301,15 +301,19 @@ export class MFXVideoEncoder extends MFXTransformStream<
 			...config,
 			...(config.codec === "vp9"
 				? {
-						codec: vp9.autoSelectCodec({
-							width: config.width,
-							height: config.height,
-							bitrate: config.bitrate,
-							bitDepth: 8,
-						}),
-					}
+					codec: vp9.autoSelectCodec({
+						width: config.width,
+						height: config.height,
+						bitrate: config.bitrate,
+						bitDepth: 8,
+					}),
+				}
 				: {}),
 		});
+
+		const matroskaMaxInterval = 1e6 * 30;
+		// Force first frame to be keyFrame
+		let lastKeyFrameTimestamp = -matroskaMaxInterval;
 
 		super(
 			{
@@ -328,9 +332,18 @@ export class MFXVideoEncoder extends MFXTransformStream<
 						);
 					}
 
-					encoder.encode(frame, {
-						keyFrame: frame.timestamp % (1e6 * 30) === 0, // Keyframe every 30 seconds for matroska
-					});
+					if (!((frame instanceof VideoFrame) || ((frame as any) instanceof ExtendedVideoFrame))) {
+						throw new Error(
+							`VideoEncoder received invalid type, check that your pipeline correctly decodes videos`
+						)
+					}
+
+					if (frame.timestamp - lastKeyFrameTimestamp >= matroskaMaxInterval) {
+						encoder.encode(frame, { keyFrame: true });
+						lastKeyFrameTimestamp = frame.timestamp;
+					} else {
+						encoder.encode(frame, { keyFrame: false });
+					}
 
 					frame.close();
 				},

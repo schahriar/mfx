@@ -160,7 +160,7 @@ export class MFXWebMVideoContainerProbe extends MFXWritableStream<Uint8Array> {
 										width: demuxer.videoTrack.width,
 										height: demuxer.videoTrack.height,
 										bitDepth: 8, // TODO: calculate bit depth
-										bitrate: (size * 8) / demuxer.duration, // Bitrate is assigned after all video tracks are read
+										bitrate: (size * 8) / demuxer?.duration, // Bitrate is assigned after all video tracks are read
 									}),
 									V_VP8: "vp8",
 								}[demuxer.videoTrack.codecID],
@@ -201,7 +201,7 @@ export class MFXWebMVideoContainerDecoder extends MFXTransformStream<
 				let idx = 0;
 
 				const context = {
-					duration: demuxer?.duration,
+					duration: demuxer?.segmentInfo?.duration,
 					createdAt: new Date(0),
 				};
 

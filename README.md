@@ -57,6 +57,7 @@ npm start
 ```
 
 ### Roadmap
+- Fully validate each frame before piping to Encoder/Decoder
 - Add note on VP9 probe
 - Provide wrapper encode / decode interfaces
 - API Documentation

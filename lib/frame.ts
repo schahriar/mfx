@@ -40,8 +40,8 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
 					source,
 					{
 						timestamp: source.currentTime * 1e6,
-						displayHeight: source.videoHeight,
 						displayWidth: source.videoWidth,
+						displayHeight: source.videoHeight,
 					},
 					{
 						duration: source.duration,
