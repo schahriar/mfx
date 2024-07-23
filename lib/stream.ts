@@ -86,6 +86,8 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 			lastMetDesiredSize = Date.now();
 		}, 1000);
 
+		let isVoid = false;
+
 		super(
 			{
 				...transformer,
@@ -94,7 +96,18 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 						await next();
 					}
 
-					await transformer.transform(chunk, controller);
+					try {
+						await transformer.transform(chunk, controller);
+					} catch (error) {
+						if (error) {
+							// On Chrome an invalid sync can crash the entire browser
+							// void-mode effectively reads the entire pipeline into nothing
+							// to prevent side-effects
+							isVoid = true;
+							console.error(error);
+							console.warn(new Error(`Tranformer (${this.identifier}) terminated due to above error\nPipeline is now sinking into void to avoid a crash`));
+						}
+					}
 					this._controller = controller;
 					if (this._buffer.length) {
 						this._copy_buffer(controller);

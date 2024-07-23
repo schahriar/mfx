@@ -22,11 +22,12 @@ export class MFXVideoDecoder extends MFXTransformStream<
 	MFXDecodableChunk,
 	ExtendedVideoFrame
 > {
+	config: VideoDecoderConfig;
 	get identifier() {
 		return "MFXVideoDecoder";
 	}
 
-	constructor() {
+	constructor(config: Partial<VideoDecoderConfig> = {}) {
 		let backpressure = Promise.resolve();
 		let configured = false;
 		const decoder = new VideoDecoder({
@@ -46,6 +47,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 						decoder.configure({
 							hardwareAcceleration: "prefer-hardware",
 							optimizeForLatency: false,
+							...config,
 							...chunk.config,
 						});
 						configured = true;
