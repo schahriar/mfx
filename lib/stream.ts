@@ -105,7 +105,11 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 							// to prevent side-effects
 							isVoid = true;
 							console.error(error);
-							console.warn(new Error(`Tranformer (${this.identifier}) terminated due to above error\nPipeline is now sinking into void to avoid a crash`));
+							console.warn(
+								new Error(
+									`Tranformer (${this.identifier}) terminated due to above error\nPipeline is now sinking into void to avoid a crash`,
+								),
+							);
 						}
 					}
 					this._controller = controller;
