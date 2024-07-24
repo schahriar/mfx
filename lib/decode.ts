@@ -29,10 +29,34 @@ export class MFXVideoDecoder extends MFXTransformStream<
 
 	constructor(config: Partial<VideoDecoderConfig> = {}) {
 		let backpressure = Promise.resolve();
+		let containerContext: ContainerContext;
 		let configured = false;
+
+		let lastFrame: VideoFrame;
+		
+		const processFrame = (frame?: VideoFrame): ExtendedVideoFrame | undefined => {
+			let newFrame: ExtendedVideoFrame | undefined;
+			if (lastFrame) {
+				const current = lastFrame;
+				newFrame = ExtendedVideoFrame.revise(current, current as any, {
+					// Ensure duration is always available after decoding
+					duration: frame.timestamp - current.timestamp
+				});
+			}
+
+			if (frame) {
+				lastFrame = frame;
+			}
+
+			return newFrame;
+		}
+
 		const decoder = new VideoDecoder({
 			output: async (frame) => {
-				backpressure = this.queue(frame);
+				const next = processFrame(frame);
+				if (next) {
+					backpressure = this.queue(next);
+				}
 			},
 			error: (e) => {
 				console.trace(e);
@@ -61,9 +85,15 @@ export class MFXVideoDecoder extends MFXTransformStream<
 						await nextTick();
 					}
 
+					containerContext = chunk.context;
+
 					decoder.decode(chunk.chunk);
 				},
-				flush: async () => {
+				flush: async (controller) => {
+					const frame = processFrame();
+					controller.enqueue(frame);
+					await nextTick();
+
 					await decoder.flush();
 					decoder.close();
 				},
@@ -84,20 +114,23 @@ export class MFXVideoDecoder extends MFXTransformStream<
 export const createContainerDecoder = async (
 	stream: ReadableStream<Uint8Array>,
 	filename: string,
+	codec?: string
 ): Promise<ReadableStream<MFXDecodableChunk>> => {
 	const ext = filename.slice(filename.lastIndexOf("."));
 	let root = stream;
 	let decoder: MFXTransformStream<Uint8Array, MFXDecodableChunk>;
 	if (ext === ".webm") {
-		const probe = new MFXWebMVideoContainerProbe();
-		const s1 = new TransformStream();
-		const s2 = new TransformStream();
-		const copier = new MFXBufferCopy(s1.writable, s2.writable);
-		stream.pipeTo(copier);
-		s1.readable.pipeTo(probe);
-		root = s2.readable;
+		if (!codec) {
+			const probe = new MFXWebMVideoContainerProbe();
+			const s1 = new TransformStream();
+			const s2 = new TransformStream();
+			const copier = new MFXBufferCopy(s1.writable, s2.writable);
+			stream.pipeTo(copier);
+			s1.readable.pipeTo(probe);
+			root = s2.readable;
 
-		const codec = await probe.getCodec();
+			codec = await probe.getCodec();
+		}
 
 		decoder = new MFXWebMVideoContainerDecoder(codec);
 	} else {
@@ -138,9 +171,7 @@ export class MFXWebMVideoContainerProbe extends MFXWritableStream<Uint8Array> {
 					demuxer.queueData(chunk.buffer);
 				},
 				close: async () => {
-					await demuxer.demux();
 					let idx = 0;
-
 					let size = 0;
 
 					while (!demuxer.eof) {
@@ -199,7 +230,9 @@ export class MFXWebMVideoContainerDecoder extends MFXTransformStream<
 				demuxer.queueData(chunk.buffer);
 			},
 			flush: async () => {
-				await demuxer.demux();
+				while (!demuxer.videoTrack && !demuxer.eof) {
+					await demuxer.demux();
+				}
 				let idx = 0;
 
 				const context = {
@@ -254,7 +287,7 @@ export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
 		let position = 0;
 		let context: ContainerContext;
 
-		let setConfig: (config: VideoDecoderConfig) => void = () => {};
+		let setConfig: (config: VideoDecoderConfig) => void = () => { };
 		const ready = new Promise<VideoDecoderConfig>((resolve) => {
 			setConfig = resolve;
 		});

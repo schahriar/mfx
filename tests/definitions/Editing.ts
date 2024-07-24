@@ -1,5 +1,6 @@
 import { MFXCutter, MFXVideoEncoder, MFXMP4Muxer, codecs, MFXGLEffect, shaders, keyframes } from "mfx";
 import { easing } from "ts-easing";
+import { MFXFrameFiller } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
@@ -34,6 +35,7 @@ export const definitions: TestDefinition[] = [{
   path: "/keyframes",
   input: "beach.mp4",
   process: async () => [
+    new MFXFrameFiller(30),
     new MFXGLEffect([
       shaders.zoom({
         factor: keyframes([{

@@ -118,15 +118,24 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 					}
 				},
 				flush: async (controller) => {
-					console.info(`<flushed:${this.identifier}>`);
-					clearInterval(streamMonitor);
-					this._controller = controller;
-					if (this._buffer.length) {
-						this._copy_buffer(controller);
-					}
+					try {
+						console.info(`<flushed:${this.identifier}>`);
+						clearInterval(streamMonitor);
+						this._controller = controller;
+						if (this._buffer.length) {
+							this._copy_buffer(controller);
+						}
 
-					if (typeof transformer.flush === "function") {
-						await transformer.flush(controller);
+						if (typeof transformer.flush === "function") {
+							await transformer.flush(controller);
+						}
+					} catch (error) {
+						console.error(error);
+						console.warn(
+							new Error(
+								`Tranformer (${this.identifier}) failed to flush`,
+							),
+						);
 					}
 				},
 			},

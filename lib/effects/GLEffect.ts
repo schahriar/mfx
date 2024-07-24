@@ -211,7 +211,7 @@ export class MFXGLEffect extends MFXTransformStream<
 				twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
 				controller.enqueue(
-					new VideoFrame(canvas, { timestamp: frame.timestamp }),
+					ExtendedVideoFrame.revise(frame, canvas),
 				);
 			},
 		});

@@ -120,8 +120,8 @@
     } else {
       const stream = await openURL(definition.input);
       inputStream = (
-        await createContainerDecoder(stream, definition.input)
-      ).pipeThrough(new MFXWorkerVideoDecoder());
+        await createContainerDecoder(stream, definition.input, definition.codec)
+      ).pipeThrough(new mfx.MFXVideoDecoder());
     }
 
     const computedPipeline = definition.process

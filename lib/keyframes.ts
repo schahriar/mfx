@@ -1,4 +1,51 @@
 import { type UniformProducer } from "./effects/shaders";
+import { ExtendedVideoFrame } from "./frame";
+import { MFXTransformStream } from "./stream";
+
+export class MFXFrameFiller extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+	get identifier() {
+		return "MFXFrameFiller";
+	}
+
+	constructor(fps: number) {
+		// Limit to 500fps to prevent bugs
+		const maxDuration = (1 / Math.min(fps, 500)) * 1e6;
+
+		super({
+			transform: (frame, controller) => {
+				const duration = frame.duration;
+				const idealFrameCount = Math.floor(duration / maxDuration);
+
+				// Simple path, no need for a fill
+				if (idealFrameCount <= 1) {
+					controller.enqueue(frame);
+					return;
+				}
+
+				// Calculate the durations ensuring no fractional durations
+				const baseDuration = Math.floor(duration / idealFrameCount);
+				const remainingDuration = duration % idealFrameCount;
+				const timestamp = frame.timestamp;
+
+				let accumulatedDuration = 0;
+				for (let i = 0; i < idealFrameCount; i++) {
+					const frameDuration = (i === (idealFrameCount - 1)) ? (baseDuration + remainingDuration) : baseDuration;
+
+					const clone = ExtendedVideoFrame.revise(frame, frame.clone() as any, {
+						timestamp: timestamp + accumulatedDuration,
+						duration: baseDuration,
+					});
+
+					accumulatedDuration += frameDuration;
+
+					controller.enqueue(clone);
+				}
+
+				frame.close();
+			},
+		});
+	}
+};
 
 /**
  * @group Advanced

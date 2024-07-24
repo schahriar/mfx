@@ -7,6 +7,7 @@ export interface TestDefinition {
   path: string;
   title: string;
   description: string;
+  codec?: string;
   input: string;
   decode?: (input: string) => Promise<ReadableStream<ExtendedVideoFrame>>,
   expect?: () => Promise<boolean>;

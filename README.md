@@ -57,7 +57,7 @@ npm start
 ```
 
 ### Roadmap
-- Fully validate each frame before piping to Encoder/Decoder
+- Source videos with frame duration > fps to showcase MFXFrameFiller
 - Add note on VP9 probe
 - Provide wrapper encode / decode interfaces
 - API Documentation
@@ -73,6 +73,7 @@ npm start
 - Audio support
   - Audio waveform
   - Audio effects
+- Improve encoding performance by reverting fill behavior for nearly identical frames (high effort)
 - Seek
   - Clips view (similar to QuickTime)
 - GIF (https://github.com/jnordberg/gif.js)

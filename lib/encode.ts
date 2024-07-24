@@ -64,22 +64,28 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
 /**
  * @group Encode
  */
-export class MFXFileWriter extends WritableStream<MFXBlob> {
+export class MFXFileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
+	get identifier() {
+		return "MFXFileWriter";
+	}
+
 	writer: Promise<FileSystemWritableFileStream>;
 	constructor(fileName: string, description = "Video File") {
 		super({
-			write: async (blob) => {
+			transform: async (blob, controller) => {
 				const writer = await this.writer;
 				if (Number.isInteger(blob.position)) {
 					await writer.seek(blob.position);
 				}
 
 				await writer.write(blob);
+
+				controller.enqueue(blob);
 			},
-			close: async () => {
+			flush: async () => {
 				const writer = await this.writer;
-				writer.close();
-			},
+				await writer.close();
+			}
 		});
 
 		// TODO: Read one chunk to determine type before initializing saver
