@@ -30,7 +30,7 @@ export {
 } from "./decode";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
 export { MFXFrameTee, MFXTransformStream, MFXVoid } from "./stream";
-export { keyframes } from "./keyframes";
+export { keyframes, MFXFrameFiller } from "./keyframes";
 export {
 	MFXWorkerVideoDecoder,
 	MFXWorkerVideoEncoder,
