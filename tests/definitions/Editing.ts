@@ -33,7 +33,7 @@ export const definitions: TestDefinition[] = [{
   title: "Keyframes",
   description: "Keyframes animating values",
   path: "/keyframes",
-  input: "beach.mp4",
+  input: "https://cdn.lyly.app/org-lyly/public/13b79eee-08ca-4af6-bc7d-cf815c101434.webm",
   process: async () => [
     new MFXFrameFiller(30),
     new MFXGLEffect([

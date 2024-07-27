@@ -57,14 +57,15 @@ npm start
 ```
 
 ### Roadmap
-- Source videos with frame duration > fps to showcase MFXFrameFiller
 - Add note on VP9 probe
+- Testing: Source videos with frame duration > fps to showcase MFXFrameFiller
 - Provide wrapper encode / decode interfaces
 - API Documentation
 - Run tests on Github actions
 - NPM Publish Github action
   - should version docs
 - Contribution Guide
+- Decode WebM via Matroska decoder to resolve issues of jswebm dependency (https://www.npmjs.com/package/ebml-stream)
 - Utilize (https://github.com/dmnsgn/media-codecs?tab=readme-ov-file) for codec string generation
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions
@@ -80,7 +81,7 @@ npm start
 - Log WebCodec bug (https://chromium.googlesource.com/chromium/src/+/7786d34a4e7771725b85f354247ad1bb1902c556/third_party/blink/renderer/modules/webcodecs/video_encoder.cc#939)
 - Reduce CPU → GPU → CPU copy times using texture atlas
 - Benchmarks (during test) against ffmpeg (AVC https://trac.ffmpeg.org/wiki/Encode/H.264#FAQ and possibly WebM)
-- Integrate debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)
+- Integrate GLSL debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)
 
 ### License
 MIT [License](LICENSE)

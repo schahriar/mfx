@@ -40,7 +40,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 				const current = lastFrame;
 				newFrame = ExtendedVideoFrame.revise(current, current as any, {
 					// Ensure duration is always available after decoding
-					duration: frame.timestamp - current.timestamp
+					duration: frame?.timestamp ? frame.timestamp - current.timestamp : current.timestamp
 				});
 			}
 
@@ -90,11 +90,11 @@ export class MFXVideoDecoder extends MFXTransformStream<
 					decoder.decode(chunk.chunk);
 				},
 				flush: async (controller) => {
+					await decoder.flush();
 					const frame = processFrame();
 					controller.enqueue(frame);
 					await nextTick();
 
-					await decoder.flush();
 					decoder.close();
 				},
 			},
