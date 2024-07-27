@@ -85,7 +85,7 @@ export class MFXFileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
 			flush: async () => {
 				const writer = await this.writer;
 				await writer.close();
-			}
+			},
 		});
 
 		// TODO: Read one chunk to determine type before initializing saver

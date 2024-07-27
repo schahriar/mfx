@@ -33,14 +33,18 @@ export class MFXVideoDecoder extends MFXTransformStream<
 		let configured = false;
 
 		let lastFrame: VideoFrame;
-		
-		const processFrame = (frame?: VideoFrame): ExtendedVideoFrame | undefined => {
+
+		const processFrame = (
+			frame?: VideoFrame,
+		): ExtendedVideoFrame | undefined => {
 			let newFrame: ExtendedVideoFrame | undefined;
 			if (lastFrame) {
 				const current = lastFrame;
 				newFrame = ExtendedVideoFrame.revise(current, current as any, {
 					// Ensure duration is always available after decoding
-					duration: frame?.timestamp ? frame.timestamp - current.timestamp : current.timestamp
+					duration: frame?.timestamp
+						? frame.timestamp - current.timestamp
+						: current.timestamp,
 				});
 			}
 
@@ -49,7 +53,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 			}
 
 			return newFrame;
-		}
+		};
 
 		const decoder = new VideoDecoder({
 			output: async (frame) => {
@@ -114,7 +118,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 export const createContainerDecoder = async (
 	stream: ReadableStream<Uint8Array>,
 	filename: string,
-	codec?: string
+	codec?: string,
 ): Promise<ReadableStream<MFXDecodableChunk>> => {
 	const ext = filename.slice(filename.lastIndexOf("."));
 	let root = stream;
@@ -287,7 +291,7 @@ export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
 		let position = 0;
 		let context: ContainerContext;
 
-		let setConfig: (config: VideoDecoderConfig) => void = () => { };
+		let setConfig: (config: VideoDecoderConfig) => void = () => {};
 		const ready = new Promise<VideoDecoderConfig>((resolve) => {
 			setConfig = resolve;
 		});

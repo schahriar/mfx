@@ -132,9 +132,7 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 					} catch (error) {
 						console.error(error);
 						console.warn(
-							new Error(
-								`Tranformer (${this.identifier}) failed to flush`,
-							),
+							new Error(`Tranformer (${this.identifier}) failed to flush`),
 						);
 					}
 				},

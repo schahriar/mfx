@@ -19,23 +19,39 @@ export class ExtendedVideoFrame extends VideoFrame {
 
 	static from(frame: VideoFrame, init?: VideoFrameInit) {}
 
-	static revise(frame: ExtendedVideoFrame | VideoFrame, source: CanvasImageSource, init?: VideoFrameInit) {
-		return new ExtendedVideoFrame(source, {
-			timestamp: frame.timestamp,
-			...frame.duration ? {
-				duration: frame.duration,
-			} : {},
-			...frame.displayWidth ? {
-				displayWidth: frame.displayWidth
-			} : {},
-			...frame.displayHeight ? {
-				displayHeight: frame.displayHeight
-			} : {},
-			...frame.visibleRect ? {
-				visibleRect: frame.visibleRect
-			} : {},
-			...init,
-		}, (frame as ExtendedVideoFrame)?.containerContext);
+	static revise(
+		frame: ExtendedVideoFrame | VideoFrame,
+		source: CanvasImageSource,
+		init?: VideoFrameInit,
+	) {
+		return new ExtendedVideoFrame(
+			source,
+			{
+				timestamp: frame.timestamp,
+				...(frame.duration
+					? {
+							duration: frame.duration,
+						}
+					: {}),
+				...(frame.displayWidth
+					? {
+							displayWidth: frame.displayWidth,
+						}
+					: {}),
+				...(frame.displayHeight
+					? {
+							displayHeight: frame.displayHeight,
+						}
+					: {}),
+				...(frame.visibleRect
+					? {
+							visibleRect: frame.visibleRect,
+						}
+					: {}),
+				...init,
+			},
+			(frame as ExtendedVideoFrame)?.containerContext,
+		);
 	}
 
 	static cut(frame: ExtendedVideoFrame, duration: number) {

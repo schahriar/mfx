@@ -2,7 +2,10 @@ import { type UniformProducer } from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
 
-export class MFXFrameFiller extends MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame> {
+export class MFXFrameFiller extends MFXTransformStream<
+	ExtendedVideoFrame,
+	ExtendedVideoFrame
+> {
 	get identifier() {
 		return "MFXFrameFiller";
 	}
@@ -29,7 +32,10 @@ export class MFXFrameFiller extends MFXTransformStream<ExtendedVideoFrame, Exten
 
 				let accumulatedDuration = 0;
 				for (let i = 0; i < idealFrameCount; i++) {
-					const frameDuration = (i === (idealFrameCount - 1)) ? (baseDuration + remainingDuration) : baseDuration;
+					const frameDuration =
+						i === idealFrameCount - 1
+							? baseDuration + remainingDuration
+							: baseDuration;
 
 					const clone = ExtendedVideoFrame.revise(frame, frame.clone() as any, {
 						timestamp: timestamp + accumulatedDuration,
@@ -45,7 +51,7 @@ export class MFXFrameFiller extends MFXTransformStream<ExtendedVideoFrame, Exten
 			},
 		});
 	}
-};
+}
 
 /**
  * @group Advanced
