@@ -111,109 +111,113 @@ export class MFXGLEffect extends MFXTransformStream<
 			checkStatus(gl);
 		};
 
-		super({
-			transform: async (frame, controller) => {
-				const width = frame.displayWidth;
-				const height = frame.displayHeight;
-				canvas.width = width;
-				canvas.height = height;
+		super(
+			{
+				transform: async (frame, controller) => {
+					const width = frame.displayWidth;
+					const height = frame.displayHeight;
+					canvas.width = width;
+					canvas.height = height;
 
-				if (!frameBufferInfo) {
-					textureIn = twgl.createTexture(gl, {
-						min: gl.NEAREST,
-						mag: gl.NEAREST,
-						wrapS: gl.CLAMP_TO_EDGE,
-						wrapT: gl.CLAMP_TO_EDGE,
-						width,
-						height,
-					});
-					textureOut = twgl.createTexture(gl, {
-						min: gl.NEAREST,
-						mag: gl.NEAREST,
-						wrapS: gl.CLAMP_TO_EDGE,
-						wrapT: gl.CLAMP_TO_EDGE,
-						width,
-						height,
-					});
+					if (!frameBufferInfo) {
+						textureIn = twgl.createTexture(gl, {
+							min: gl.NEAREST,
+							mag: gl.NEAREST,
+							wrapS: gl.CLAMP_TO_EDGE,
+							wrapT: gl.CLAMP_TO_EDGE,
+							width,
+							height,
+						});
+						textureOut = twgl.createTexture(gl, {
+							min: gl.NEAREST,
+							mag: gl.NEAREST,
+							wrapS: gl.CLAMP_TO_EDGE,
+							wrapT: gl.CLAMP_TO_EDGE,
+							width,
+							height,
+						});
 
-					frameBufferInfo = twgl.createFramebufferInfo(
-						gl,
-						[textureIn],
-						width,
-						height,
+						frameBufferInfo = twgl.createFramebufferInfo(
+							gl,
+							[textureIn],
+							width,
+							height,
+						);
+
+						// Clear frame only at start
+						gl.clearColor(1.0, 0.0, 0.0, 1.0);
+						gl.clear(gl.COLOR_BUFFER_BIT);
+					}
+
+					twgl.bindFramebufferInfo(gl, frameBufferInfo);
+					gl.bindTexture(gl.TEXTURE_2D, textureIn);
+					gl.pixelStorei(
+						gl.UNPACK_FLIP_Y_WEBGL,
+						Object.keys(programInfos).length % 2,
+					);
+					gl.texImage2D(
+						gl.TEXTURE_2D,
+						0,
+						gl.RGBA,
+						gl.RGBA,
+						gl.UNSIGNED_BYTE,
+						frame,
 					);
 
-					// Clear frame only at start
-					gl.clearColor(1.0, 0.0, 0.0, 1.0);
-					gl.clear(gl.COLOR_BUFFER_BIT);
-				}
-
-				twgl.bindFramebufferInfo(gl, frameBufferInfo);
-				gl.bindTexture(gl.TEXTURE_2D, textureIn);
-				gl.pixelStorei(
-					gl.UNPACK_FLIP_Y_WEBGL,
-					Object.keys(programInfos).length % 2,
-				);
-				gl.texImage2D(
-					gl.TEXTURE_2D,
-					0,
-					gl.RGBA,
-					gl.RGBA,
-					gl.UNSIGNED_BYTE,
-					frame,
-				);
-
-				attachTextureToFramebuffer(textureIn);
-				gl.viewport(0, 0, width, height);
-
-				// Free resource after GPU paint
-				frame.close();
-
-				Object.keys(programInfos).map((programId, i) => {
-					const programInfo = programInfos[programId];
-					const pipeline = programmedPipeline[programId];
-					gl.activeTexture(gl.TEXTURE0);
-					gl.bindTexture(gl.TEXTURE_2D, textureIn);
-					attachTextureToFramebuffer(textureOut);
-					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
+					attachTextureToFramebuffer(textureIn);
 					gl.viewport(0, 0, width, height);
 
-					const uniforms = Object.keys(pipeline.uniforms || {}).reduce(
-						(accu, key) => ({
-							...accu,
-							[key]: resolveUniforms(pipeline.uniforms[key], frame),
-						}),
-						{},
-					);
+					// Free resource after GPU paint
+					frame.close();
 
-					gl.useProgram(programInfo.program);
-					twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-					twgl.setUniforms(programInfo, {
-						...uniforms,
+					Object.keys(programInfos).map((programId, i) => {
+						const programInfo = programInfos[programId];
+						const pipeline = programmedPipeline[programId];
+						gl.activeTexture(gl.TEXTURE0);
+						gl.bindTexture(gl.TEXTURE_2D, textureIn);
+						attachTextureToFramebuffer(textureOut);
+						gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
+						gl.viewport(0, 0, width, height);
+
+						const uniforms = Object.keys(pipeline.uniforms || {}).reduce(
+							(accu, key) => ({
+								...accu,
+								[key]: resolveUniforms(pipeline.uniforms[key], frame),
+							}),
+							{},
+						);
+
+						gl.useProgram(programInfo.program);
+						twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+						twgl.setUniforms(programInfo, {
+							...uniforms,
+							frame: textureIn,
+							frameSize: [width, height],
+						});
+						twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
+
+						[textureIn, textureOut] = [textureOut, textureIn];
+					});
+
+					gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+					gl.viewport(0, 0, canvas.width, canvas.height);
+
+					gl.activeTexture(gl.TEXTURE0);
+					gl.bindTexture(gl.TEXTURE_2D, textureIn);
+
+					gl.useProgram(paintProgramInfo.program);
+					twgl.setBuffersAndAttributes(gl, paintProgramInfo, bufferInfo);
+					twgl.setUniforms(paintProgramInfo, {
 						frame: textureIn,
 						frameSize: [width, height],
 					});
 					twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
-					[textureIn, textureOut] = [textureOut, textureIn];
-				});
-
-				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-				gl.viewport(0, 0, canvas.width, canvas.height);
-
-				gl.activeTexture(gl.TEXTURE0);
-				gl.bindTexture(gl.TEXTURE_2D, textureIn);
-
-				gl.useProgram(paintProgramInfo.program);
-				twgl.setBuffersAndAttributes(gl, paintProgramInfo, bufferInfo);
-				twgl.setUniforms(paintProgramInfo, {
-					frame: textureIn,
-					frameSize: [width, height],
-				});
-				twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
-
-				controller.enqueue(ExtendedVideoFrame.revise(frame, canvas));
+					controller.enqueue(ExtendedVideoFrame.revise(frame, canvas));
+				},
 			},
-		}, writableStrategy, readableStrategy);
+			writableStrategy,
+			readableStrategy,
+		);
 	}
 }
