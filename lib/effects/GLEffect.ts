@@ -67,6 +67,8 @@ export class MFXGLEffect extends MFXTransformStream<
 	constructor(
 		pipeline: Effect[],
 		canvas: HTMLCanvasElement = document.createElement("canvas"),
+		writableStrategy: QueuingStrategy<ExtendedVideoFrame>,
+		readableStrategy: QueuingStrategy<ExtendedVideoFrame>,
 	) {
 		const gl = canvas.getContext("webgl2");
 		const programmedPipeline = pipeline.reduce(
@@ -212,6 +214,6 @@ export class MFXGLEffect extends MFXTransformStream<
 
 				controller.enqueue(ExtendedVideoFrame.revise(frame, canvas));
 			},
-		});
+		}, writableStrategy, readableStrategy);
 	}
 }

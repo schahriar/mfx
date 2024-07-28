@@ -75,7 +75,7 @@ export class MFXFileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
 			transform: async (blob, controller) => {
 				const writer = await this.writer;
 				if (Number.isInteger(blob.position)) {
-					await writer.seek(blob.position);
+					await writer.seek(blob.position as number);
 				}
 
 				await writer.write(blob);
