@@ -92,10 +92,14 @@ export class MFXGLEffect extends MFXTransformStream<
 				numComponents: 2,
 				data: [
 					// x, y
-					-1, -1, // Bottom-left corner (flipped)
-					-1, +1, // Top-left corner (flipped)
-					+1, +1, // Top-right corner (flipped)
-					+1, -1, // Bottom-right corner (flipped)
+					-1,
+					-1, // Bottom-left corner (flipped)
+					-1,
+					+1, // Top-left corner (flipped)
+					+1,
+					+1, // Top-right corner (flipped)
+					+1,
+					-1, // Bottom-right corner (flipped)
 				],
 			},
 		};
@@ -125,7 +129,10 @@ export class MFXGLEffect extends MFXTransformStream<
 					canvas.width = width;
 					canvas.height = height;
 
-					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, Object.keys(programInfos).length % 2);
+					gl.pixelStorei(
+						gl.UNPACK_FLIP_Y_WEBGL,
+						Object.keys(programInfos).length % 2,
+					);
 
 					if (!frameBufferInfo) {
 						textureIn = twgl.createTexture(gl, {
