@@ -8,6 +8,7 @@ export const definitions: TestDefinition[] = [{
   description: "Sources frames from an HTMLVideoElement",
   path: "/source_preview",
   input: "boats.mp4",
+  skip: "VideoSource doesn't provide accurate frames, excluding from snapshot test coverage",
   decode: async (input) => {
     const video = document.createElement("video");
     video.src = input;

@@ -90,7 +90,13 @@ export class MFXGLEffect extends MFXTransformStream<
 		const arrays = {
 			texcoord: {
 				numComponents: 2,
-				data: [-1, -1, -1, +1, +1, +1, +1, -1],
+				data: [
+					// x, y
+					-1, -1, // Bottom-left corner (flipped)
+					-1, +1, // Top-left corner (flipped)
+					+1, +1, // Top-right corner (flipped)
+					+1, -1, // Bottom-right corner (flipped)
+				],
 			},
 		};
 
@@ -118,6 +124,8 @@ export class MFXGLEffect extends MFXTransformStream<
 					const height = frame.displayHeight;
 					canvas.width = width;
 					canvas.height = height;
+
+					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, Object.keys(programInfos).length % 2);
 
 					if (!frameBufferInfo) {
 						textureIn = twgl.createTexture(gl, {
@@ -151,10 +159,6 @@ export class MFXGLEffect extends MFXTransformStream<
 
 					twgl.bindFramebufferInfo(gl, frameBufferInfo);
 					gl.bindTexture(gl.TEXTURE_2D, textureIn);
-					gl.pixelStorei(
-						gl.UNPACK_FLIP_Y_WEBGL,
-						Object.keys(programInfos).length % 2,
-					);
 					gl.texImage2D(
 						gl.TEXTURE_2D,
 						0,
@@ -170,13 +174,12 @@ export class MFXGLEffect extends MFXTransformStream<
 					// Free resource after GPU paint
 					frame.close();
 
-					Object.keys(programInfos).map((programId, i) => {
+					Object.keys(programInfos).map((programId) => {
 						const programInfo = programInfos[programId];
 						const pipeline = programmedPipeline[programId];
 						gl.activeTexture(gl.TEXTURE0);
 						gl.bindTexture(gl.TEXTURE_2D, textureIn);
 						attachTextureToFramebuffer(textureOut);
-						gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, (i + 1) % 2);
 						gl.viewport(0, 0, width, height);
 
 						const uniforms = Object.keys(pipeline.uniforms || {}).reduce(

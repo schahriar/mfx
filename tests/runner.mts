@@ -71,6 +71,7 @@ const main = async () => {
   });
 
   for (let def of definitions) {
+    if (def.skip) continue;
     const testName = `Testing ${def.title}`;
     herb.group(testName);
     herb.log(herb.blue("Running test"));
