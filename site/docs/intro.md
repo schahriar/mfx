@@ -10,7 +10,6 @@ This includes:
 - Video pipeline via Web Streams
 - GPU effects
 
-
 ### Fundamentals
 The building block of MFX are [WebStreams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API). Video files can be read from a [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Response/body) readable stream and piped into a decoder to get the raw frames.
 

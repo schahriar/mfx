@@ -43,7 +43,8 @@ footer {
   display: block;
 }
 
-[data-page="home"] .toggleButton_node_modules-\@docusaurus-theme-classic-lib-theme-ColorModeToggle-styles-module {
+[data-page="home"]
+  .toggleButton_node_modules-\@docusaurus-theme-classic-lib-theme-ColorModeToggle-styles-module {
   display: none;
 }
 
@@ -60,4 +61,21 @@ footer {
   .disclaimer {
     display: none;
   }
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #3b3b3b;
+  color: #e6e6e6;
+  font-size: 1em;
+  padding: 9px 10px;
+  background: transparent;
+  margin: 10px 0;
 }
