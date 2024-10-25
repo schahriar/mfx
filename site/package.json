@@ -6,7 +6,7 @@
     "docusaurus": "docusaurus",
     "build:mfx": "cd ../ && npm run build && cp -r ./dist ./site/mfx && cd ./site",
     "start": "npm run build:mfx && docusaurus start",
-    "build": "docusaurus build",
+    "build": "npm run build:mfx && docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
