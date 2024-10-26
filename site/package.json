@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "build:mfx": "cd ../ && npm run build && cp -r ./dist ./site/mfx && cd ./site",
+    "build:mfx": "cd ../ && npm run build && cp -r ./dist/bundle.js ./site/static/bundle.js && cd ./site",
     "start": "npm run build:mfx && docusaurus start",
     "build": "npm run build:mfx && docusaurus build",
     "swizzle": "docusaurus swizzle",
@@ -25,7 +25,9 @@
     "docusaurus-lunr-search": "^3.4.0",
     "prism-react-renderer": "^2.3.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "react-use-localstorage": "^3.5.3",
+    "use-debounce": "^10.0.4"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.4.0",

@@ -1,46 +1,13 @@
-import React, { useState } from "react";
-import ReactLiveScope from '@theme/ReactLiveScope';
-import Playground from '@theme/Playground';
-import * as MFX from "../../mfx/bundle";
+import React, { useMemo, useState } from "react";
+import ReactLiveScope from "@theme/ReactLiveScope";
+import Playground from "@theme/Playground";
 import videoSource from "@site/static/4KWithAudio.mp4";
+import useLocalStorage from "react-use-localstorage";
+import { useDebounce } from 'use-debounce';
 
-export default () => {
-  const [source, setSource] = useState("https://github.com/schahriar/mfx/raw/refs/heads/main/samples/4KWithAudio.mp4");
-  const {default: _, ...lib} = MFX;
-  return (
-    <div>
-      <div className="input-container">
-        <label>Source</label>
-        <input value={source} onChange={(ev) => setSource(ev.target.value)}/>
-      </div>
-      <Playground
-        language="jsx"
-        metastring="noInline"
-        scope={{...ReactLiveScope, ...lib}}
-        transformCode={(code) => `
-          const VideoPreview = () => {
-            const [source, setSource] = useState("");
-            const videoEl = useRef();
-            useEffect(() => {
-              (async () => {
-                const videoIn = "${videoSource}";
-                const videoOut = new MFXMediaSourceStream();
-                setSource(videoOut.getSource());
-                ${code};
-              })();
-            }, []);
-          
-            return (
-              <video ref={videoEl} autoplay controls style={{ width: "100%" }} src={source}></video>
-            );
-          }
-          
-          render(<VideoPreview />);
-        `}
-        title="/src/components/HelloCodeTitle.js"
-        showLineNumbers>
-        {`
-const video = await fetch(videoIn);
+import BrowserOnly from "@docusaurus/BrowserOnly";
+
+const demoCode = `const video = await fetch(videoIn);
 
 const output = {
   // Codec string
@@ -56,15 +23,82 @@ video.body
   // Next two lines define the decoder
   .pipeThrough(new MFXMP4VideoContainerDecoder())
   .pipeThrough(new MFXVideoDecoder())
+  .pipeThrough(new MFXFrameFiller(30)) // Fill to 30 fps
   .pipeThrough(new MFXGLEffect([ // Apply zoom out effect
-    shaders.zoom({ factor: 1.5, x: 0.5, y: 0.25 }),
+    shaders.zoom({
+      factor: keyframes([{
+        time: 0,
+        value: 1
+      }, {
+        time: 2000,
+        value: 2
+      }, {
+        time: 10000,
+        value: 1
+      }]),
+      x: 0.5,
+      y: 0.5
+    }),
   ]))
   // Next two lines define the encoder
   .pipeThrough(new MFXVideoEncoder(output))
   .pipeThrough(new MFXWebMMuxer(output)) // Returns a Blob type that can be piped to a backend if needed
-  .pipeTo(videoOut)
-        `}
+  .pipeTo(videoOut)`;
+
+const PlaygroundComponent = () => {
+  const [code, setCode] = useLocalStorage("playground-code", demoCode);
+  const [debouncedCode] = useDebounce(code, 3000);
+  const [source, setSource] = useState(
+    "https://github.com/schahriar/mfx/raw/refs/heads/main/samples/4KWithAudio.mp4"
+  );
+
+  const { default: _, ...lib } = window.MFX || {};
+
+  console.log({ lib });
+
+  return (
+    <div>
+      <div className="input-container">
+        <label>Source</label>
+        <input value={source} onChange={(ev) => setSource(ev.target.value)} />
+      </div>
+      <Playground
+        language="jsx"
+        metastring="noInline"
+        scope={{ ...ReactLiveScope, ...lib }}
+        transformCode={(code) => {
+          setCode(code);
+          return `
+          const VideoPreview = () => {
+            const [source, setSource] = useState("");
+            const videoEl = useRef();
+            useEffect(() => {
+              (async () => {
+                console.count("update");
+                const videoIn = "${videoSource}";
+                const videoOut = new MFXMediaSourceStream();
+                setSource(videoOut.getSource());
+                ${debouncedCode};
+              })();
+            }, []);
+          
+            return (
+              <video ref={videoEl} autoPlay muted controls style={{ width: "100%" }} src={source}></video>
+            );
+          }
+          
+          render(<VideoPreview />);
+        `;
+        }}
+        title="/src/components/HelloCodeTitle.js"
+        showLineNumbers
+      >
+        {code}
       </Playground>
     </div>
   );
+};
+
+export default () => {
+  return <BrowserOnly>{() => <PlaygroundComponent />}</BrowserOnly>;
 };

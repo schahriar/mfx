@@ -24,7 +24,6 @@ const config: Config = {
     locales: ['en'],
   },
 
-  themes: ['@docusaurus/theme-live-codeblock'],
 
   headTags: [
     {
@@ -33,7 +32,11 @@ const config: Config = {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
       }
-    }
+    },
+  ],
+
+  scripts: [
+    "/bundle.js"
   ],
 
   presets: [
@@ -51,6 +54,7 @@ const config: Config = {
   ],
 
   plugins: [
+    require.resolve('@docusaurus/theme-live-codeblock'),
     [
       'docusaurus-plugin-typedoc-api',
       {
@@ -62,7 +66,7 @@ const config: Config = {
         }],
       },
     ],
-    require.resolve('docusaurus-lunr-search')
+    require.resolve('docusaurus-lunr-search'),
   ],
 
   themeConfig: {
