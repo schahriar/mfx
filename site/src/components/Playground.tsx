@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from "react";
 import ReactLiveScope from "@theme/ReactLiveScope";
 import Playground from "@theme/Playground";
-import videoSource from "@site/static/4KWithAudio.mp4";
 import useLocalStorage from "react-use-localstorage";
-import { useDebounce } from 'use-debounce';
 
 import BrowserOnly from "@docusaurus/BrowserOnly";
 
@@ -47,14 +45,11 @@ video.body
 
 const PlaygroundComponent = () => {
   const [code, setCode] = useLocalStorage("playground-code", demoCode);
-  const [debouncedCode] = useDebounce(code, 3000);
   const [source, setSource] = useState(
-    "https://github.com/schahriar/mfx/raw/refs/heads/main/samples/4KWithAudio.mp4"
+    "https://mfxcdn.b-cdn.net/Serene.mp4"
   );
 
   const { default: _, ...lib } = window.MFX || {};
-
-  console.log({ lib });
 
   return (
     <div>
@@ -74,11 +69,10 @@ const PlaygroundComponent = () => {
             const videoEl = useRef();
             useEffect(() => {
               (async () => {
-                console.count("update");
-                const videoIn = "${videoSource}";
+                const videoIn = "${source}";
                 const videoOut = new MFXMediaSourceStream();
                 setSource(videoOut.getSource());
-                ${debouncedCode};
+                ${code};
               })();
             }, []);
           

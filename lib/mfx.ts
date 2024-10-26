@@ -21,7 +21,6 @@ export {
 	MFXVideoEncoder,
 } from "./encode";
 export {
-	type MFXDecodableChunk,
 	MFXMP4VideoContainerDecoder,
 	MFXVideoDecoder,
 	MFXWebMVideoContainerDecoder,
