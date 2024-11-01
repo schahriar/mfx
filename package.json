@@ -63,6 +63,7 @@
     "ring-buffer-ts": "^1.2.0",
     "ts-easing": "^0.2.0",
     "twgl.js": "^5.5.4",
-    "webm-muxer": "^4.0.1"
+    "webm-muxer": "^4.0.1",
+    "whatwg-mimetype": "^4.0.0"
   }
 }

@@ -74,6 +74,7 @@ npm start
 - Audio support
   - Audio waveform
   - Audio effects
+  - Audio Containers (mp3, flac, wav, opus)
 - Improve encoding performance by reverting fill behavior for nearly identical frames (high effort)
 - Seek
   - Clips view (similar to QuickTime)

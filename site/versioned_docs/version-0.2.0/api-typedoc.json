@@ -2867,7 +2867,7 @@
 												{
 													"type": "reference",
 													"target": 495,
-													"name": "MFXEncodedVideoChunk",
+													"name": "MFXEncodedChunk",
 													"package": "mfx"
 												}
 											]
@@ -3064,7 +3064,7 @@
 								{
 									"type": "reference",
 									"target": 495,
-									"name": "MFXEncodedVideoChunk",
+									"name": "MFXEncodedChunk",
 									"package": "mfx"
 								}
 							]
@@ -3084,7 +3084,7 @@
 								{
 									"type": "reference",
 									"target": 495,
-									"name": "MFXEncodedVideoChunk",
+									"name": "MFXEncodedChunk",
 									"package": "mfx"
 								}
 							]
@@ -6635,7 +6635,7 @@
 						{
 							"type": "reference",
 							"target": 495,
-							"name": "MFXEncodedVideoChunk",
+							"name": "MFXEncodedChunk",
 							"package": "mfx"
 						},
 						{
@@ -9089,7 +9089,7 @@
 										"elementType": {
 											"type": "reference",
 											"target": 495,
-											"name": "MFXEncodedVideoChunk",
+											"name": "MFXEncodedChunk",
 											"package": "mfx"
 										}
 									}
@@ -9274,7 +9274,7 @@
 						{
 							"type": "reference",
 							"target": 495,
-							"name": "MFXEncodedVideoChunk",
+							"name": "MFXEncodedChunk",
 							"package": "mfx"
 						}
 					],
@@ -9983,7 +9983,7 @@
 						{
 							"type": "reference",
 							"target": 495,
-							"name": "MFXEncodedVideoChunk",
+							"name": "MFXEncodedChunk",
 							"package": "mfx"
 						},
 						{
@@ -11802,14 +11802,14 @@
 							"overwrites": {
 								"type": "reference",
 								"target": -1,
-								"name": "ForwardedStream<\n\tExtendedVideoFrame,\n\tMFXEncodedVideoChunk\n>.constructor"
+								"name": "ForwardedStream<\n\tExtendedVideoFrame,\n\tMFXEncodedChunk\n>.constructor"
 							}
 						}
 					],
 					"overwrites": {
 						"type": "reference",
 						"target": -1,
-						"name": "ForwardedStream<\n\tExtendedVideoFrame,\n\tMFXEncodedVideoChunk\n>.constructor"
+						"name": "ForwardedStream<\n\tExtendedVideoFrame,\n\tMFXEncodedChunk\n>.constructor"
 					}
 				},
 				{
@@ -12153,7 +12153,7 @@
 										"elementType": {
 											"type": "reference",
 											"target": 495,
-											"name": "MFXEncodedVideoChunk",
+											"name": "MFXEncodedChunk",
 											"package": "mfx"
 										}
 									}
@@ -12348,7 +12348,7 @@
 						{
 							"type": "reference",
 							"target": 495,
-							"name": "MFXEncodedVideoChunk",
+							"name": "MFXEncodedChunk",
 							"package": "mfx"
 						}
 					],
@@ -13765,7 +13765,7 @@
 		},
 		{
 			"id": 495,
-			"name": "MFXEncodedVideoChunk",
+			"name": "MFXEncodedChunk",
 			"variant": "declaration",
 			"kind": 256,
 			"flags": {},
@@ -16608,15 +16608,15 @@
 		},
 		"495": {
 			"sourceFileName": "../lib/encode.ts",
-			"qualifiedName": "MFXEncodedVideoChunk"
+			"qualifiedName": "MFXEncodedChunk"
 		},
 		"496": {
 			"sourceFileName": "../lib/encode.ts",
-			"qualifiedName": "MFXEncodedVideoChunk.videoChunk"
+			"qualifiedName": "MFXEncodedChunk.videoChunk"
 		},
 		"497": {
 			"sourceFileName": "../lib/encode.ts",
-			"qualifiedName": "MFXEncodedVideoChunk.videoMetadata"
+			"qualifiedName": "MFXEncodedChunk.videoMetadata"
 		},
 		"498": {
 			"sourceFileName": "../lib/encode.ts",

@@ -1,4 +1,4 @@
-import type { MFXEncodedVideoChunk } from "./encode";
+import type { MFXEncodedChunk } from "./encode";
 import { RingBuffer } from "ring-buffer-ts";
 import { MFXTransformStream } from "./stream";
 import { ExtendedVideoFrame } from "./frame";
@@ -39,8 +39,8 @@ export class ConsoleWritableStream<T = any> {
  * @group Debug
  */
 export class MFXDigest extends MFXTransformStream<
-	ExtendedVideoFrame | MFXEncodedVideoChunk,
-	ExtendedVideoFrame | MFXEncodedVideoChunk
+	ExtendedVideoFrame | MFXEncodedChunk,
+	ExtendedVideoFrame | MFXEncodedChunk
 > {
 	get identifier() {
 		return "MFXDigest";
@@ -65,7 +65,7 @@ export class MFXDigest extends MFXTransformStream<
 
 		super({
 			transform: async (chunk, controller) => {
-				let buffer: Uint8Array;
+				let buffer: Uint8Array = new Uint8Array();
 				if (Array.isArray(chunk) && chunk[0] instanceof Uint8Array) {
 					buffer = chunk[0];
 				} else if (
@@ -76,9 +76,12 @@ export class MFXDigest extends MFXTransformStream<
 					await chunk.copyTo(buffer);
 				} else if (chunk instanceof Blob) {
 					buffer = new Uint8Array(await chunk.arrayBuffer());
-				} else {
-					buffer = new Uint8Array(chunk.videoChunk.byteLength);
-					await chunk.videoChunk.copyTo(buffer);
+				} else if (chunk.video) {
+					buffer = new Uint8Array(chunk.video.chunk.byteLength);
+					await chunk.video.chunk.copyTo(buffer);
+				} else if (chunk.audio) {
+					buffer = new Uint8Array(chunk.audio.chunk.byteLength);
+					await chunk.audio.chunk.copyTo(buffer);
 				}
 
 				const checksum = await calculateChecksum(buffer);

@@ -131,7 +131,7 @@ export class MFXBlob extends Blob {
  * @group Encode
  */
 export class MFXMP4Muxer extends MFXTransformStream<
-	MFXEncodedVideoChunk,
+	MFXEncodedChunk,
 	MFXBlob
 > {
 	get identifier() {
@@ -160,11 +160,22 @@ export class MFXMP4Muxer extends MFXTransformStream<
 		let muxer: MP4Muxer<MP4StreamTarget>;
 
 		super({
-			transform: async (encodedVideoChunk) => {
-				muxer.addVideoChunk(
-					encodedVideoChunk.videoChunk,
-					encodedVideoChunk.videoMetadata,
-				);
+			transform: async (chunk) => {
+				// TODO: support raw chunks such as addAudioChunkRaw
+				// to allow passthrough tracks
+				if (chunk.video) {
+					muxer.addVideoChunk(
+						chunk.video.chunk,
+						chunk.video.metadata,
+					);
+				}
+
+				if (chunk.audio) {
+					muxer.addAudioChunk(
+						chunk.audio.chunk,
+						chunk.audio.metadata,
+					);
+				}
 			},
 			flush: async () => {
 				muxer.finalize();
@@ -204,7 +215,7 @@ export class MFXMP4Muxer extends MFXTransformStream<
  * @group Encode
  */
 export class MFXWebMMuxer extends MFXTransformStream<
-	MFXEncodedVideoChunk,
+	MFXEncodedChunk,
 	MFXBlob
 > {
 	get identifier() {
@@ -223,17 +234,27 @@ export class MFXWebMMuxer extends MFXTransformStream<
 			}
 
 			// TODO: Can we support MPEG encoding? (https://www.matroska.org/technical/codec_specs.html#:~:text=Initialization%3A%20none-,V_MPEG2,-Codec%20ID%3A%20V_MPEG2)
-
 			throw new Error(`Unsupported webM codec ${codec}`);
 		};
 		let muxer: WebMMuxer<WebMStreamTarget>;
 
 		super({
-			transform: async (encodedVideoChunk) => {
-				muxer.addVideoChunk(
-					encodedVideoChunk.videoChunk,
-					encodedVideoChunk.videoMetadata,
-				);
+			transform: async (chunk) => {
+				// TODO: support raw chunks such as addAudioChunkRaw
+				// to allow passthrough tracks
+				if (chunk.video) {
+					muxer.addVideoChunk(
+						chunk.video.chunk,
+						chunk.video.metadata,
+					);
+				}
+
+				if (chunk.audio) {
+					muxer.addAudioChunk(
+						chunk.audio.chunk,
+						chunk.audio.metadata,
+					);
+				}
 			},
 			flush: async () => {
 				muxer.finalize();
@@ -275,18 +296,24 @@ export class MFXWebMMuxer extends MFXTransformStream<
 /**
  * @group Encode
  */
-export interface MFXEncodedVideoChunk {
-	videoChunk: EncodedVideoChunk;
-	videoMetadata: EncodedVideoChunkMetadata;
-}
+export interface MFXEncodedChunk {
+	video?: {
+		chunk: EncodedVideoChunk;
+		metadata?: EncodedVideoChunkMetadata;
+	}
+	audio?: {
+		chunk?: EncodedAudioChunk;
+		metadata?: EncodedAudioChunkMetadata;
+	}
+};
 
 /**
- * Only use in a worker, alternatively utilize MFXWorkerVideoEncoder in a main thread video pipeline
+ * Only use in a worker
  * @group Encode
  */
 export class MFXVideoEncoder extends MFXTransformStream<
 	ExtendedVideoFrame,
-	MFXEncodedVideoChunk
+	MFXEncodedChunk
 > {
 	get identifier() {
 		return "MFXVideoEncoder";
@@ -297,8 +324,10 @@ export class MFXVideoEncoder extends MFXTransformStream<
 		const encoder = new VideoEncoder({
 			output: async (chunk, metadata) => {
 				backpressure = this.queue({
-					videoChunk: chunk,
-					videoMetadata: metadata,
+					video: {
+						chunk,
+						metadata
+					}
 				});
 			},
 			error: (e) => {

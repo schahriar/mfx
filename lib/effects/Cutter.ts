@@ -1,4 +1,4 @@
-import { ExtendedVideoFrame } from "../frame";
+import { cloneFrame, ExtendedVideoFrame } from "../frame";
 import { MFXFrameSampler } from "../sampler";
 
 /**
@@ -26,7 +26,11 @@ export class MFXCutter extends MFXFrameSampler {
 			{
 				transform: (frame) => {
 					const duration = (end - start) * 1000;
-					return ExtendedVideoFrame.cut(frame, duration);
+					const clone: VideoFrame = cloneFrame(frame, {
+						duration
+					});
+
+					return clone;
 				},
 				closer: true,
 			},

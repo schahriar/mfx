@@ -30,6 +30,7 @@ const main = async () => {
   });
   const page = await browser.newPage();
   const build = cp.spawn("npm", ["start"]);
+  build.stdout.pipe(process.stdout)
 
   const [buildURL] = await new Promise<RegExpMatchArray>(async (resolve, reject) => {
     let text = "";

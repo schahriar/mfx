@@ -1,14 +1,15 @@
-import type { MFXEncodedVideoChunk } from "../encode";
+import type { MFXEncodedChunk } from "../encode";
 import type { ExtendedVideoFrame } from "../frame";
 import { ForwardedStream } from "../worker";
 
 /**
+ * @deprecated
  * Use MFXVideoEncoder variant if running the entire pipeline in a worker
  * @group Encode
  */
 export class MFXWorkerVideoEncoder extends ForwardedStream<
 	ExtendedVideoFrame,
-	MFXEncodedVideoChunk
+	MFXEncodedChunk
 > {
 	get identifier() {
 		return "MFXWorkerVideoEncoder";

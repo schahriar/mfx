@@ -2,20 +2,156 @@ import { next, nextTask, nextTick } from "./utils";
 import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXBufferCopy, MFXTransformStream, MFXWritableStream } from "./stream";
+import { TrackStream } from "./stream/TrackStream";
 import JsWebm from "jswebm";
 import { vp9 } from "./codec/vp9";
+import MIMEType from "whatwg-mimetype";
+import { MP4ContainerDecoder } from "./container/mp4/MP4ContainerDecoder";
+import { ContainerDecoder, type MFXDecodableTrackChunk, MFXTrackType, type MFXTrack } from "./container/ContainerDecoder";
+import { WebMContainerDecoder } from "./container/webM/WebMContainerDecoder";
+import type { MFXEncodedChunk } from "./encode";
 
 /**
  * @group Decode
  */
-export interface MFXDecodableChunk {
-	context: ContainerContext;
-	config: VideoDecoderConfig;
-	chunk: EncodedVideoChunk;
+export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
+	context?: ContainerContext;
+	track?: MFXTrack<Sample>;
+	video?: MFXEncodedChunk["video"] & {
+		config: VideoDecoderConfig;
+	};
+	audio?: MFXEncodedChunk["audio"] & {
+		config: AudioDecoderConfig;
+	};
+};
+
+/**
+ * @group Decode
+ */
+export const decode = async (input: ReadableStream<Uint8Array>, mimeType: string) => {
+	let streams: TrackStream<MFXDecodableChunk>[] = [];
+	const mime = new MIMEType(mimeType);
+
+	let decoder: ContainerDecoder<any>;
+
+	if (mime.subtype === "mp4") {
+		decoder = new MP4ContainerDecoder();
+	} else if (mime.subtype === "webm" || mime.subtype === "x-matroska") {
+		decoder = new WebMContainerDecoder(mimeType)
+	}
+
+	if (!decoder) {
+		throw new Error(`No decoder was found for mimeType: ${mimeType}`);
+	}
+
+	const splitter = new WritableStream<MFXDecodableTrackChunk<any>>({
+		write: (chunk) => {
+			const track = chunk.track;
+			const stream = streams.find((s) => s.track.id === track.id);
+			const writer = stream.writable.getWriter();
+
+			chunk.samples.forEach((sample) => {
+				if (track.type === MFXTrackType.Video) {
+					writer.write({
+						[MFXTrackType.Video ? "video" : "audio"]: {
+							config: track.config,
+							chunk: track.toChunk(sample)
+						},
+					})
+				}
+
+			});
+			writer.releaseLock();
+		}
+	});
+
+	input.pipeThrough(decoder).pipeTo(splitter);
+	streams = (await decoder.tracks).map((track) => new TrackStream(track));
+
+	const videoTracks = streams.filter((stream) => stream.track.type === MFXTrackType.Video);
+	const audioTracks = streams.filter((stream) => stream.track.type === MFXTrackType.Audio);
+
+	return {
+		// Convinience properties, first track of each type in container
+		video: videoTracks?.[0],
+		audio: audioTracks?.[0],
+
+		videoTracks,
+		audioTracks
+	};
+};
+
+/**
+ * @group Decode
+ */
+export class MFXAudioDecoder extends MFXTransformStream<
+	MFXDecodableChunk,
+	AudioData
+> {
+	config: AudioDecoderConfig;
+	get identifier() {
+		return "MFXAudioDecoder";
+	}
+
+	constructor(config: Partial<AudioDecoderConfig> = {}) {
+		let backpressure = Promise.resolve();
+		let configured = false;
+
+		const decoder = new AudioDecoder({
+			output: async (data) => {
+				backpressure = this.queue(data);
+			},
+			error: (e) => {
+				console.trace(e);
+				this.dispatchError(e);
+			},
+		});
+
+		super(
+			{
+				transform: async ({ audio }) => {
+					if (!configured) {
+						decoder.configure({
+							...audio.config as AudioDecoderConfig,
+							...config
+						});
+						configured = true;
+					}
+
+					// Prevent forward backpressure
+					await backpressure;
+
+					// Prevent backwards backpressure
+					while (decoder.decodeQueueSize > 10) {
+						await nextTick();
+					}
+
+					decoder.decode(audio.chunk);
+				},
+				flush: async () => {
+					await decoder.flush();
+					await nextTick();
+
+					decoder.close();
+				},
+			},
+			new CountQueuingStrategy({
+				highWaterMark: 10, // Input chunks (tuned for low memory usage)
+			}),
+			new CountQueuingStrategy({
+				highWaterMark: 10, // Output frames (tuned for low memory usage)
+			}),
+		);
+	}
+};
+
+const calculateDuration = (a: VideoFrame, b: VideoFrame) => {
+	return b?.timestamp
+		? b.timestamp - a.timestamp
+		: a.timestamp
 }
 
 /**
- * Only use in a worker, alternatively utilize MFXWorkerVideoEncoder in a main thread video pipeline
  * @group Decode
  */
 export class MFXVideoDecoder extends MFXTransformStream<
@@ -29,23 +165,50 @@ export class MFXVideoDecoder extends MFXTransformStream<
 
 	constructor(config: Partial<VideoDecoderConfig> = {}) {
 		let backpressure = Promise.resolve();
-		let containerContext: ContainerContext;
 		let configured = false;
+		let context: ContainerContext | null = null;
 
+		let frameStack: VideoFrame[] = [];
 		let lastFrame: VideoFrame;
 
 		const processFrame = (
 			frame?: VideoFrame,
 		): ExtendedVideoFrame | undefined => {
 			let newFrame: ExtendedVideoFrame | undefined;
+
 			if (lastFrame) {
-				const current = lastFrame;
-				newFrame = ExtendedVideoFrame.revise(current, current as any, {
+				let last = lastFrame;
+				let duration = calculateDuration(last, frame);
+
+				const discard = () => {
+					last = frame;
+					duration = calculateDuration(frame, frameStack[2]);
+					frameStack = [frame, frameStack[2]];
+				};
+				// TODO: Filter out frames with timecodes outside of container start/end
+				const isOutOfBound = frame && (frame.timestamp < 0 || (Number.isInteger(context?.duration) && context.duration > 0 && frame.timestamp > context?.duration * 1e3));
+
+				if (isOutOfBound) {
+					console.warn("Discarding out of bound frame, MFX is not currently able to handle out of bound frames", { discarded: frame });
+					return null;
+				}
+
+				if (duration <= 0) {
+					// Last frame is out of order, discard
+					console.warn("Discarding out of order frame, MFX is not currently able to handle out of order frames", {
+						discarded: lastFrame
+					});
+					// TODO: Add option to debug by emitting bad frames as an event to be inspected in a Canvas
+					discard();
+				}
+
+				newFrame = ExtendedVideoFrame.revise(last, last as any, {
 					// Ensure duration is always available after decoding
-					duration: frame?.timestamp
-						? frame.timestamp - current.timestamp
-						: current.timestamp,
+					duration: Math.max(duration, 0),
 				});
+
+				frameStack.unshift(newFrame)
+				frameStack = frameStack.slice(0, 3);
 			}
 
 			if (frame) {
@@ -70,16 +233,18 @@ export class MFXVideoDecoder extends MFXTransformStream<
 
 		super(
 			{
-				transform: async (chunk) => {
+				transform: async ({ video, context: derivedContext }) => {
 					if (!configured) {
 						decoder.configure({
 							hardwareAcceleration: "prefer-hardware",
 							optimizeForLatency: false,
 							...config,
-							...chunk.config,
+							...video.config,
 						});
 						configured = true;
 					}
+
+					context = derivedContext;
 
 					// Prevent forward backpressure
 					await backpressure;
@@ -89,9 +254,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 						await nextTick();
 					}
 
-					containerContext = chunk.context;
-
-					decoder.decode(chunk.chunk);
+					decoder.decode(video.chunk);
 				},
 				flush: async (controller) => {
 					await decoder.flush();
@@ -257,14 +420,16 @@ export class MFXWebMVideoContainerDecoder extends MFXTransformStream<
 					while (idx < demuxer.videoPackets.length) {
 						const packet = demuxer.videoPackets[idx];
 						const decodableChunk: MFXDecodableChunk = {
-							config,
 							context,
-							chunk: new EncodedVideoChunk({
-								type: idx === 0 || packet.isKeyframe ? "key" : "delta",
-								timestamp: packet.timestamp * demuxer.segmentInfo.timecodeScale,
-								data: packet.data,
-								transfer: [packet.data],
-							}),
+							video: {
+								chunk: new EncodedVideoChunk({
+									type: idx === 0 || packet.isKeyframe ? "key" : "delta",
+									timestamp: packet.timestamp * demuxer.segmentInfo.timecodeScale,
+									data: packet.data,
+									transfer: [packet.data],
+								}),
+								config
+							}
 						};
 						this.queue(decodableChunk);
 						idx++;
@@ -275,8 +440,10 @@ export class MFXWebMVideoContainerDecoder extends MFXTransformStream<
 	}
 }
 
+
 /**
  * @group Decode
+ * @deprecated
  */
 export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
 	Uint8Array,
@@ -291,7 +458,7 @@ export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
 		let position = 0;
 		let context: ContainerContext;
 
-		let setConfig: (config: VideoDecoderConfig) => void = () => {};
+		let setConfig: (config: VideoDecoderConfig) => void = () => { };
 		const ready = new Promise<VideoDecoderConfig>((resolve) => {
 			setConfig = resolve;
 		});
@@ -313,16 +480,18 @@ export class MFXMP4VideoContainerDecoder extends MFXTransformStream<
 		file.onSamples = async (id, user, samples) => {
 			const config = await ready;
 			this.queue(
-				...samples.map<MFXDecodableChunk>((sample) => ({
-					config,
+				...samples.map<MFXDecodableChunk>((sample): MFXDecodableChunk => ({
 					context,
-					chunk: new EncodedVideoChunk({
-						type: sample.is_sync ? "key" : "delta",
-						timestamp: (1e6 * sample.cts) / sample.timescale,
-						duration: (1e6 * sample.duration) / sample.timescale,
-						data: sample.data.buffer,
-						transfer: [sample.data.buffer],
-					}),
+					video: {
+						config,
+						chunk: new EncodedVideoChunk({
+							type: sample.is_sync ? "key" : "delta",
+							timestamp: (1e6 * sample.cts) / sample.timescale,
+							duration: (1e6 * sample.duration) / sample.timescale,
+							data: sample.data.buffer,
+							transfer: [sample.data.buffer],
+						}),
+					}
 				})),
 			);
 		};

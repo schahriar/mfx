@@ -14,7 +14,7 @@ export { MFXFPSDebugger, ConsoleWritableStream, MFXDigest } from "./debug";
 export {
 	MFXWebMMuxer,
 	MFXBlob,
-	type MFXEncodedVideoChunk,
+	type MFXEncodedChunk as MFXEncodedChunk,
 	MFXFileWriter,
 	MFXMP4Muxer,
 	MFXMediaSourceStream,
@@ -26,14 +26,11 @@ export {
 	MFXWebMVideoContainerDecoder,
 	MFXWebMVideoContainerProbe,
 	createContainerDecoder,
+	decode,
 } from "./decode";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
 export { MFXFrameTee, MFXTransformStream, MFXVoid } from "./stream";
 export { keyframes, MFXFrameFiller } from "./keyframes";
-export {
-	MFXWorkerVideoDecoder,
-	MFXWorkerVideoEncoder,
-} from "./workers";
 /** @ignore */
 export { rawShaders };
 /** @group Effects */

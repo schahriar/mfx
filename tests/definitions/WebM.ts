@@ -6,7 +6,6 @@ import {
   rawShaders,
   codecs,
   MFXMP4Muxer,
-  MFXWorkerVideoEncoder
 } from "mfx";
 import type { TestDefinition } from "../types";
 
@@ -50,7 +49,29 @@ export const definitions: TestDefinition[] = [{
     };
 
     return [
-      new MFXWorkerVideoEncoder(config),
+      new MFXVideoEncoder(config),
+      new MFXWebMMuxer(config)
+    ];
+  }
+},  {
+  id: "webm_codec_ooo",
+  title: "WebM Codec Out of Order frames",
+  description: "Coding / Decoding WebM file with out of order frames",
+  path: "/webm_codec_ooo",
+  input: "BeachWithAudio.webm",
+  process: async () => {
+    return []
+  },
+  output: async () => {
+    const config = {
+      codec: "vp9",
+      width: 640 * 3,
+      height: 360 * 3,
+      bitrate: 1e6 * 3,
+    };
+
+    return [
+      new MFXVideoEncoder(config),
       new MFXWebMMuxer(config)
     ];
   }
@@ -75,7 +96,7 @@ export const definitions: TestDefinition[] = [{
     };
 
     return [
-      new MFXWorkerVideoEncoder(config),
+      new MFXVideoEncoder(config),
       new MFXWebMMuxer(config)
     ];
   }

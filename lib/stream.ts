@@ -153,6 +153,10 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 		}
 	}
 
+	get desiredSize() {
+		return this._controller?.desiredSize || 60;
+	}
+
 	queue(...items: O[]) {
 		if (this._controller) {
 			items.forEach((item) => this._controller.enqueue(item));

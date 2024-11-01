@@ -4,7 +4,41 @@ export interface ContainerContext {
 	duration: number;
 	createdAt?: Date;
 	// TODO: Support seek
-}
+};
+
+export const cloneFrame = (
+	frame: VideoFrame,
+	init?: VideoFrameInit,
+	source: any = frame,
+) => {
+	return new VideoFrame(
+		source,
+		{
+			timestamp: frame.timestamp,
+			...(frame.duration
+				? {
+						duration: frame.duration,
+					}
+				: {}),
+			...(frame.displayWidth
+				? {
+						displayWidth: frame.displayWidth,
+					}
+				: {}),
+			...(frame.displayHeight
+				? {
+						displayHeight: frame.displayHeight,
+					}
+				: {}),
+			...(frame.visibleRect
+				? {
+						visibleRect: frame.visibleRect,
+					}
+				: {}),
+			...init,
+		},
+	);
+};
 
 export class ExtendedVideoFrame extends VideoFrame {
 	containerContext?: ContainerContext;
@@ -16,8 +50,6 @@ export class ExtendedVideoFrame extends VideoFrame {
 		super(source, init);
 		this.containerContext = container;
 	}
-
-	static from(frame: VideoFrame, init?: VideoFrameInit) {}
 
 	static revise(
 		frame: ExtendedVideoFrame | VideoFrame,
