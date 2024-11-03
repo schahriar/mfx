@@ -148,7 +148,7 @@ export class MFXAudioDecoder extends MFXTransformStream<
 const calculateDuration = (a: VideoFrame, b: VideoFrame) => {
 	return b?.timestamp
 		? b.timestamp - a.timestamp
-		: a.timestamp
+		: 0;
 }
 
 /**
@@ -175,10 +175,15 @@ export class MFXVideoDecoder extends MFXTransformStream<
 			frame?: VideoFrame,
 		): ExtendedVideoFrame | undefined => {
 			let newFrame: ExtendedVideoFrame | undefined;
+			const isLastFrame = !frame;
+			
+			/** @note This generic frame duration approach works for any container but can result in inaccuracies */
+			// In the future we can utilize container provided durations for each frame if necessary
 
 			if (lastFrame) {
 				let last = lastFrame;
-				let duration = calculateDuration(last, frame);
+				// If we are at the last frame calculate the total duration of the frame from the container duration
+				let duration = isLastFrame ? Math.max((context.duration * 1e3) - last.timestamp, 0) : calculateDuration(last, frame);
 
 				const discard = () => {
 					last = frame;

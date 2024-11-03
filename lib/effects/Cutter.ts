@@ -25,10 +25,7 @@ export class MFXCutter extends MFXFrameSampler {
 			},
 			{
 				transform: (frame) => {
-					const duration = (end - start) * 1000;
-					const clone: VideoFrame = cloneFrame(frame, {
-						duration
-					});
+					const clone: VideoFrame = cloneFrame(frame);
 
 					return clone;
 				},
