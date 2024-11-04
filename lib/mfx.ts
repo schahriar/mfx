@@ -3,7 +3,7 @@ import * as shaders from "./effects/shaders";
 import { avc } from "./codec/avc";
 import { vp9 } from "./codec/vp9";
 
-export { convolution3x3 } from "./convolution";
+export { convolution3x3 } from "./effects/convolution";
 export { MFXGLEffect } from "./effects/GLEffect";
 export { MFXCutter } from "./effects/Cutter";
 export { Scaler } from "./effects/Scaler";
@@ -12,20 +12,15 @@ export { Compositor } from "./effects/Compositor";
 export { MFXFrameSampler } from "./sampler";
 export { MFXFPSDebugger, ConsoleWritableStream, MFXDigest } from "./debug";
 export {
-	MFXWebMMuxer,
 	MFXBlob,
 	type MFXEncodedChunk as MFXEncodedChunk,
-	MFXFileWriter,
-	MFXMP4Muxer,
-	MFXMediaSourceStream,
+	WebMContainerEncoder,
+	MP4ContainerEncoder,
 	MFXVideoEncoder,
 } from "./encode";
+export * from "./output";
 export {
-	MFXMP4VideoContainerDecoder,
 	MFXVideoDecoder,
-	MFXWebMVideoContainerDecoder,
-	MFXWebMVideoContainerProbe,
-	createContainerDecoder,
 	decode,
 } from "./decode";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";

@@ -11,17 +11,13 @@ Decode MP4 Video -> zoom out -> encode to WebM (vp8):
 ```javascript
 import {
   shaders,
-  MFXMP4VideoContainerDecoder,
-  MFXVideoDecoder,
+  decode,
   MFXGLEffect,
-  MFXVideoEncoder,
-  MFXWebMMuxer,
   MFXFileWriter,
 } from "mfx";
 
-const filename = "myvideo.mp4";
 // Files can be fetched locally
-const video = await fetch(`https://example.com/${filename}`);
+const file = await fetch("https://example.com/myvideo.mp4");
 
 const output = {
   codec: "vp8",
@@ -31,16 +27,25 @@ const output = {
   framerate: 30,
 };
 
+const { video, audio } = await decode(file, "video/mp4");
+
 // Create video pipeline
-video.body
-  .pipeThrough(new MFXMP4VideoContainerDecoder(filename))
-  .pipeThrough(new MFXVideoDecoder())
-  .pipeThrough(new MFXGLEffect([ // Apply zoom out effect
-    shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
-  ]))
-  .pipeThrough(new MFXVideoEncoder(output))
-  .pipeThrough(new MFXWebMMuxer(output)) // Returns a Blob type that can be piped to a backend if needed
-  .pipeTo(new MFXFileWriter("output.webm")) // Opens a save dialog in the browser
+const videoOutput = video.pipeThrough(new MFXGLEffect([ // Apply zoom out effect
+  shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
+]));
+
+const output = await encode({
+  mimeType: `video/webm; codecs="vp8,opus"`, // Transcode to WebM VP8 (video) and Opus (audio)
+  tracks: [videoOutput, audio] // Take transformed video and raw audio and re-encode
+  video: {
+    width: 640,
+    height: 360,
+    bitrate: 1e6,
+    framerate: 30,
+  }
+});
+
+output.pipeTo(new MFXFileWriter("output.webm")) // Opens a save dialog in the browser
 
 ```
 

@@ -289,3 +289,17 @@ export class MFXVoid extends WritableStream<any> {
 		});
 	}
 }
+
+export class PassThroughStream<T> extends MFXTransformStream<T, T> {
+	get identifier() {
+		return "PassThroughStream";
+	}
+
+	constructor() {
+		super({
+			transform: (chunk, controller) => {
+				controller.enqueue(chunk);
+			},
+		})
+	}
+};

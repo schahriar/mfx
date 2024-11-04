@@ -1,4 +1,4 @@
-import { MFXCutter, MFXVideoEncoder, MFXMP4Muxer, codecs, MFXGLEffect, shaders, keyframes } from "mfx";
+import { MFXCutter, MFXVideoEncoder, MP4ContainerEncoder, codecs, MFXGLEffect, shaders, keyframes } from "mfx";
 import { easing } from "ts-easing";
 import { MFXFrameFiller } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";
@@ -25,7 +25,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXMP4Muxer(config)
+      new MP4ContainerEncoder(config)
     ];
   }
 }, {
@@ -72,7 +72,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXMP4Muxer(config)
+      new MP4ContainerEncoder(config)
     ];
   }
 }];

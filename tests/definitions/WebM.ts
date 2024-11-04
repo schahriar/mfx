@@ -2,10 +2,10 @@ import {
   convolution3x3,
   MFXVideoEncoder,
   MFXGLEffect,
-  MFXWebMMuxer,
+  WebMContainerEncoder,
   rawShaders,
   codecs,
-  MFXMP4Muxer,
+  MP4ContainerEncoder,
 } from "mfx";
 import type { TestDefinition } from "../types";
 
@@ -29,7 +29,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXMP4Muxer(config),
+      new MP4ContainerEncoder(config),
     ];
   }
 }, {
@@ -51,7 +51,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXWebMMuxer(config)
+      new WebMContainerEncoder(config)
     ];
   }
 },  {
@@ -73,7 +73,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXWebMMuxer(config)
+      new WebMContainerEncoder(config)
     ];
   }
 }, {
@@ -98,7 +98,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXWebMMuxer(config)
+      new WebMContainerEncoder(config)
     ];
   }
 }, {
@@ -127,7 +127,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXWebMMuxer(config)
+      new WebMContainerEncoder(config)
     ];
   }
 }];

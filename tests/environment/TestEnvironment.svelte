@@ -1,8 +1,6 @@
 <script lang="ts">
   import {
-    MFXWorkerVideoDecoder,
     PassthroughCanvas,
-    createContainerDecoder,
     MFXFPSDebugger,
     MFXDigest,
     MFXFrameSampler,
