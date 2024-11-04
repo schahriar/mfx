@@ -4,13 +4,13 @@ import { avc } from "./codec/avc";
 import { vp9 } from "./codec/vp9";
 
 export { convolution3x3 } from "./effects/convolution";
-export { MFXGLEffect } from "./effects/GLEffect";
-export { MFXCutter } from "./effects/Cutter";
+export { GLEffect } from "./effects/GLEffect";
+export { Cutter } from "./effects/Cutter";
 export { Scaler } from "./effects/Scaler";
 export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
 export { Compositor } from "./effects/Compositor";
-export { MFXFrameSampler } from "./sampler";
-export { MFXFPSDebugger, ConsoleWritableStream, MFXDigest } from "./debug";
+export { FrameSampler } from "./sampler";
+export { FPSDebugger, ConsoleWritableStream, Digest } from "./debug";
 export {
 	MFXBlob,
 	type MFXEncodedChunk as MFXEncodedChunk,
@@ -24,8 +24,8 @@ export {
 	decode,
 } from "./decode";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
-export { MFXFrameTee, MFXTransformStream, MFXVoid } from "./stream";
-export { keyframes, MFXFrameFiller } from "./keyframes";
+export { FrameTee, MFXTransformStream, Void } from "./stream";
+export { keyframes, FrameFiller } from "./keyframes";
 /** @ignore */
 export { rawShaders };
 /** @group Effects */

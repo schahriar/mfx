@@ -4,12 +4,12 @@ import { MFXTransformStream } from "./stream";
 /**
  * @group Stream
  */
-export class MFXFrameSampler extends MFXTransformStream<
+export class FrameSampler extends MFXTransformStream<
 	ExtendedVideoFrame,
 	ExtendedVideoFrame
 > {
 	get identifier() {
-		return "MFXFrameSampler";
+		return "FrameSampler";
 	}
 
 	constructor(

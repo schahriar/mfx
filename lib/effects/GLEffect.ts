@@ -56,12 +56,12 @@ const resolveUniforms = (o: any, frame: ExtendedVideoFrame) => {
 };
 
 /** @group Effects */
-export class MFXGLEffect extends MFXTransformStream<
+export class GLEffect extends MFXTransformStream<
 	ExtendedVideoFrame,
 	ExtendedVideoFrame
 > {
 	get identifier() {
-		return "MFXGLEffect";
+		return "GLEffect";
 	}
 
 	constructor(

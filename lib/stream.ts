@@ -78,7 +78,7 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 			if (this._controller.desiredSize === 0) {
 				if (lastMetDesiredSize < Date.now() - 10000) {
 					console.warn(
-						`Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new MFXVoid()) at the end of your stream`,
+						`Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new Void()) at the end of your stream`,
 					);
 					lastMetDesiredSize = Date.now() + 30 * 60 * 1000; // Already reported, check in 30 seconds
 				}
@@ -245,12 +245,12 @@ export class MFXBufferCopy<T> extends MFXWritableStream<T> {
 /**
  * @group Stream
  */
-export class MFXFrameTee extends MFXTransformStream<
+export class FrameTee extends MFXTransformStream<
 	ExtendedVideoFrame,
 	ExtendedVideoFrame
 > {
 	get identifier() {
-		return "MFXFrameTee";
+		return "FrameTee";
 	}
 
 	constructor(ctx: (stream: ReadableStream<ExtendedVideoFrame>) => void) {
@@ -275,7 +275,7 @@ export class MFXFrameTee extends MFXTransformStream<
 }
 
 /** @group Stream */
-export class MFXVoid extends WritableStream<any> {
+export class Void extends WritableStream<any> {
 	constructor() {
 		super({
 			write: (chunk) => {

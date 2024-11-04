@@ -1,11 +1,11 @@
 <script lang="ts">
   import {
     PassthroughCanvas,
-    MFXFPSDebugger,
-    MFXDigest,
-    MFXFrameSampler,
-    MFXFrameTee,
-    MFXVoid,
+    FPSDebugger,
+    Digest,
+    FrameSampler,
+    FrameTee,
+    Void,
     MFXMediaSourceStream,
     ExtendedVideoFrame,
     Scaler,
@@ -31,8 +31,8 @@
     frame: ExtendedVideoFrame;
     id: number;
   }[] = [];
-  const fpsCounter = new MFXFPSDebugger();
-  const digest = new MFXDigest((value) => {
+  const fpsCounter = new FPSDebugger();
+  const digest = new Digest((value) => {
     snapshot.push(value);
   });
 
@@ -67,7 +67,7 @@
     };
   });
 
-  const outputDigest = new MFXDigest(
+  const outputDigest = new Digest(
     (value) => {
       hash = value;
     },
@@ -130,15 +130,15 @@
       : [];
 
     const decodeStream = inputStream.pipeThrough(
-      new MFXFrameTee((stream) => {
+      new FrameTee((stream) => {
         stream
           .pipeThrough(
-            new MFXFrameSampler(async (f, i) => i === 0 || !Boolean(i % 30))
+            new FrameSampler(async (f, i) => i === 0 || !Boolean(i % 30))
           )
           .pipeThrough(new Scaler(0.1))
           .pipeThrough(digest)
           .pipeThrough(
-            new MFXFrameSampler(
+            new FrameSampler(
               async (frame, i) => {
                 samples = [
                   ...samples,
@@ -157,7 +157,7 @@
               { closer: false }
             )
           )
-          .pipeTo(new MFXVoid());
+          .pipeTo(new Void());
       })
     );
 
@@ -184,7 +184,7 @@
       return;
     }
 
-    displayStream.pipeThrough(outputDigest).pipeTo(new MFXVoid());
+    displayStream.pipeThrough(outputDigest).pipeTo(new Void());
   });
 
   $: {

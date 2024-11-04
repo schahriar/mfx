@@ -1,6 +1,6 @@
-import { MFXCutter, MFXVideoEncoder, MP4ContainerEncoder, codecs, MFXGLEffect, shaders, keyframes } from "mfx";
+import { Cutter, MFXVideoEncoder, MP4ContainerEncoder, codecs, GLEffect, shaders, keyframes } from "mfx";
 import { easing } from "ts-easing";
-import { MFXFrameFiller } from "../../lib/keyframes";
+import { FrameFiller } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
@@ -10,7 +10,7 @@ export const definitions: TestDefinition[] = [{
   path: "/cut",
   input: "boats.mp4",
   process: async () => [
-    new MFXCutter({
+    new Cutter({
       start: 1000, // Start at 1 second
       end: 2000, // End at 2 seconds
     })
@@ -35,8 +35,8 @@ export const definitions: TestDefinition[] = [{
   path: "/keyframes",
   input: "beach.webm",
   process: async () => [
-    new MFXFrameFiller(30),
-    new MFXGLEffect([
+    new FrameFiller(30),
+    new GLEffect([
       shaders.zoom({
         factor: keyframes([{
           time: 0,

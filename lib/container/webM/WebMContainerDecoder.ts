@@ -1,7 +1,6 @@
 import JsWebm from "jswebm";
-import MIMEType from "whatwg-mimetype";
 import { ContainerDecoder, type MFXAudioTrack, MFXTrackType, type MFXVideoTrack } from "../ContainerDecoder";
-import { getCodecFromMimeType, next } from "../../utils";
+import { next } from "../../utils";
 
 /**
  * @group Decode

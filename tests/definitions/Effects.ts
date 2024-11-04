@@ -1,5 +1,5 @@
 import { convolution3x3, Scaler, rawShaders, shaders } from "mfx";
-import { MFXGLEffect } from "../../lib/effects/GLEffect";
+import { GLEffect } from "../../lib/effects/GLEffect";
 import type { TestDefinition } from "../types";
 
 export const definitions: TestDefinition[] = [{
@@ -9,7 +9,7 @@ export const definitions: TestDefinition[] = [{
   path: "/zoom",
   input: "AI.mp4",
   process: async () => [
-    new MFXGLEffect([
+    new GLEffect([
       shaders.zoom({ factor: 2, x: 0.5, y: 0.5 }),
     ])
   ]
@@ -20,7 +20,7 @@ export const definitions: TestDefinition[] = [{
   path: "/zoom_out",
   input: "AI.mp4",
   process: async () => [
-    new MFXGLEffect([
+    new GLEffect([
       shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
     ])
   ]
@@ -32,7 +32,7 @@ export const definitions: TestDefinition[] = [{
   input: "boats.mp4",
   process: async () => [
     new Scaler(0.2),
-    new MFXGLEffect([{
+    new GLEffect([{
       shader: rawShaders.blur,
     }, {
       shader: rawShaders.convolution,

@@ -1,4 +1,4 @@
-import { type MFXEncodedChunk, MFXTransformStream, MFXBlob } from "mfx";
+import { type MFXEncodedChunk, MFXTransformStream, MFXBlob } from "../../mfx";
 import {
 	Muxer as WebMMuxer,
 	StreamTarget as WebMStreamTarget,

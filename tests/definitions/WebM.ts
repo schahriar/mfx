@@ -1,7 +1,7 @@
 import {
   convolution3x3,
   MFXVideoEncoder,
-  MFXGLEffect,
+  GLEffect,
   WebMContainerEncoder,
   rawShaders,
   codecs,
@@ -109,7 +109,7 @@ export const definitions: TestDefinition[] = [{
   input: "AI.mp4",
   process: async () => {
     return [
-      new MFXGLEffect([{
+      new GLEffect([{
         shader: rawShaders.convolution,
         uniforms: {
           kernel: convolution3x3.emboss

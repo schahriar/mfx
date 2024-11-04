@@ -1,4 +1,4 @@
-import { keyframes, MFXGLEffect, MFXVideoSource, shaders } from "mfx";
+import { keyframes, GLEffect, MFXVideoSource, shaders } from "mfx";
 import { easing } from "ts-easing";
 import type { TestDefinition } from "../types";
 
@@ -21,7 +21,7 @@ export const definitions: TestDefinition[] = [{
   },
   process: async () => {
     return [
-      new MFXGLEffect([
+      new GLEffect([
         shaders.zoom({
           factor: keyframes([{
             time: 0,

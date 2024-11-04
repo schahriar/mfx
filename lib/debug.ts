@@ -38,12 +38,12 @@ export class ConsoleWritableStream<T = any> {
 /**
  * @group Debug
  */
-export class MFXDigest extends MFXTransformStream<
+export class Digest extends MFXTransformStream<
 	ExtendedVideoFrame | MFXEncodedChunk,
 	ExtendedVideoFrame | MFXEncodedChunk
 > {
 	get identifier() {
-		return "MFXDigest";
+		return "Digest";
 	}
 
 	globalChecksum = "";
@@ -107,12 +107,12 @@ export class MFXDigest extends MFXTransformStream<
 /**
  * @group Debug
  */
-export class MFXFPSDebugger extends MFXTransformStream<
+export class FPSDebugger extends MFXTransformStream<
 	ExtendedVideoFrame,
 	ExtendedVideoFrame
 > {
 	get identifier() {
-		return "MFXFPSDebugger";
+		return "FPSDebugger";
 	}
 
 	ringBuffer: RingBuffer<number>;

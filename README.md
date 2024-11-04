@@ -12,29 +12,23 @@ Decode MP4 Video -> zoom out -> encode to WebM (vp8):
 import {
   shaders,
   decode,
-  MFXGLEffect,
-  MFXFileWriter,
+  encode,
+  GLEffect,
+  FileWriter,
 } from "mfx";
 
 // Files can be fetched locally
 const file = await fetch("https://example.com/myvideo.mp4");
 
-const output = {
-  codec: "vp8",
-  width: 640,
-  height: 360,
-  bitrate: 1e6,
-  framerate: 30,
-};
-
+// Decode video container
 const { video, audio } = await decode(file, "video/mp4");
 
-// Create video pipeline
-const videoOutput = video.pipeThrough(new MFXGLEffect([ // Apply zoom out effect
+// Create video pipeline taking raw frames through Web Streams
+const videoOutput = video.pipeThrough(new GLEffect([ // Apply zoom out effect
   shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
 ]));
 
-const output = await encode({
+encode({
   mimeType: `video/webm; codecs="vp8,opus"`, // Transcode to WebM VP8 (video) and Opus (audio)
   tracks: [videoOutput, audio] // Take transformed video and raw audio and re-encode
   video: {
@@ -43,10 +37,8 @@ const output = await encode({
     bitrate: 1e6,
     framerate: 30,
   }
-});
-
-output.pipeTo(new MFXFileWriter("output.webm")) // Opens a save dialog in the browser
-
+}).pipeTo(new FileWriter("output.webm")); // Opens a save dialog in the browser
+// Alternatively you can pipeTo a fetch POST request
 ```
 
 
@@ -63,7 +55,7 @@ npm start
 
 ### Roadmap
 - Add note on VP9 probe
-- Testing: Source videos with frame duration > fps to showcase MFXFrameFiller
+- Testing: Source videos with frame duration > fps to showcase FrameFiller
 - Provide wrapper encode / decode interfaces
 - API Documentation
 - Run tests on Github actions

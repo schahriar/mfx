@@ -2,12 +2,12 @@ import { type UniformProducer } from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
 
-export class MFXFrameFiller extends MFXTransformStream<
+export class FrameFiller extends MFXTransformStream<
 	ExtendedVideoFrame,
 	ExtendedVideoFrame
 > {
 	get identifier() {
-		return "MFXFrameFiller";
+		return "FrameFiller";
 	}
 
 	constructor(fps: number) {

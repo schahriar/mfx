@@ -1,12 +1,12 @@
 import { cloneFrame, ExtendedVideoFrame } from "../frame";
-import { MFXFrameSampler } from "../sampler";
+import { FrameSampler } from "../sampler";
 
 /**
  * @group Effects
  */
-export class MFXCutter extends MFXFrameSampler {
+export class Cutter extends FrameSampler {
 	get identifier() {
-		return "MFXCutter";
+		return "Cutter";
 	}
 
 	constructor({

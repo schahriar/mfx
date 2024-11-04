@@ -3,9 +3,7 @@ import type { ExtendedVideoFrame } from "../frame";
 import { ForwardedStream } from "../worker";
 
 /**
- * @deprecated
- * Use MFXVideoEncoder variant if running the entire pipeline in a worker
- * @group Encode
+ * @example
  */
 export class MFXWorkerVideoEncoder extends ForwardedStream<
 	ExtendedVideoFrame,

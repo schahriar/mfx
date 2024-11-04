@@ -1,5 +1,5 @@
 import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from "mp4-muxer";
-import { MFXBlob, type MFXEncodedChunk, MFXTransformStream } from "mfx";
+import { MFXBlob, type MFXEncodedChunk, MFXTransformStream } from "../../mfx";
 
 /**
  * @group Encode

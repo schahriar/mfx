@@ -4,9 +4,9 @@ import { MFXTransformStream } from "./stream";
 /**
  * @group Encode
  */
-export class MFXFileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
+export class FileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
 	get identifier() {
-		return "MFXFileWriter";
+		return "FileWriter";
 	}
 
 	writer: Promise<FileSystemWritableFileStream>;
