@@ -1,30 +1,31 @@
 import JsWebm from "jswebm";
 import MIMEType from "whatwg-mimetype";
 import { ContainerDecoder, type MFXAudioTrack, MFXTrackType, type MFXVideoTrack } from "../ContainerDecoder";
-import { next } from "../../utils";
+import { getCodecFromMimeType, next } from "../../utils";
 
 /**
  * @group Decode
  */
 export class WebMContainerDecoder extends ContainerDecoder<any> {
-	get identifier() {
-		return "WebMContainerDecoder";
-	}
+  get identifier() {
+    return "WebMContainerDecoder";
+  }
 
-	constructor(mimeType: string) {
-		const demuxer = new JsWebm();
-    const mime = new MIMEType(mimeType);
-    const [videoCodec = "", audioCodec = ""] = (mime.parameters.get("codecs") || "").split(",");
+  constructor({
+    videoCodec = "vp8",
+    audioCodec = ""
+  }) {
+    const demuxer = new JsWebm();
 
-		super({
-			transform: async (chunk) => {
-				demuxer.queueData(chunk.buffer);
-			},
-			flush: async () => {
-				while (!demuxer.videoTrack && !demuxer.eof) {
-					await demuxer.demux();
-				}
-				let videoCursor = 0;
+    super({
+      transform: async (chunk) => {
+        demuxer.queueData(chunk.buffer);
+      },
+      flush: async () => {
+        while (!demuxer.videoTrack && !demuxer.eof) {
+          await demuxer.demux();
+        }
+        let videoCursor = 0;
         let audioCursor = 0;
 
         const { videoTrack, audioTrack } = demuxer;
@@ -35,8 +36,8 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
           duration: 0,
           config: {
             codec: videoCodec,
-            codedHeight: videoTrack.video.height,
-            codedWidth: videoTrack.video.width,
+            codedHeight: videoTrack.height,
+            codedWidth: videoTrack.width,
           },
           toChunk: (sample) => new EncodedVideoChunk({
             type: sample.isKeyframe ? "key" : "delta",
@@ -45,12 +46,12 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
             transfer: [sample.data],
           })
         } : null;
-  
-        const processedAudioTrack: MFXAudioTrack<any> | null = {
+
+        const processedAudioTrack: MFXAudioTrack<any> | null = audioTrack ? {
           id: audioTrack.trackUID,
           type: MFXTrackType.Audio,
           config: {
-            codec: demuxer.audioCodec,
+            codec: audioCodec || demuxer.audioCodec,
             numberOfChannels: audioTrack.channels,
             sampleRate: audioTrack.rate,
           },
@@ -59,8 +60,8 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
             data: sample.data,
             timestamp: sample.timestamp * demuxer.segmentInfo.timecodeScale,
           })
-        };
-  
+        } : null;
+
         const tracks = [
           /**
            * @note
@@ -70,20 +71,20 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
           ...processedVideoTrack ? [processedVideoTrack] : [],
           ...processedAudioTrack ? [processedAudioTrack] : [],
         ];
-  
+
         this.start(tracks);
 
-				while (!demuxer.eof) {
+        while (!demuxer.eof) {
+          await demuxer.demux();
+          await next(0);
+
           if (!this.desiredSize) {
             await next(0);
             continue;
           }
 
-					await demuxer.demux();
-					await next(0);
-
-					while (videoCursor < demuxer.videoPackets.length) {
-						const packet = demuxer.videoPackets[videoCursor];
+          while (videoCursor < demuxer.videoPackets.length) {
+            const packet = demuxer.videoPackets[videoCursor];
 
             if (videoCursor === 0) {
               packet.isKeyframe = true;
@@ -94,21 +95,21 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
               samples: [packet],
             });
 
-						videoCursor++;
-					}
+            videoCursor++;
+          }
 
-          while (videoCursor < demuxer.audioPackets.length) {
-						const packet = demuxer.audioPackets[audioCursor];
+          while (audioCursor < demuxer.audioPackets.length) {
+            const packet = demuxer.audioPackets[audioCursor];
 
             this.queue({
               track: processedAudioTrack,
               samples: [packet],
             });
 
-						audioCursor++;
-					}
-				}
-			},
-		});
-	}
+            audioCursor++;
+          }
+        }
+      },
+    });
+  }
 }

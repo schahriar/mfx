@@ -1,8 +1,7 @@
-import { next, nextTask, nextTick } from "./utils";
+import { getCodecFromMimeType, next, nextTask, nextTick } from "./utils";
 import MP4Box, { type MP4ArrayBuffer } from "mp4box";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXBufferCopy, MFXTransformStream, MFXWritableStream } from "./stream";
-import { TrackStream } from "./stream/TrackStream";
 import JsWebm from "jswebm";
 import { vp9 } from "./codec/vp9";
 import MIMEType from "whatwg-mimetype";
@@ -29,15 +28,39 @@ export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
  * @group Decode
  */
 export const decode = async (input: ReadableStream<Uint8Array>, mimeType: string) => {
-	let streams: TrackStream<MFXDecodableChunk>[] = [];
+	let videoTracks: MFXVideoDecoder[] = [];
+	let audioTracks: MFXAudioDecoder[] = [];
+	let root = input;
 	const mime = new MIMEType(mimeType);
+	let { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
 	let decoder: ContainerDecoder<any>;
 
+	const isWebM = mime.subtype === "webm" || mime.subtype === "x-matroska";
+
+	// Slow path
+	if (isWebM && !videoCodec) {
+		const measure = "Time-spent on codec probing";
+		console.time(measure);
+		console.warn(`No video codec provided in mimeType = (${mimeType}): a slow full container decode is required.
+
+Please provided a full mimeType if video/audio codec is known ahead of time.`);
+		const probe = new MFXWebMVideoContainerProbe();
+		const s1 = new TransformStream();
+		const s2 = new TransformStream();
+		const copier = new MFXBufferCopy(s1.writable, s2.writable);
+		input.pipeTo(copier);
+		s1.readable.pipeTo(probe);
+		root = s2.readable;
+
+		videoCodec = await probe.getCodec();
+		console.timeEnd(measure);
+	}
+
 	if (mime.subtype === "mp4") {
 		decoder = new MP4ContainerDecoder();
-	} else if (mime.subtype === "webm" || mime.subtype === "x-matroska") {
-		decoder = new WebMContainerDecoder(mimeType)
+	} else if (isWebM) {
+		decoder = new WebMContainerDecoder({ videoCodec, audioCodec });
 	}
 
 	if (!decoder) {
@@ -47,29 +70,43 @@ export const decode = async (input: ReadableStream<Uint8Array>, mimeType: string
 	const splitter = new WritableStream<MFXDecodableTrackChunk<any>>({
 		write: (chunk) => {
 			const track = chunk.track;
-			const stream = streams.find((s) => s.track.id === track.id);
-			const writer = stream.writable.getWriter();
+			let stream: MFXTransformStream<MFXDecodableChunk, any>;
+
+			if (track.type === MFXTrackType.Video) {
+				stream = videoTracks.find((s) => s.track.id === track.id);
+			} else {
+				stream = audioTracks.find((s) => s.track.id === track.id);
+			}
+
+			if (!stream) {
+				throw new Error(`Unexpected failure, unable to find associted decoder for track ${track.id} of type ${track.type}`);
+			}
+
+			const writer = stream.writable.getWriter() as WritableStreamDefaultWriter<MFXDecodableChunk>;
 
 			chunk.samples.forEach((sample) => {
-				if (track.type === MFXTrackType.Video) {
-					writer.write({
-						[MFXTrackType.Video ? "video" : "audio"]: {
-							config: track.config,
-							chunk: track.toChunk(sample)
-						},
-					})
-				}
-
+				writer.write({
+					[track.type]: {
+						config: track.config,
+						chunk: track.toChunk(sample)
+					},
+				})
 			});
 			writer.releaseLock();
+		},
+		close: async () => {
+			await Promise.all([...videoTracks, ...audioTracks].map((track) => track.writable.close()));
 		}
 	});
 
-	input.pipeThrough(decoder).pipeTo(splitter);
-	streams = (await decoder.tracks).map((track) => new TrackStream(track));
-
-	const videoTracks = streams.filter((stream) => stream.track.type === MFXTrackType.Video);
-	const audioTracks = streams.filter((stream) => stream.track.type === MFXTrackType.Audio);
+	root.pipeThrough(decoder).pipeTo(splitter);
+	const tracks = await decoder.tracks;
+	videoTracks = tracks
+		.filter((track) => track.type === MFXTrackType.Video)
+		.map((track) => new MFXVideoDecoder(track.config as VideoDecoderConfig).setTrack(track));
+	audioTracks = tracks
+		.filter((track) => track.type === MFXTrackType.Audio)
+		.map((track) => new MFXAudioDecoder(track.config as AudioDecoderConfig).setTrack(track));
 
 	return {
 		// Convinience properties, first track of each type in container
@@ -176,7 +213,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 		): ExtendedVideoFrame | undefined => {
 			let newFrame: ExtendedVideoFrame | undefined;
 			const isLastFrame = !frame;
-			
+
 			/** @note This generic frame duration approach works for any container but can result in inaccuracies */
 			// In the future we can utilize container provided durations for each frame if necessary
 
@@ -263,7 +300,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
 				},
 				flush: async (controller) => {
 					await decoder.flush();
-					const frame = processFrame();
+					const frame = processFrame(lastFrame);
 					controller.enqueue(frame);
 					await nextTick();
 

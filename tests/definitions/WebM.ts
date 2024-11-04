@@ -15,6 +15,7 @@ export const definitions: TestDefinition[] = [{
   description: "Decodes WebM file",
   path: "/webm_decode",
   input: "beach.webm",
+  codec: "vp09.02.41.08",
   process: async () => {
     return []
   },
@@ -28,7 +29,7 @@ export const definitions: TestDefinition[] = [{
 
     return [
       new MFXVideoEncoder(config),
-      new MFXMP4Muxer(config)
+      new MFXMP4Muxer(config),
     ];
   }
 }, {

@@ -32,15 +32,11 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
 		file.onSamples = async (id, user, samples) => {
 			const tracks = await this.tracks;
 			const track = tracks.find((track) => track.id === id);
-			const lastSample = samples[samples.length - 1];
 
 			this.queue({
 				track,
 				samples,
 			});
-
-			// Free memory
-			file.releaseUsedSamples(id, lastSample.number);
 		};
 		file.onReady = (info) => {
 			// TODO: Support multiple video tracks?
@@ -55,18 +51,25 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
 				duration: videoTrack.duration / videoTrack.timescale,
 				createdAt: videoTrack.created.getTime(),
 				config: {
-					codec: videoTrack.codec.startsWith("avc1") ? "avc1" : videoTrack.codec,
+					codec: videoTrack.codec,
 					codedHeight: videoTrack.video.height,
 					codedWidth: videoTrack.video.width,
 					description: getVideoBoxDescription(file.getTrackById(videoTrack.id)),
 				},
-				toChunk: (sample) => new EncodedVideoChunk({
-					type: sample.is_sync ? "key" : "delta",
-					timestamp: (1e6 * sample.cts) / sample.timescale,
-					duration: (1e6 * sample.duration) / sample.timescale,
-					data: sample.data.buffer,
-					transfer: [sample.data.buffer],
-				})
+				toChunk: (sample) => {
+					const chunk =  new EncodedVideoChunk({
+						type: sample.is_sync ? "key" : "delta",
+						timestamp: (1e6 * sample.cts) / sample.timescale,
+						duration: (1e6 * sample.duration) / sample.timescale,
+						data: sample.data.buffer,
+						transfer: [sample.data.buffer],
+					});
+
+					// Free memory
+					file.releaseUsedSamples(videoTrack.id, sample.number);
+
+					return chunk;
+				}
 			} : null;
 
 			const processedAudioTracks = audioTracks.map<MFXAudioTrack<MP4Sample>>((track) => ({

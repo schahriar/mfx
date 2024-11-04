@@ -1,3 +1,4 @@
+import type { MFXTrack } from "./container/ContainerDecoder";
 import { ExtendedVideoFrame } from "./frame";
 import { next } from "./utils";
 
@@ -54,6 +55,7 @@ export abstract class MFXWritableStream<I> extends WritableStream {
  * @group Stream
  */
 export abstract class MFXTransformStream<I, O> extends TransformStream {
+	protected _track: MFXTrack<any>;
 	protected _buffer: O[];
 	protected _eventTarget: EventTarget;
 	protected _controller: TransformStreamDefaultController<O>;
@@ -155,6 +157,16 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 
 	get desiredSize() {
 		return this._controller?.desiredSize || 60;
+	}
+
+	get track() {
+		return this._track;
+	}
+
+	setTrack(track: MFXTrack<any>) {
+		this._track = track;
+
+		return this;
 	}
 
 	queue(...items: O[]) {

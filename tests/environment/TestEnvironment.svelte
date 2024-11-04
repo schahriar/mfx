@@ -119,9 +119,12 @@
       inputStream = await definition.decode(definition.input);
     } else {
       const stream = await openURL(definition.input);
-      inputStream = (
-        await createContainerDecoder(stream, definition.input, definition.codec)
-      ).pipeThrough(new mfx.MFXVideoDecoder());
+      const { video } = await mfx.decode(
+        stream,
+        `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}`
+      );
+
+      inputStream = video.readable;
     }
 
     const computedPipeline = definition.process
