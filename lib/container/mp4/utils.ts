@@ -24,5 +24,3 @@ export const getVideoBoxDescription = (track: Trak) => {
 
   return new Uint8Array();
 };
-
-

@@ -6,300 +6,300 @@ import { next } from "./utils";
  * @group Stream
  */
 export abstract class MFXWritableStream<I> extends WritableStream {
-	protected _eventTarget: EventTarget;
+  protected _eventTarget: EventTarget;
 
-	abstract get identifier();
+  abstract get identifier();
 
-	constructor(
-		underlyingSink?: UnderlyingSink<I>,
-		strategy: QueuingStrategy<I> = new CountQueuingStrategy({
-			highWaterMark: 60,
-		}),
-	) {
-		super(underlyingSink, strategy);
-		setTimeout(() => {
-			console.info(`<defined:${this.identifier}>`);
-		}, 0);
-		this._eventTarget = new EventTarget();
-	}
+  constructor(
+    underlyingSink?: UnderlyingSink<I>,
+    strategy: QueuingStrategy<I> = new CountQueuingStrategy({
+      highWaterMark: 60,
+    }),
+  ) {
+    super(underlyingSink, strategy);
+    setTimeout(() => {
+      console.info(`<defined:${this.identifier}>`);
+    }, 0);
+    this._eventTarget = new EventTarget();
+  }
 
-	dispatchEvent(event: Event) {
-		this._eventTarget.dispatchEvent(event);
-	}
+  dispatchEvent(event: Event) {
+    this._eventTarget.dispatchEvent(event);
+  }
 
-	dispatchError(error: Error) {
-		console.error(error);
-		this._eventTarget.dispatchEvent(
-			new CustomEvent("error", { detail: { error } }),
-		);
-	}
+  dispatchError(error: Error) {
+    console.error(error);
+    this._eventTarget.dispatchEvent(
+      new CustomEvent("error", { detail: { error } }),
+    );
+  }
 
-	addEventListener(
-		type: string,
-		callback: EventListenerOrEventListenerObject,
-		options?: boolean | AddEventListenerOptions,
-	) {
-		this._eventTarget.addEventListener(type, callback, options);
-	}
+  addEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ) {
+    this._eventTarget.addEventListener(type, callback, options);
+  }
 
-	removeEventListener(
-		type: string,
-		callback: EventListenerOrEventListenerObject,
-		options?: boolean | EventListenerOptions,
-	) {
-		this._eventTarget.removeEventListener(type, callback, options);
-	}
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ) {
+    this._eventTarget.removeEventListener(type, callback, options);
+  }
 }
 
 /**
  * @group Stream
  */
 export abstract class MFXTransformStream<I, O> extends TransformStream {
-	protected _track: MFXTrack<any>;
-	protected _buffer: O[];
-	protected _eventTarget: EventTarget;
-	protected _controller: TransformStreamDefaultController<O>;
+  protected _track: MFXTrack<any>;
+  protected _buffer: O[];
+  protected _eventTarget: EventTarget;
+  protected _controller: TransformStreamDefaultController<O>;
 
-	abstract get identifier();
+  abstract get identifier();
 
-	constructor(
-		transformer: Transformer<I, O> = {},
-		writableStrategy: QueuingStrategy<I> = new CountQueuingStrategy({
-			highWaterMark: 60,
-		}),
-		readableStrategy: QueuingStrategy<O> = new CountQueuingStrategy({
-			highWaterMark: 60,
-		}),
-	) {
-		let lastMetDesiredSize = Date.now();
-		const streamMonitor = setInterval(() => {
-			if (!this._controller) return;
+  constructor(
+    transformer: Transformer<I, O> = {},
+    writableStrategy: QueuingStrategy<I> = new CountQueuingStrategy({
+      highWaterMark: 60,
+    }),
+    readableStrategy: QueuingStrategy<O> = new CountQueuingStrategy({
+      highWaterMark: 60,
+    }),
+  ) {
+    let lastMetDesiredSize = Date.now();
+    const streamMonitor = setInterval(() => {
+      if (!this._controller) return;
 
-			if (this._controller.desiredSize === 0) {
-				if (lastMetDesiredSize < Date.now() - 10000) {
-					console.warn(
-						`Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new Void()) at the end of your stream`,
-					);
-					lastMetDesiredSize = Date.now() + 30 * 60 * 1000; // Already reported, check in 30 seconds
-				}
-				return;
-			}
+      if (this._controller.desiredSize === 0) {
+        if (lastMetDesiredSize < Date.now() - 10000) {
+          console.warn(
+            `Stream clogged on pipe ${this.identifier}\n you might be missing .pipeTo(new Void()) at the end of your stream`,
+          );
+          lastMetDesiredSize = Date.now() + 30 * 60 * 1000; // Already reported, check in 30 seconds
+        }
+        return;
+      }
 
-			lastMetDesiredSize = Date.now();
-		}, 1000);
+      lastMetDesiredSize = Date.now();
+    }, 1000);
 
-		let isVoid = false;
+    let isVoid = false;
 
-		super(
-			{
-				...transformer,
-				transform: async (chunk, controller) => {
-					while (!controller?.desiredSize) {
-						await next();
-					}
+    super(
+      {
+        ...transformer,
+        transform: async (chunk, controller) => {
+          while (!controller?.desiredSize) {
+            await next();
+          }
 
-					try {
-						await transformer.transform(chunk, controller);
-					} catch (error) {
-						if (error && !isVoid) {
-							// On Chrome an invalid sync can crash the entire browser
-							// void-mode effectively reads the entire pipeline into nothing
-							// to prevent side-effects
-							isVoid = true;
-							console.error(error);
-							console.warn(
-								new Error(
-									`Tranformer (${this.identifier}) terminated due to above error\nPipeline is now sinking into void to avoid a crash`,
-								),
-							);
-						}
-					}
-					this._controller = controller;
-					if (this._buffer.length) {
-						this._copy_buffer(controller);
-					}
-				},
-				flush: async (controller) => {
-					try {
-						console.info(`<flushed:${this.identifier}>`);
-						clearInterval(streamMonitor);
-						this._controller = controller;
-						if (this._buffer.length) {
-							this._copy_buffer(controller);
-						}
+          try {
+            await transformer.transform(chunk, controller);
+          } catch (error) {
+            if (error && !isVoid) {
+              // On Chrome an invalid sync can crash the entire browser
+              // void-mode effectively reads the entire pipeline into nothing
+              // to prevent side-effects
+              isVoid = true;
+              console.error(error);
+              console.warn(
+                new Error(
+                  `Tranformer (${this.identifier}) terminated due to above error\nPipeline is now sinking into void to avoid a crash`,
+                ),
+              );
+            }
+          }
+          this._controller = controller;
+          if (this._buffer.length) {
+            this._copy_buffer(controller);
+          }
+        },
+        flush: async (controller) => {
+          try {
+            console.info(`<flushed:${this.identifier}>`);
+            clearInterval(streamMonitor);
+            this._controller = controller;
+            if (this._buffer.length) {
+              this._copy_buffer(controller);
+            }
 
-						if (typeof transformer.flush === "function") {
-							await transformer.flush(controller);
-						}
-					} catch (error) {
-						console.error(error);
-						console.warn(
-							new Error(`Tranformer (${this.identifier}) failed to flush`),
-						);
-					}
-				},
-			},
-			writableStrategy,
-			readableStrategy,
-		);
-		setTimeout(() => {
-			console.info(`<defined:${this.identifier}>`);
-		}, 0);
-		this._buffer = [];
-		this._eventTarget = new EventTarget();
-	}
+            if (typeof transformer.flush === "function") {
+              await transformer.flush(controller);
+            }
+          } catch (error) {
+            console.error(error);
+            console.warn(
+              new Error(`Tranformer (${this.identifier}) failed to flush`),
+            );
+          }
+        },
+      },
+      writableStrategy,
+      readableStrategy,
+    );
+    setTimeout(() => {
+      console.info(`<defined:${this.identifier}>`);
+    }, 0);
+    this._buffer = [];
+    this._eventTarget = new EventTarget();
+  }
 
-	private _copy_buffer(controller) {
-		while (this._buffer.length) {
-			controller.enqueue(this._buffer.shift());
-		}
-	}
+  private _copy_buffer(controller) {
+    while (this._buffer.length) {
+      controller.enqueue(this._buffer.shift());
+    }
+  }
 
-	get desiredSize() {
-		return this._controller?.desiredSize || 60;
-	}
+  get desiredSize() {
+    return this._controller?.desiredSize || 60;
+  }
 
-	get track() {
-		return this._track;
-	}
+  get track() {
+    return this._track;
+  }
 
-	setTrack(track: MFXTrack<any>) {
-		this._track = track;
+  setTrack(track: MFXTrack<any>) {
+    this._track = track;
 
-		return this;
-	}
+    return this;
+  }
 
-	queue(...items: O[]) {
-		if (this._controller) {
-			items.forEach((item) => this._controller.enqueue(item));
-		} else {
-			this._buffer.push(...items);
-			this.dispatchEvent(new CustomEvent("queue"));
-		}
+  queue(...items: O[]) {
+    if (this._controller) {
+      items.forEach((item) => this._controller.enqueue(item));
+    } else {
+      this._buffer.push(...items);
+      this.dispatchEvent(new CustomEvent("queue"));
+    }
 
-		return new Promise<void>(async (resolve) => {
-			while (this._controller?.desiredSize <= 0) {
-				await next();
-			}
+    return new Promise<void>(async (resolve) => {
+      while (this._controller?.desiredSize <= 0) {
+        await next();
+      }
 
-			resolve();
-		});
-	}
+      resolve();
+    });
+  }
 
-	dispatchEvent(event: Event) {
-		this._eventTarget.dispatchEvent(event);
-	}
+  dispatchEvent(event: Event) {
+    this._eventTarget.dispatchEvent(event);
+  }
 
-	dispatchError(error: Error) {
-		console.error(error);
-		this._eventTarget.dispatchEvent(
-			new CustomEvent("error", { detail: { error } }),
-		);
-	}
+  dispatchError(error: Error) {
+    console.error(error);
+    this._eventTarget.dispatchEvent(
+      new CustomEvent("error", { detail: { error } }),
+    );
+  }
 
-	addEventListener(
-		type: string,
-		callback: EventListenerOrEventListenerObject,
-		options?: boolean | AddEventListenerOptions,
-	) {
-		this._eventTarget.addEventListener(type, callback, options);
-	}
+  addEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ) {
+    this._eventTarget.addEventListener(type, callback, options);
+  }
 
-	removeEventListener(
-		type: string,
-		callback: EventListenerOrEventListenerObject,
-		options?: boolean | EventListenerOptions,
-	) {
-		this._eventTarget.removeEventListener(type, callback, options);
-	}
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions,
+  ) {
+    this._eventTarget.removeEventListener(type, callback, options);
+  }
 }
 
 /**
  * @group Stream
  */
 export class MFXBufferCopy<T> extends MFXWritableStream<T> {
-	get identifier() {
-		return "MFXBufferCopy";
-	}
+  get identifier() {
+    return "MFXBufferCopy";
+  }
 
-	constructor(a: WritableStream<T>, b: WritableStream<T>) {
-		super({
-			write: async (chunk) => {
-				const aw = a.getWriter();
-				const bw = b.getWriter();
+  constructor(a: WritableStream<T>, b: WritableStream<T>) {
+    super({
+      write: async (chunk) => {
+        const aw = a.getWriter();
+        const bw = b.getWriter();
 
-				aw.write(chunk);
-				aw.releaseLock();
+        aw.write(chunk);
+        aw.releaseLock();
 
-				bw.write(chunk);
-				bw.releaseLock();
-			},
-			close: () => {
-				a.close();
-				b.close();
-			},
-		});
-	}
+        bw.write(chunk);
+        bw.releaseLock();
+      },
+      close: () => {
+        a.close();
+        b.close();
+      },
+    });
+  }
 }
 
 /**
  * @group Stream
  */
 export class FrameTee extends MFXTransformStream<
-	ExtendedVideoFrame,
-	ExtendedVideoFrame
+  ExtendedVideoFrame,
+  ExtendedVideoFrame
 > {
-	get identifier() {
-		return "FrameTee";
-	}
+  get identifier() {
+    return "FrameTee";
+  }
 
-	constructor(ctx: (stream: ReadableStream<ExtendedVideoFrame>) => void) {
-		const stream = new TransformStream();
+  constructor(ctx: (stream: ReadableStream<ExtendedVideoFrame>) => void) {
+    const stream = new TransformStream();
 
-		super({
-			transform: async (chunk, controller) => {
-				const clone = chunk.clone();
-				const writer = stream.writable.getWriter();
-				await writer.write(clone);
-				writer.releaseLock();
+    super({
+      transform: async (chunk, controller) => {
+        const clone = chunk.clone();
+        const writer = stream.writable.getWriter();
+        await writer.write(clone);
+        writer.releaseLock();
 
-				controller.enqueue(chunk);
-			},
-			flush: async () => {
-				await stream.writable.close();
-			},
-		});
+        controller.enqueue(chunk);
+      },
+      flush: async () => {
+        await stream.writable.close();
+      },
+    });
 
-		ctx(stream.readable);
-	}
+    ctx(stream.readable);
+  }
 }
 
 /** @group Stream */
 export class Void extends WritableStream<any> {
-	constructor() {
-		super({
-			write: (chunk) => {
-				if (
-					chunk instanceof ExtendedVideoFrame ||
-					chunk instanceof VideoFrame
-				) {
-					chunk.close();
-				}
-			},
-		});
-	}
+  constructor() {
+    super({
+      write: (chunk) => {
+        if (
+          chunk instanceof ExtendedVideoFrame ||
+          chunk instanceof VideoFrame
+        ) {
+          chunk.close();
+        }
+      },
+    });
+  }
 }
 
 export class PassThroughStream<T> extends MFXTransformStream<T, T> {
-	get identifier() {
-		return "PassThroughStream";
-	}
+  get identifier() {
+    return "PassThroughStream";
+  }
 
-	constructor() {
-		super({
-			transform: (chunk, controller) => {
-				controller.enqueue(chunk);
-			},
-		})
-	}
-};
+  constructor() {
+    super({
+      transform: (chunk, controller) => {
+        controller.enqueue(chunk);
+      },
+    });
+  }
+}

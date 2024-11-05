@@ -5,50 +5,50 @@ import { MFXTransformStream } from "../stream";
  * @group Visualization
  */
 export class PaintToCanvas extends WritableStream<ExtendedVideoFrame> {
-	constructor(canvas: HTMLCanvasElement) {
-		const ctx = canvas.getContext("2d");
+  constructor(canvas: HTMLCanvasElement) {
+    const ctx = canvas.getContext("2d");
 
-		super({
-			write: async (frame) => {
-				const width = frame.displayWidth;
-				const height = frame.displayHeight;
-				canvas.width = width;
-				canvas.height = height;
+    super({
+      write: async (frame) => {
+        const width = frame.displayWidth;
+        const height = frame.displayHeight;
+        canvas.width = width;
+        canvas.height = height;
 
-				ctx.drawImage(frame, 0, 0, width, height);
+        ctx.drawImage(frame, 0, 0, width, height);
 
-				// Free resource after paint
-				frame.close();
-			},
-		});
-	}
+        // Free resource after paint
+        frame.close();
+      },
+    });
+  }
 }
 
 /**
  * @group Visualization
  */
 export class PassthroughCanvas extends MFXTransformStream<
-	ExtendedVideoFrame,
-	ExtendedVideoFrame
+  ExtendedVideoFrame,
+  ExtendedVideoFrame
 > {
-	get identifier() {
-		return "PassthroughCanvas";
-	}
+  get identifier() {
+    return "PassthroughCanvas";
+  }
 
-	constructor(canvas: HTMLCanvasElement) {
-		const ctx = canvas.getContext("2d");
+  constructor(canvas: HTMLCanvasElement) {
+    const ctx = canvas.getContext("2d");
 
-		super({
-			transform: async (frame, controller) => {
-				const width = frame.displayWidth;
-				const height = frame.displayHeight;
-				canvas.width = width;
-				canvas.height = height;
+    super({
+      transform: async (frame, controller) => {
+        const width = frame.displayWidth;
+        const height = frame.displayHeight;
+        canvas.width = width;
+        canvas.height = height;
 
-				ctx.drawImage(frame, 0, 0, width, height);
+        ctx.drawImage(frame, 0, 0, width, height);
 
-				controller.enqueue(frame);
-			},
-		});
-	}
+        controller.enqueue(frame);
+      },
+    });
+  }
 }

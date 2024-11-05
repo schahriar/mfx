@@ -12,16 +12,16 @@ export { Compositor } from "./effects/Compositor";
 export { FrameSampler } from "./sampler";
 export { FPSDebugger, ConsoleWritableStream, Digest } from "./debug";
 export {
-	MFXBlob,
-	type MFXEncodedChunk as MFXEncodedChunk,
-	WebMContainerEncoder,
-	MP4ContainerEncoder,
-	MFXVideoEncoder,
+  MFXBlob,
+  type MFXEncodedChunk as MFXEncodedChunk,
+  WebMContainerEncoder,
+  MP4ContainerEncoder,
+  MFXVideoEncoder,
 } from "./encode";
 export * from "./output";
 export {
-	MFXVideoDecoder,
-	decode,
+  MFXVideoDecoder,
+  decode,
 } from "./decode";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
 export { FrameTee, MFXTransformStream, Void } from "./stream";
@@ -33,8 +33,8 @@ export { shaders };
 
 /** @group Advanced */
 export const codecs = {
-	avc,
-	vp9,
+  avc,
+  vp9,
 };
 
 /** @ignore */

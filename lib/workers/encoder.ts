@@ -6,25 +6,25 @@ import { ForwardedStream } from "../worker";
  * @example
  */
 export class MFXWorkerVideoEncoder extends ForwardedStream<
-	ExtendedVideoFrame,
-	MFXEncodedChunk
+  ExtendedVideoFrame,
+  MFXEncodedChunk
 > {
-	get identifier() {
-		return "MFXWorkerVideoEncoder";
-	}
+  get identifier() {
+    return "MFXWorkerVideoEncoder";
+  }
 
-	constructor(config: VideoEncoderConfig) {
-		const worker = new Worker(
-			/* webpackChunkName: "encoder-worker" */ new URL(
-				"./encoder.worker.ts",
-				import.meta.url,
-			),
-		);
+  constructor(config: VideoEncoderConfig) {
+    const worker = new Worker(
+      /* webpackChunkName: "encoder-worker" */ new URL(
+        "./encoder.worker.ts",
+        import.meta.url,
+      ),
+    );
 
-		worker.postMessage({ config });
+    worker.postMessage({ config });
 
-		super("MFXWorkerVideoEncoder", worker, {
-			transfer: (frame) => [frame],
-		});
-	}
+    super("MFXWorkerVideoEncoder", worker, {
+      transfer: (frame) => [frame],
+    });
+  }
 }

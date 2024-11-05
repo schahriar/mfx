@@ -1,5 +1,10 @@
 import JsWebm from "jswebm";
-import { ContainerDecoder, type MFXAudioTrack, MFXTrackType, type MFXVideoTrack } from "../ContainerDecoder";
+import {
+  ContainerDecoder,
+  type MFXAudioTrack,
+  MFXTrackType,
+  type MFXVideoTrack,
+} from "../ContainerDecoder";
 import { next } from "../../utils";
 
 /**
@@ -10,10 +15,7 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
     return "WebMContainerDecoder";
   }
 
-  constructor({
-    videoCodec = "vp8",
-    audioCodec = ""
-  }) {
+  constructor({ videoCodec = "vp8", audioCodec = "" }) {
     const demuxer = new JsWebm();
 
     super({
@@ -29,37 +31,45 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
 
         const { videoTrack, audioTrack } = demuxer;
 
-        const processedVideoTrack: MFXVideoTrack<any> | null = videoTrack ? {
-          id: videoTrack.trackUID,
-          type: MFXTrackType.Video,
-          duration: 0,
-          config: {
-            codec: videoCodec,
-            codedHeight: videoTrack.height,
-            codedWidth: videoTrack.width,
-          },
-          toChunk: (sample) => new EncodedVideoChunk({
-            type: sample.isKeyframe ? "key" : "delta",
-            timestamp: sample.timestamp * demuxer.segmentInfo.timecodeScale,
-            data: sample.data,
-            transfer: [sample.data],
-          })
-        } : null;
+        const processedVideoTrack: MFXVideoTrack<any> | null = videoTrack
+          ? {
+              id: videoTrack.trackUID,
+              type: MFXTrackType.Video,
+              duration: 0,
+              config: {
+                codec: videoCodec,
+                codedHeight: videoTrack.height,
+                codedWidth: videoTrack.width,
+              },
+              toChunk: (sample) =>
+                new EncodedVideoChunk({
+                  type: sample.isKeyframe ? "key" : "delta",
+                  timestamp:
+                    sample.timestamp * demuxer.segmentInfo.timecodeScale,
+                  data: sample.data,
+                  transfer: [sample.data],
+                }),
+            }
+          : null;
 
-        const processedAudioTrack: MFXAudioTrack<any> | null = audioTrack ? {
-          id: audioTrack.trackUID,
-          type: MFXTrackType.Audio,
-          config: {
-            codec: audioCodec || demuxer.audioCodec,
-            numberOfChannels: audioTrack.channels,
-            sampleRate: audioTrack.rate,
-          },
-          toChunk: (sample) => new EncodedAudioChunk({
-            type: "key",
-            data: sample.data,
-            timestamp: sample.timestamp * demuxer.segmentInfo.timecodeScale,
-          })
-        } : null;
+        const processedAudioTrack: MFXAudioTrack<any> | null = audioTrack
+          ? {
+              id: audioTrack.trackUID,
+              type: MFXTrackType.Audio,
+              config: {
+                codec: audioCodec || demuxer.audioCodec,
+                numberOfChannels: audioTrack.channels,
+                sampleRate: audioTrack.rate,
+              },
+              toChunk: (sample) =>
+                new EncodedAudioChunk({
+                  type: "key",
+                  data: sample.data,
+                  timestamp:
+                    sample.timestamp * demuxer.segmentInfo.timecodeScale,
+                }),
+            }
+          : null;
 
         const tracks = [
           /**
@@ -67,8 +77,8 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
            * Skip video if not available to support
            * audio only (m4a) files
            */
-          ...processedVideoTrack ? [processedVideoTrack] : [],
-          ...processedAudioTrack ? [processedAudioTrack] : [],
+          ...(processedVideoTrack ? [processedVideoTrack] : []),
+          ...(processedAudioTrack ? [processedAudioTrack] : []),
         ];
 
         this.start(tracks);

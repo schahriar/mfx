@@ -24,14 +24,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-export const getESDSBoxFromMP4File = (file: MP4File, codec = 'mp4a') => {
+export const getESDSBoxFromMP4File = (file: MP4File, codec = "mp4a") => {
   const mp4aBox = file.moov?.traks
     .map((t) => t.mdia.minf.stbl.stsd.entries)
     .flat()
     .find(({ type }) => type === codec) as MP4ABoxParser;
 
   return mp4aBox?.esds;
-}
+};
 
 export const parseAudioInfo4ESDSBox = (esds: ESDSBoxParser) => {
   const decoderConf = esds?.esd?.descs[0]?.descs[0];
