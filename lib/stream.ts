@@ -2,6 +2,20 @@ import type { MFXTrack } from "./container/ContainerDecoder";
 import { ExtendedVideoFrame } from "./frame";
 import { next } from "./utils";
 
+export class Collector {
+  _streams: PassThroughStream<any>[] = [];
+
+  add() {
+    const stream = new PassThroughStream();
+    this._streams.push(stream);
+    return stream;
+  }
+
+  async wait() {
+    await Promise.all(this._streams.map((s) => s.flushed));
+  }
+};
+
 /**
  * @group Stream
  */
@@ -291,15 +305,24 @@ export class Void extends WritableStream<any> {
 }
 
 export class PassThroughStream<T> extends MFXTransformStream<T, T> {
+  flushed: Promise<void>;
   get identifier() {
     return "PassThroughStream";
   }
 
-  constructor() {
+  constructor(transform: (T) => T = (c) => c) {
+    let flush: () => void;
+    const flushed = new Promise<void>((resolve) => {
+      flush = resolve;
+    });
+
     super({
       transform: (chunk, controller) => {
-        controller.enqueue(chunk);
+        controller.enqueue(transform(chunk));
       },
+      flush,
     });
+
+    this.flushed = flushed;
   }
 }

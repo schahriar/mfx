@@ -1,10 +1,12 @@
-import { next } from "./utils";
-import { MFXTransformStream, PassThroughStream } from "./stream";
+import { getCodecFromMimeType, getContainerFromMimeType, next } from "./utils";
+import { Collector, MFXTransformStream, PassThroughStream } from "./stream";
 import { ExtendedVideoFrame } from "./frame";
 import { vp9 } from "./codec/vp9";
+import { MP4ContainerEncoder } from "./container/mp4/MP4ContainerEncoder";
+import { WebMContainerEncoder } from "./container/webM/WebMContainerEncoder";
+import type { MFXEncodedChunk } from "./types";
 
-export { MP4ContainerEncoder } from "./container/mp4/MP4ContainerEncoder";
-export { WebMContainerEncoder } from "./container/webM/WebMContainerEncoder";
+export { MP4ContainerEncoder, WebMContainerEncoder };
 
 /**
  * @group Encode
@@ -15,52 +17,64 @@ export const encode = ({
   audio,
 }: {
   mimeType: string;
-  video?: VideoEncoderConfig & {
+  video?: Omit<VideoEncoderConfig, "codec"> & {
     stream: MFXTransformStream<any, VideoFrame> | ReadableStream<VideoFrame>;
+    codec?: string;
   };
-  audio?: AudioEncoderConfig & {
+  audio?: Omit<AudioEncoderConfig, "codec"> & {
     stream: MFXTransformStream<any, AudioData> | ReadableStream<AudioData>;
+    codec?: string;
   };
 }) => {
-  const stream = new PassThroughStream<MFXBlob>();
+	const containerType = getContainerFromMimeType(mimeType);
+	const { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
-  return stream;
+	if (!["mp4", "webm"].includes(containerType)) {
+		throw new Error(`Unsupported container type ${containerType}`);
+	}
+
+  const { stream: videoStream, ...videoConfigRaw } = video || {};
+  const { stream: audioStream, ...audioConfigRaw } = audio || {};
+  const videoConfig = {
+    codec: videoCodec,
+    ...videoConfigRaw,
+  } as VideoEncoderConfig;
+  const audioConfig = {
+    codec: audioCodec,
+    ...audioConfigRaw,
+  } as AudioEncoderConfig;
+
+	const container = containerType === "mp4" ? new MP4ContainerEncoder(videoConfig) : new WebMContainerEncoder(videoConfig);
+  let streams: ReadableStream<any>[] = [];
+
+	if (video) {
+		const videoOutput = ((videoStream as TransformStream).readable || videoStream) as ReadableStream<VideoFrame>;
+		streams.push(videoOutput.pipeThrough(new MFXVideoEncoder(videoConfig)));
+	}
+
+	if (audio) {
+		const audioOutput = ((audioStream as TransformStream).readable || audioStream) as ReadableStream<AudioData>;
+		streams.push(audioOutput.pipeThrough(new MFXAudioEncoder(audioConfig)));
+	}
+
+  const writer = container.writable.getWriter();
+
+  (async () => {
+    let promises = [];
+    for (let stream of streams) {
+      promises.push((async () => {
+        for await (const chunk of (stream as any)) {
+          writer.write(chunk);
+        }
+      })());
+    }
+
+    await Promise.all(promises);
+    writer.close();
+  })();
+
+  return container.readable;
 };
-
-/** @group Stream */
-export class MFXBlob extends Blob {
-  position?: number;
-  videoEncodingConfig: VideoEncoderConfig;
-  constructor(
-    parts: BlobPart[],
-    opt: BlobPropertyBag & {
-      position?: number;
-      videoEncodingConfig: VideoEncoderConfig;
-    },
-  ) {
-    super(parts, opt);
-    this.position = opt.position;
-    this.videoEncodingConfig = opt.videoEncodingConfig;
-  }
-
-  getMimeType() {
-    return `${this.type}; codecs="${this.videoEncodingConfig.codec}"`;
-  }
-}
-
-/**
- * @group Encode
- */
-export interface MFXEncodedChunk {
-  video?: {
-    chunk: EncodedVideoChunk;
-    metadata?: EncodedVideoChunkMetadata;
-  };
-  audio?: {
-    chunk?: EncodedAudioChunk;
-    metadata?: EncodedAudioChunkMetadata;
-  };
-}
 
 /**
  * @group Encode
@@ -134,6 +148,11 @@ export class MFXVideoEncoder extends MFXTransformStream<
             throw new Error(
               `VideoEncoder received invalid type, check that your pipeline correctly decodes videos`,
             );
+          }
+
+          if (frame.duration <= 0) {
+            frame.close();
+            return;
           }
 
           if (frame.timestamp - lastKeyFrameTimestamp >= matroskaMaxInterval) {

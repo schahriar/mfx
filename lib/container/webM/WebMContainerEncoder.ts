@@ -1,4 +1,7 @@
-import { type MFXEncodedChunk, MFXTransformStream, MFXBlob } from "../../mfx";
+import type { MFXEncodedChunk } from "../../types";
+import { MFXTransformStream } from "../../stream";
+import { MFXBlob } from "../../blob";
+
 import {
   Muxer as WebMMuxer,
   StreamTarget as WebMStreamTarget,
@@ -17,7 +20,7 @@ export class WebMContainerEncoder extends MFXTransformStream<
 
   ready: Promise<any>;
   constructor(config: VideoEncoderConfig, chunkSize?: number) {
-    const codecMapper = (codec: VideoEncoderConfig["codec"]) => {
+    const videoCodecMapper = (codec: VideoEncoderConfig["codec"]) => {
       if (codec.startsWith("vp08") || codec === "vp8") {
         return "V_VP8";
       }
@@ -28,6 +31,17 @@ export class WebMContainerEncoder extends MFXTransformStream<
 
       // TODO: Can we support MPEG encoding? (https://www.matroska.org/technical/codec_specs.html#:~:text=Initialization%3A%20none-,V_MPEG2,-Codec%20ID%3A%20V_MPEG2)
       throw new Error(`Unsupported webM codec ${codec}`);
+    };
+    const audioCodecMapper = (codec: AudioEncoderConfig["codec"]) => {
+      if (codec === "opus") {
+        return "A_OPUS";
+      }
+
+      if (codec === "vorbis") {
+        return "A_VORBIS";
+      }
+
+      throw new Error(`Unsupported webM audio codec ${codec}`);
     };
     let muxer: WebMMuxer<WebMStreamTarget>;
 
@@ -54,7 +68,12 @@ export class WebMContainerEncoder extends MFXTransformStream<
         width: config.width,
         frameRate: config.framerate,
         alpha: config.alpha !== "discard" || Boolean(config.alpha),
-        codec: codecMapper(config.codec),
+        codec: videoCodecMapper(config.codec),
+      },
+      audio: {
+        codec: "A_OPUS", // TODO: Perform mapping
+        numberOfChannels: 2,
+        sampleRate: 48000,
       },
       firstTimestampBehavior: "offset",
       type: "matroska",

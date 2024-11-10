@@ -1,4 +1,4 @@
-import type { MFXEncodedChunk } from "../encode";
+import type { MFXEncodedChunk } from "../types";
 import type { ExtendedVideoFrame } from "../frame";
 import { ForwardedStream } from "../worker";
 

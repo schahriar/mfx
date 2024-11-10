@@ -1,7 +1,9 @@
-import { Cutter, MFXVideoEncoder, MP4ContainerEncoder, codecs, GLEffect, shaders, keyframes } from "mfx";
+import { Cutter, MFXVideoEncoder, MP4ContainerEncoder, codecs, GLEffect, shaders, keyframes, encode } from "mfx";
 import { easing } from "ts-easing";
 import { FrameFiller } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";
+
+const scaleFactor = 3;
 
 export const definitions: TestDefinition[] = [{
   id: "editing_cut",
@@ -15,18 +17,16 @@ export const definitions: TestDefinition[] = [{
       end: 2000, // End at 2 seconds
     })
   ],
-  output: async () => {
-    const config = {
-      codec: codecs.avc.generateCodecString("baseline", "5.0"),
-      width: 640,
-      height: 360,
-      bitrate: 1e6,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new MP4ContainerEncoder(config)
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
+      video: {
+        stream: s,
+        width: 640 * scaleFactor,
+        height: 360 * scaleFactor,
+        bitrate: 1e6 * scaleFactor,
+      }
+    });
   }
 }, {
   id: "editing_keyframes",
@@ -62,17 +62,15 @@ export const definitions: TestDefinition[] = [{
       }),
     ])
   ],
-  output: async () => {
-    const config = {
-      codec: codecs.avc.generateCodecString("baseline", "5.0"),
-      width: 640 * 3,
-      height: 360 * 3,
-      bitrate: 1e6 * 4,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new MP4ContainerEncoder(config)
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
+      video: {
+        stream: s,
+        width: 640 * scaleFactor,
+        height: 360 * scaleFactor,
+        bitrate: 1e6 * scaleFactor,
+      }
+    });
   }
 }];

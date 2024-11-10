@@ -1,13 +1,15 @@
 import {
   convolution3x3,
-  MFXVideoEncoder,
   GLEffect,
-  WebMContainerEncoder,
   rawShaders,
   codecs,
-  MP4ContainerEncoder,
+  encode,
 } from "mfx";
 import type { TestDefinition } from "../types";
+
+// Note that this is used for bitrate as well but bitrate doesn't scale linearly
+// this behavior is ok for tests
+const scaleFactor = 3;
 
 export const definitions: TestDefinition[] = [{
   id: "webm_decoding",
@@ -19,18 +21,16 @@ export const definitions: TestDefinition[] = [{
   process: async () => {
     return []
   },
-  output: async () => {
-    const config = {
-      codec: codecs.avc.generateCodecString("baseline", "5.0"),
-      width: 640 * 3,
-      height: 360 * 3,
-      bitrate: 1e6 * 3,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new MP4ContainerEncoder(config),
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
+      video: {
+        stream: s,
+        width: 640 * scaleFactor,
+        height: 360 * scaleFactor,
+        bitrate: 1e6 * scaleFactor,
+      }
+    });
   }
 }, {
   id: "webm_codec",
@@ -41,18 +41,16 @@ export const definitions: TestDefinition[] = [{
   process: async () => {
     return []
   },
-  output: async () => {
-    const config = {
-      codec: "vp9",
-      width: 640 * 3,
-      height: 360 * 3,
-      bitrate: 1e6 * 3,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new WebMContainerEncoder(config)
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/webm; codecs="vp9"`,
+      video: {
+        stream: s,
+        width: 640 * scaleFactor,
+        height: 360 * scaleFactor,
+        bitrate: 1e6 * scaleFactor,
+      }
+    });
   }
 },  {
   id: "webm_codec_ooo",
@@ -63,18 +61,16 @@ export const definitions: TestDefinition[] = [{
   process: async () => {
     return []
   },
-  output: async () => {
-    const config = {
-      codec: "vp9",
-      width: 640 * 3,
-      height: 360 * 3,
-      bitrate: 1e6 * 3,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new WebMContainerEncoder(config)
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/webm; codecs="vp9"`,
+      video: {
+        stream: s,
+        width: 640 * scaleFactor,
+        height: 360 * scaleFactor,
+        bitrate: 1e6 * scaleFactor,
+      }
+    });
   }
 }, {
   id: "webm_codec_10bit",
@@ -88,18 +84,16 @@ export const definitions: TestDefinition[] = [{
   process: async () => {
     return []
   },
-  output: async () => {
-    const config = {
-      codec: "vp9",
-      width: 640 * 3,
-      height: 360 * 3,
-      bitrate: 1e6 * 3,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new WebMContainerEncoder(config)
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/webm; codecs="vp9"`,
+      video: {
+        stream: s,
+        width: 640 * scaleFactor,
+        height: 360 * scaleFactor,
+        bitrate: 1e6 * scaleFactor,
+      }
+    });
   }
 }, {
   id: "webm_encoding",
@@ -117,17 +111,15 @@ export const definitions: TestDefinition[] = [{
       }])
     ]
   },
-  output: async () => {
-    const config = {
-      codec: "vp8",
-      width: 640,
-      height: 360,
-      bitrate: 1e6,
-    };
-
-    return [
-      new MFXVideoEncoder(config),
-      new WebMContainerEncoder(config)
-    ];
+  output: async (s) => {
+    return encode({
+      mimeType: `video/webm; codecs="vp8"`,
+      video: {
+        stream: s,
+        width: 640,
+        height: 360,
+        bitrate: 1e6,
+      }
+    });
   }
 }];

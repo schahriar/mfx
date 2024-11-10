@@ -1,4 +1,4 @@
-import { getCodecFromMimeType, next, nextTick } from "./utils";
+import { getCodecFromMimeType, getContainerFromMimeType, next, nextTick } from "./utils";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXBufferCopy, MFXTransformStream } from "./stream";
 import MIMEType from "whatwg-mimetype";
@@ -10,7 +10,7 @@ import {
   type MFXTrack,
 } from "./container/ContainerDecoder";
 import { WebMContainerDecoder } from "./container/webM/WebMContainerDecoder";
-import type { MFXEncodedChunk } from "./encode";
+import type { MFXEncodedChunk } from "./types";
 import { MFXWebMContainerProbe } from "./container/webM/WebMContainerProbe";
 
 /**
@@ -37,15 +37,13 @@ export const decode = async (
   let videoTracks: MFXVideoDecoder[] = [];
   let audioTracks: MFXAudioDecoder[] = [];
   let root = input;
-  const mime = new MIMEType(mimeType);
+	const containerType = getContainerFromMimeType(mimeType);
   let { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
   let decoder: ContainerDecoder<any>;
 
-  const isWebM = mime.subtype === "webm" || mime.subtype === "x-matroska";
-
   // Slow path
-  if (isWebM && !videoCodec) {
+  if (containerType === "webm" && !videoCodec) {
     const measure = "Time-spent on codec probing";
     console.time(measure);
     console.warn(`No video codec provided in mimeType = (${mimeType}): a slow full container decode is required.
@@ -63,9 +61,9 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
     console.timeEnd(measure);
   }
 
-  if (mime.subtype === "mp4") {
+  if (containerType === "mp4") {
     decoder = new MP4ContainerDecoder();
-  } else if (isWebM) {
+  } else if (containerType === "webm") {
     decoder = new WebMContainerDecoder({ videoCodec, audioCodec });
   }
 

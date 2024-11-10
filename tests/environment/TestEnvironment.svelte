@@ -112,16 +112,18 @@
 
   onMount(async () => {
     let inputStream: ReadableStream<ExtendedVideoFrame>;
+    let inputAudioStream: ReadableStream<AudioData> | undefined;
 
     if (typeof definition.decode === "function") {
       inputStream = await definition.decode(definition.input);
     } else {
       const stream = await openURL(definition.input);
-      const { video } = await mfx.decode(
+      const { video, audio } = await mfx.decode(
         stream,
-        `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}`
+        `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}; codecs="${definition.codec || ""}"`
       );
 
+      inputAudioStream = audio?.readable;
       inputStream = video.readable;
     }
 
@@ -173,13 +175,13 @@
       .pipeThrough(fpsCounter);
 
     if (definition.output) {
-      const outputPipeline = await definition.output();
-      const outputStream = outputPipeline.reduce(
+      const outputPipeline = await definition.output(displayStream, inputAudioStream);
+      const outputStream = Array.isArray(outputPipeline) ? outputPipeline.reduce(
         (stream, pipe) => stream.pipeThrough(pipe),
         displayStream
-      );
+      ) : outputPipeline;
 
-      outputStream.pipeThrough(outputDigest).pipeTo(outputVideo);
+      (outputStream as any).pipeThrough(outputDigest).pipeTo(outputVideo);
 
       return;
     }

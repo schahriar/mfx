@@ -1,4 +1,4 @@
-import { MFXBlob } from "./encode";
+import { MFXBlob } from "./blob";
 import { MFXTransformStream } from "./stream";
 
 /**
@@ -75,7 +75,7 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
               `Unsupported mime type piped to MFXMediaSourceStream ${chunk.getMimeType()}`,
             );
           }
-          sourceBuffer = mediaSource.addSourceBuffer(chunk.getMimeType());
+          sourceBuffer = mediaSource.addSourceBuffer(`video/webm; codecs="vp09.00.40.08,opus"`);
         }
 
         const arrayBuffer = await chunk.arrayBuffer();

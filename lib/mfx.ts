@@ -11,13 +11,14 @@ export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
 export { Compositor } from "./effects/Compositor";
 export { FrameSampler } from "./sampler";
 export { FPSDebugger, ConsoleWritableStream, Digest } from "./debug";
+export { MFXBlob } from "./blob";
 export {
-  MFXBlob,
-  type MFXEncodedChunk as MFXEncodedChunk,
   WebMContainerEncoder,
   MP4ContainerEncoder,
   MFXVideoEncoder,
+  encode,
 } from "./encode";
+export * from "./types";
 export * from "./output";
 export {
   MFXVideoDecoder,
