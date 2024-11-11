@@ -66,6 +66,7 @@ npm start
 
 ### Soon
 - Replace Cutter/Tee with decode seek/trim options
+- Functional APIs as abstractions to WebStreams
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions
   - Dynamic layer counts using GLSL generation / Or Canvas based
