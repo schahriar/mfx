@@ -14,7 +14,7 @@ export class Collector {
   async wait() {
     await Promise.all(this._streams.map((s) => s.flushed));
   }
-};
+}
 
 /**
  * @group Stream

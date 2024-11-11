@@ -9,7 +9,9 @@ export const nextTick = (dur = 1) =>
 /** @ignore */
 export const next = nextTick;
 
-export const getContainerFromMimeType = (mimeType: string): "webm" | "mp4" | undefined => {
+export const getContainerFromMimeType = (
+  mimeType: string,
+): "webm" | "mp4" | undefined => {
   const mime = new MIMEType(mimeType);
   if (mime.subtype === "webm" || mime.subtype === "x-matroska") {
     return "webm";

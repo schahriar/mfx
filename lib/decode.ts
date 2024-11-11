@@ -1,4 +1,9 @@
-import { getCodecFromMimeType, getContainerFromMimeType, next, nextTick } from "./utils";
+import {
+  getCodecFromMimeType,
+  getContainerFromMimeType,
+  next,
+  nextTick,
+} from "./utils";
 import { type ContainerContext, ExtendedVideoFrame } from "./frame";
 import { MFXBufferCopy, MFXTransformStream } from "./stream";
 import { MP4ContainerDecoder } from "./container/mp4/MP4ContainerDecoder";
@@ -30,7 +35,10 @@ export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
  * @group Decode
  * Forces a VideoFrame to be copied to Software (CPU)
  */
-export const forceCopyFrame = async (frame: VideoFrame, canvas: HTMLCanvasElement = document.createElement("canvas")) => {
+export const forceCopyFrame = async (
+  frame: VideoFrame,
+  canvas: HTMLCanvasElement = document.createElement("canvas"),
+) => {
   if (!frame) return;
 
   const ctx = canvas.getContext("2d", {
@@ -48,11 +56,11 @@ export const forceCopyFrame = async (frame: VideoFrame, canvas: HTMLCanvasElemen
 
   frame.close();
   return ExtendedVideoFrame.revise(frame, imageBitmap);
-}
+};
 
 export interface DecodeOptions {
   forceDecodeToSoftware?: boolean;
-};
+}
 
 /**
  * @group Decode
@@ -60,12 +68,12 @@ export interface DecodeOptions {
 export const decode = async (
   input: ReadableStream<Uint8Array>,
   mimeType: string,
-  opt: DecodeOptions = {}
+  opt: DecodeOptions = {},
 ) => {
   let videoTracks: MFXVideoDecoder[] = [];
   let audioTracks: MFXAudioDecoder[] = [];
   let root = input;
-	const containerType = getContainerFromMimeType(mimeType);
+  const containerType = getContainerFromMimeType(mimeType);
   let { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
   let decoder: ContainerDecoder<any>;
@@ -142,7 +150,7 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
     .filter((track) => track.type === MFXTrackType.Video)
     .map((track) =>
       new MFXVideoDecoder(track.config as VideoDecoderConfig, {
-        forceDecodeToSoftware: opt.forceDecodeToSoftware
+        forceDecodeToSoftware: opt.forceDecodeToSoftware,
       }).setTrack(track),
     );
   audioTracks = tracks
@@ -237,19 +245,24 @@ export class MFXVideoDecoder extends MFXTransformStream<
   ExtendedVideoFrame
 > {
   config: VideoDecoderConfig & {
-    forceDecodeToSoftware: boolean
+    forceDecodeToSoftware: boolean;
   };
   get identifier() {
     return "MFXVideoDecoder";
   }
 
-  constructor(config: Partial<VideoDecoderConfig> = {}, {
-    forceDecodeToSoftware = false
-  }: {
-    forceDecodeToSoftware?: boolean;
-  } = {}) {
+  constructor(
+    config: Partial<VideoDecoderConfig> = {},
+    {
+      forceDecodeToSoftware = false,
+    }: {
+      forceDecodeToSoftware?: boolean;
+    } = {},
+  ) {
     const canvas = new OffscreenCanvas(config.codedWidth, config.codedHeight);
-    const transformer = async (frame: ExtendedVideoFrame): Promise<ExtendedVideoFrame> => {
+    const transformer = async (
+      frame: ExtendedVideoFrame,
+    ): Promise<ExtendedVideoFrame> => {
       if (frame && forceDecodeToSoftware) {
         return await forceCopyFrame(frame, canvas as any);
       }

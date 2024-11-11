@@ -45,24 +45,33 @@ export const encode = ({
     ...audioConfigRaw,
   } as AudioEncoderConfig;
   const containerConfig: ContainerEncoderConfig = {
-    ...video ? {
-      video: videoConfig,
-    } : {},
-    ...audio ? {
-      audio: audioConfig
-    } : {}
+    ...(video
+      ? {
+          video: videoConfig,
+        }
+      : {}),
+    ...(audio
+      ? {
+          audio: audioConfig,
+        }
+      : {}),
   };
 
-  const container = containerType === "mp4" ? new MP4ContainerEncoder(containerConfig) : new WebMContainerEncoder(containerConfig);
+  const container =
+    containerType === "mp4"
+      ? new MP4ContainerEncoder(containerConfig)
+      : new WebMContainerEncoder(containerConfig);
   let streams: ReadableStream<any>[] = [];
 
   if (video) {
-    const videoOutput = ((videoStream as TransformStream).readable || videoStream) as ReadableStream<VideoFrame>;
+    const videoOutput = ((videoStream as TransformStream).readable ||
+      videoStream) as ReadableStream<VideoFrame>;
     streams.push(videoOutput.pipeThrough(new MFXVideoEncoder(videoConfig)));
   }
 
   if (audio) {
-    const audioOutput = ((audioStream as TransformStream).readable || audioStream) as ReadableStream<AudioData>;
+    const audioOutput = ((audioStream as TransformStream).readable ||
+      audioStream) as ReadableStream<AudioData>;
     streams.push(audioOutput.pipeThrough(new MFXAudioEncoder(audioConfig)));
   }
 
@@ -71,11 +80,13 @@ export const encode = ({
   (async () => {
     let promises = [];
     for (let stream of streams) {
-      promises.push((async () => {
-        for await (const chunk of (stream as any)) {
-          writer.write(chunk);
-        }
-      })());
+      promises.push(
+        (async () => {
+          for await (const chunk of stream as any) {
+            writer.write(chunk);
+          }
+        })(),
+      );
     }
 
     await Promise.all(promises);
@@ -117,13 +128,13 @@ export class MFXVideoEncoder extends MFXTransformStream<
       ...config,
       ...(config.codec === "vp9"
         ? {
-          codec: vp9.autoSelectCodec({
-            width: config.width,
-            height: config.height,
-            bitrate: config.bitrate,
-            bitDepth: 8,
-          }),
-        }
+            codec: vp9.autoSelectCodec({
+              width: config.width,
+              height: config.height,
+              bitrate: config.bitrate,
+              bitDepth: 8,
+            }),
+          }
         : {}),
     });
 

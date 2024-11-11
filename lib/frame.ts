@@ -4,7 +4,7 @@ export interface ContainerContext {
   duration: number;
   createdAt?: Date;
   // TODO: Support seek
-};
+}
 
 export const cloneFrame = (
   frame: VideoFrame,
@@ -92,7 +92,7 @@ export class ExtendedVideoFrame extends VideoFrame {
 
     return clone;
   }
-};
+}
 
 export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
   constructor(source: HTMLVideoElement, { playbackRate = 3 } = {}) {
@@ -149,4 +149,4 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
       },
     });
   }
-};
+}
