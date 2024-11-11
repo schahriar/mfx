@@ -2,6 +2,7 @@ import { Muxer as MP4Muxer, StreamTarget as MP4StreamTarget } from "mp4-muxer";
 import type { MFXEncodedChunk } from "../../types";
 import { MFXTransformStream } from "../../stream";
 import { MFXBlob } from "../../blob";
+import type { ContainerEncoderConfig } from "../encoderConfig";
 
 /**
  * @group Encode
@@ -15,9 +16,9 @@ export class MP4ContainerEncoder extends MFXTransformStream<
   }
 
   ready: Promise<any>;
-  constructor(config: VideoEncoderConfig, chunkSize?: number) {
-    const codecMapper = (
-      codec: VideoEncoderConfig["codec"],
+  constructor(config: ContainerEncoderConfig, chunkSize?: number) {
+    const videoCodecMapper = (
+      codec: ContainerEncoderConfig["video"]["codec"],
     ): "avc" | "hevc" | "vp9" | "av1" => {
       const targets: ("avc" | "hevc" | "vp9" | "av1")[] = [
         "avc",
@@ -25,13 +26,33 @@ export class MP4ContainerEncoder extends MFXTransformStream<
         "vp9",
         "av1",
       ];
+
+      if (codec.startsWith("hvc")) {
+        return "hevc";
+      }
+
       for (let i = 0; i < targets.length; i++) {
         if (codec.startsWith(targets[i])) {
           return targets[i];
         }
       }
 
-      throw new Error(`Unsupported MP4 codec ${codec}`);
+      throw new Error(`Unsupported MP4 video codec ${codec}`);
+    };
+    const audioCodecMapper = (
+      codec: ContainerEncoderConfig["audio"]["codec"],
+    ) => {
+      const targets: ("opus" | "aac")[] = [
+        "opus",
+        "aac",
+      ];
+      for (let i = 0; i < targets.length; i++) {
+        if (codec.startsWith(targets[i])) {
+          return targets[i];
+        }
+      }
+
+      throw new Error(`Unsupported MP4 audio codec ${codec}`);
     };
     let muxer: MP4Muxer<MP4StreamTarget>;
 
@@ -53,11 +74,20 @@ export class MP4ContainerEncoder extends MFXTransformStream<
     });
 
     muxer = new MP4Muxer({
-      video: {
-        height: config.height,
-        width: config.width,
-        codec: codecMapper(config.codec),
-      },
+      ...config.video ? {
+        video: {
+          height: config.video.height,
+          width: config.video.width,
+          codec: videoCodecMapper(config.video.codec),
+        },
+      } : {},
+      ...config.audio ? {
+        audio: {
+          codec: audioCodecMapper(config.audio.codec),
+          numberOfChannels: config.audio.numberOfChannels,
+          sampleRate: config.audio.sampleRate
+        }
+      } : {},
       firstTimestampBehavior: "offset",
       fastStart: "fragmented",
       target: new MP4StreamTarget({
@@ -66,15 +96,15 @@ export class MP4ContainerEncoder extends MFXTransformStream<
             new MFXBlob([data], {
               type: "video/mp4",
               position,
-              videoEncodingConfig: config,
+              config,
             }),
           );
         },
         ...(Number.isInteger(chunkSize)
           ? {
-              chunked: true,
-              chunkSize,
-            }
+            chunked: true,
+            chunkSize,
+          }
           : {}),
       }),
     });

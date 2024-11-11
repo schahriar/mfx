@@ -20,10 +20,7 @@ export {
 } from "./encode";
 export * from "./types";
 export * from "./output";
-export {
-  MFXVideoDecoder,
-  decode,
-} from "./decode";
+export * from "./decode";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
 export { FrameTee, MFXTransformStream, Void } from "./stream";
 export { keyframes, FrameFiller } from "./keyframes";

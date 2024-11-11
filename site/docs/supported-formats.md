@@ -25,8 +25,22 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 | Container | Codec       | Encode / Decode |
 | --------  | ---------   | --------------- 
 | MP4       | H.264/AVC   | Both            |
-| MP4       | H.265/HEVC  | Both            |
+| MP4       | H.265/HEVC  | Decode(1)       |
 | MP4       | VP8         | Both            |
 | MP4       | VP9         | Both            |
 | WebM      | VP8         | Both            |
 | WebM      | VP9         | Both            |
+
+### Audio Support
+
+| Container | Codec       | Encode / Decode |
+| --------  | ---------   | --------------- 
+| MP4       | Opus        | Both            |
+| MP4       | AAC         | Both(2)         |
+| WebM      | Opus        | Both            |
+| WebM      | Vorbis      | Both(2)         |
+
+```
+(1) Support for HEVC encoding is not available in WebCodec implementations as of 2024.
+(2) Untested
+```

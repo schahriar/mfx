@@ -1,20 +1,23 @@
+import type { ContainerEncoderConfig } from "./container/encoderConfig";
+
 /** @group Stream */
 export class MFXBlob extends Blob {
   position?: number;
-  videoEncodingConfig: VideoEncoderConfig;
+  config: ContainerEncoderConfig;
   constructor(
     parts: BlobPart[],
     opt: BlobPropertyBag & {
       position?: number;
-      videoEncodingConfig: VideoEncoderConfig;
+      config: ContainerEncoderConfig;
     },
   ) {
     super(parts, opt);
     this.position = opt.position;
-    this.videoEncodingConfig = opt.videoEncodingConfig;
+    this.config = opt.config;
   }
 
   getMimeType() {
-    return `${this.type}; codecs="${this.videoEncodingConfig.codec}"`;
+    const { video, audio } = this.config;
+    return `${this.type}; codecs="${[video?.codec, audio?.codec].filter(Boolean).join(",")}"`;
   }
 }

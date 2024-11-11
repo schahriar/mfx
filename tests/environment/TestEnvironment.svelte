@@ -18,6 +18,7 @@
   import FramePreview from "./FramePreview.svelte";
   import { circInOut } from "svelte/easing";
   import type { TestDefinition } from "../types";
+  import type { MFXTrack } from "../../lib/container/ContainerDecoder";
 
   export let definition: TestDefinition;
 
@@ -113,6 +114,8 @@
   onMount(async () => {
     let inputStream: ReadableStream<ExtendedVideoFrame>;
     let inputAudioStream: ReadableStream<AudioData> | undefined;
+    let videoTrack: MFXTrack<any>;
+    let audioTrack: MFXTrack<any>;
 
     if (typeof definition.decode === "function") {
       inputStream = await definition.decode(definition.input);
@@ -120,11 +123,14 @@
       const stream = await openURL(definition.input);
       const { video, audio } = await mfx.decode(
         stream,
-        `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}; codecs="${definition.codec || ""}"`
+        `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}; codecs="${definition.codec || ""}"`,
+        definition.decodeOptions
       );
 
       inputAudioStream = audio?.readable;
       inputStream = video.readable;
+      videoTrack = video?.track;
+      audioTrack = audio?.track;
     }
 
     const computedPipeline = definition.process
@@ -175,7 +181,7 @@
       .pipeThrough(fpsCounter);
 
     if (definition.output) {
-      const outputPipeline = await definition.output(displayStream, inputAudioStream);
+      const outputPipeline = await definition.output(displayStream, inputAudioStream, videoTrack, audioTrack);
       const outputStream = Array.isArray(outputPipeline) ? outputPipeline.reduce(
         (stream, pipe) => stream.pipeThrough(pipe),
         displayStream

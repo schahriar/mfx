@@ -75,7 +75,7 @@ export class MFXMediaSourceStream extends WritableStream<MFXBlob> {
               `Unsupported mime type piped to MFXMediaSourceStream ${chunk.getMimeType()}`,
             );
           }
-          sourceBuffer = mediaSource.addSourceBuffer(`video/webm; codecs="vp09.00.40.08,opus"`);
+          sourceBuffer = mediaSource.addSourceBuffer(chunk.getMimeType());
         }
 
         const arrayBuffer = await chunk.arrayBuffer();

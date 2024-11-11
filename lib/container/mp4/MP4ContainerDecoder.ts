@@ -113,7 +113,7 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
          * audio only (m4a) files
          */
         ...(processedVideoTrack ? [processedVideoTrack] : []),
-        ...processedAudioTracks,
+        ...(processedAudioTracks ? processedAudioTracks : []),
       ];
 
       this.start(tracks);

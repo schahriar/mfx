@@ -6,6 +6,7 @@ import {
   Muxer as WebMMuxer,
   StreamTarget as WebMStreamTarget,
 } from "webm-muxer";
+import type { ContainerEncoderConfig } from "../encoderConfig";
 
 /**
  * @group Encode
@@ -19,8 +20,8 @@ export class WebMContainerEncoder extends MFXTransformStream<
   }
 
   ready: Promise<any>;
-  constructor(config: VideoEncoderConfig, chunkSize?: number) {
-    const videoCodecMapper = (codec: VideoEncoderConfig["codec"]) => {
+  constructor(config: ContainerEncoderConfig, chunkSize?: number) {
+    const videoCodecMapper = (codec: ContainerEncoderConfig["video"]["codec"]) => {
       if (codec.startsWith("vp08") || codec === "vp8") {
         return "V_VP8";
       }
@@ -32,7 +33,7 @@ export class WebMContainerEncoder extends MFXTransformStream<
       // TODO: Can we support MPEG encoding? (https://www.matroska.org/technical/codec_specs.html#:~:text=Initialization%3A%20none-,V_MPEG2,-Codec%20ID%3A%20V_MPEG2)
       throw new Error(`Unsupported webM codec ${codec}`);
     };
-    const audioCodecMapper = (codec: AudioEncoderConfig["codec"]) => {
+    const audioCodecMapper = (codec: ContainerEncoderConfig["audio"]["codec"]) => {
       if (codec === "opus") {
         return "A_OPUS";
       }
@@ -63,18 +64,22 @@ export class WebMContainerEncoder extends MFXTransformStream<
     });
 
     muxer = new WebMMuxer({
-      video: {
-        height: config.height,
-        width: config.width,
-        frameRate: config.framerate,
-        alpha: config.alpha !== "discard" || Boolean(config.alpha),
-        codec: videoCodecMapper(config.codec),
-      },
-      audio: {
-        codec: "A_OPUS", // TODO: Perform mapping
-        numberOfChannels: 2,
-        sampleRate: 48000,
-      },
+      ...config.video ? {
+        video: {
+          height: config.video.height,
+          width: config.video.width,
+          frameRate: config.video.framerate,
+          alpha: config.video.alpha !== "discard" || Boolean(config.video.alpha),
+          codec: videoCodecMapper(config.video.codec),
+        }
+      } : {},
+      ...config.audio ? {
+        audio: {
+          codec: audioCodecMapper(config.audio.codec), // TODO: Perform mapping
+          numberOfChannels: config.audio.numberOfChannels,
+          sampleRate: config.audio.sampleRate,
+        }
+      } : {},
       firstTimestampBehavior: "offset",
       type: "matroska",
       streaming: true,
@@ -84,15 +89,15 @@ export class WebMContainerEncoder extends MFXTransformStream<
             new MFXBlob([data], {
               type: "video/webm",
               position,
-              videoEncodingConfig: config,
+              config,
             }),
           );
         },
         ...(Number.isInteger(chunkSize)
           ? {
-              chunked: true,
-              chunkSize,
-            }
+            chunked: true,
+            chunkSize,
+          }
           : {}),
       }),
     });

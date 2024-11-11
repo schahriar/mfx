@@ -4,7 +4,7 @@ export interface ContainerContext {
   duration: number;
   createdAt?: Date;
   // TODO: Support seek
-}
+};
 
 export const cloneFrame = (
   frame: VideoFrame,
@@ -40,17 +40,17 @@ export const cloneFrame = (
 export class ExtendedVideoFrame extends VideoFrame {
   containerContext?: ContainerContext;
   constructor(
-    source: CanvasImageSource,
+    source: CanvasImageSource | ImageData,
     init?: VideoFrameInit,
     container?: ContainerContext,
   ) {
-    super(source, init);
+    super(source as any, init);
     this.containerContext = container;
   }
 
   static revise(
     frame: ExtendedVideoFrame | VideoFrame,
-    source: CanvasImageSource,
+    source: CanvasImageSource | ImageData,
     init?: VideoFrameInit,
   ) {
     return new ExtendedVideoFrame(
@@ -92,7 +92,7 @@ export class ExtendedVideoFrame extends VideoFrame {
 
     return clone;
   }
-}
+};
 
 export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
   constructor(source: HTMLVideoElement, { playbackRate = 3 } = {}) {
@@ -149,4 +149,4 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
       },
     });
   }
-}
+};

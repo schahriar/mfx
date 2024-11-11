@@ -1,4 +1,4 @@
-import { Cutter, MFXVideoEncoder, MP4ContainerEncoder, codecs, GLEffect, shaders, keyframes, encode } from "mfx";
+import { Cutter, codecs, GLEffect, shaders, keyframes, encode } from "mfx";
 import { easing } from "ts-easing";
 import { FrameFiller } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";

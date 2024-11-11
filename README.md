@@ -21,7 +21,10 @@ import {
 const file = await fetch("https://example.com/myvideo.mp4");
 
 // Decode video container, returns each track as a WebStream
-const { video, audio } = await decode(file, "video/mp4");
+const { video, audio } = await decode(file, "video/mp4", {
+  // Addresses Chromium WebCodecs bug, Set to true for HEVC or if "Can't readback frame textures" is thrown. Has ~10% performance impact.
+  forceDecodeToSoftware: false,
+});
 
 // Create video pipeline taking raw frames through Web Streams
 const videoOutput = video.pipeThrough(new GLEffect([ // Apply zoom out effect
@@ -62,9 +65,10 @@ npm start
 ## Roadmap
 
 ### Soon
+- Replace Cutter/Tee with decode seek/trim options
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions
-  - Dynamic layer counts using GLSL generation
+  - Dynamic layer counts using GLSL generation / Or Canvas based
   - `compose` function to quickly merge 
 - GIF (https://github.com/jnordberg/gif.js)
 - Add note on VP9 probe
@@ -78,6 +82,7 @@ npm start
 - Utilize (https://github.com/dmnsgn/media-codecs?tab=readme-ov-file) for codec string generation
 - Canvas frame generator
   - Add threejs demo
+- SVG → Image → Frame animated pipeline
 - Audio effect support
   - Audio waveform
 - Audio Containers (mp3, flac, wav, opus)

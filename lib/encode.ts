@@ -5,6 +5,7 @@ import { vp9 } from "./codec/vp9";
 import { MP4ContainerEncoder } from "./container/mp4/MP4ContainerEncoder";
 import { WebMContainerEncoder } from "./container/webM/WebMContainerEncoder";
 import type { MFXEncodedChunk } from "./types";
+import type { ContainerEncoderConfig } from "./container/encoderConfig";
 
 export { MP4ContainerEncoder, WebMContainerEncoder };
 
@@ -26,12 +27,12 @@ export const encode = ({
     codec?: string;
   };
 }) => {
-	const containerType = getContainerFromMimeType(mimeType);
-	const { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
+  const containerType = getContainerFromMimeType(mimeType);
+  const { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
-	if (!["mp4", "webm"].includes(containerType)) {
-		throw new Error(`Unsupported container type ${containerType}`);
-	}
+  if (!["mp4", "webm"].includes(containerType)) {
+    throw new Error(`Unsupported container type ${containerType}`);
+  }
 
   const { stream: videoStream, ...videoConfigRaw } = video || {};
   const { stream: audioStream, ...audioConfigRaw } = audio || {};
@@ -43,19 +44,27 @@ export const encode = ({
     codec: audioCodec,
     ...audioConfigRaw,
   } as AudioEncoderConfig;
+  const containerConfig: ContainerEncoderConfig = {
+    ...video ? {
+      video: videoConfig,
+    } : {},
+    ...audio ? {
+      audio: audioConfig
+    } : {}
+  };
 
-	const container = containerType === "mp4" ? new MP4ContainerEncoder(videoConfig) : new WebMContainerEncoder(videoConfig);
+  const container = containerType === "mp4" ? new MP4ContainerEncoder(containerConfig) : new WebMContainerEncoder(containerConfig);
   let streams: ReadableStream<any>[] = [];
 
-	if (video) {
-		const videoOutput = ((videoStream as TransformStream).readable || videoStream) as ReadableStream<VideoFrame>;
-		streams.push(videoOutput.pipeThrough(new MFXVideoEncoder(videoConfig)));
-	}
+  if (video) {
+    const videoOutput = ((videoStream as TransformStream).readable || videoStream) as ReadableStream<VideoFrame>;
+    streams.push(videoOutput.pipeThrough(new MFXVideoEncoder(videoConfig)));
+  }
 
-	if (audio) {
-		const audioOutput = ((audioStream as TransformStream).readable || audioStream) as ReadableStream<AudioData>;
-		streams.push(audioOutput.pipeThrough(new MFXAudioEncoder(audioConfig)));
-	}
+  if (audio) {
+    const audioOutput = ((audioStream as TransformStream).readable || audioStream) as ReadableStream<AudioData>;
+    streams.push(audioOutput.pipeThrough(new MFXAudioEncoder(audioConfig)));
+  }
 
   const writer = container.writable.getWriter();
 
@@ -108,13 +117,13 @@ export class MFXVideoEncoder extends MFXTransformStream<
       ...config,
       ...(config.codec === "vp9"
         ? {
-            codec: vp9.autoSelectCodec({
-              width: config.width,
-              height: config.height,
-              bitrate: config.bitrate,
-              bitDepth: 8,
-            }),
-          }
+          codec: vp9.autoSelectCodec({
+            width: config.width,
+            height: config.height,
+            bitrate: config.bitrate,
+            bitDepth: 8,
+          }),
+        }
         : {}),
     });
 
