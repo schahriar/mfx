@@ -71,10 +71,10 @@ npm start
   - Blend mode and opacity as compositor functions
   - Dynamic layer counts using GLSL generation / Or Canvas based
   - `compose` function to quickly merge 
-- GIF (https://github.com/jnordberg/gif.js)
-- Add note on VP9 probe
-- Testing: Source videos with frame duration > fps to showcase FrameFiller
 - API Documentation
+  - Add note on VP9 probe
+- GIF (https://github.com/jnordberg/gif.js)
+- Testing: Source videos with frame duration > fps to showcase FrameFiller
 - Run tests on Github actions
 - Contribution Guide
 
