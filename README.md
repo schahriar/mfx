@@ -51,6 +51,23 @@ outputStream.pipeTo(new FileWriter("output.webm")); // Opens a save dialog in th
 // Alternatively you can pipeTo a fetch POST request
 ```
 
+## Support Table
+While `codec` support heavily depends on the browser, `mfx` aims to provide support for the following container / codec pairs:
+
+| Container | Codec       | Encode / Decode |
+| --------  | ---------   | --------------- 
+| MP4       | H.264/AVC   | Both            |
+| MP4       | H.265/HEVC  | Decode          |
+| MP4       | VP8         | Both            |
+| MP4       | VP9         | Both            |
+| WebM      | VP8         | Both            |
+| WebM      | VP9         | Both            |
+| <hr> | **`Audio`** | <hr>
+| MP4       | Opus        | Both            |
+| MP4       | AAC         | Both            |
+| WebM      | Opus        | Both            |
+| WebM      | Vorbis      | Both            |
+
 ## Contributing
 Install git-lfs to pull sample files:
 ```
