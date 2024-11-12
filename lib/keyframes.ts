@@ -2,17 +2,18 @@ import { type UniformProducer } from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
 
-export class FrameFiller extends MFXTransformStream<
+export class FrameRateAdjuster extends MFXTransformStream<
   ExtendedVideoFrame,
   ExtendedVideoFrame
 > {
   get identifier() {
-    return "FrameFiller";
+    return "FrameRateAdjuster";
   }
 
   constructor(fps: number) {
     // Limit to 500fps to prevent bugs
     const maxDuration = (1 / Math.min(fps, 500)) * 1e6;
+    let borrowedDuration = 0;
 
     super({
       transform: (frame, controller) => {
@@ -20,8 +21,14 @@ export class FrameFiller extends MFXTransformStream<
         const idealFrameCount = Math.floor(duration / maxDuration);
 
         // Simple path, no need for a fill
-        if (idealFrameCount <= 1) {
+        if (idealFrameCount == 1) {
           controller.enqueue(frame);
+          return;
+        }
+
+        if (idealFrameCount < 1) {
+          // Skip this frame and store the duration
+          borrowedDuration += frame.duration;
           return;
         }
 
@@ -39,8 +46,11 @@ export class FrameFiller extends MFXTransformStream<
 
           const clone = ExtendedVideoFrame.revise(frame, frame.clone() as any, {
             timestamp: timestamp + accumulatedDuration,
-            duration: baseDuration,
+            duration: baseDuration + borrowedDuration,
           });
+
+          // Reset borrowedDuration as it is consumed in the new frame's duration
+          borrowedDuration = 0;
 
           accumulatedDuration += frameDuration;
 

@@ -1,6 +1,5 @@
 import { Cutter, codecs, GLEffect, shaders, keyframes, encode } from "mfx";
 import { easing } from "ts-easing";
-import { FrameFiller } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";
 
 const scaleFactor = 3;
@@ -34,8 +33,10 @@ export const definitions: TestDefinition[] = [{
   description: "Keyframes animating values",
   path: "/keyframes",
   input: "beach.webm",
+  decodeOptions: {
+    frameRate: 30
+  },
   process: async () => [
-    new FrameFiller(30),
     new GLEffect([
       shaders.zoom({
         factor: keyframes([{

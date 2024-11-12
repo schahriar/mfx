@@ -7,9 +7,9 @@ import { MFXWritableStream } from "../../stream";
  * Probes codec information about a WebM container
  * @group Decode
  */
-export class MFXWebMContainerProbe extends MFXWritableStream<Uint8Array> {
+export class WebMContainerProbe extends MFXWritableStream<Uint8Array> {
   get identifier() {
-    return "MFXWebMContainerProbe";
+    return "WebMContainerProbe";
   }
 
   // Returns codec string after container is fully processed

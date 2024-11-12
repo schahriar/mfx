@@ -2,10 +2,12 @@ import MP4Box, { type MP4ArrayBuffer, type MP4Sample } from "mp4box";
 import { getVideoBoxDescription } from "./utils";
 import {
   ContainerDecoder,
-  type MFXAudioTrack,
-  MFXTrackType,
-  type MFXVideoTrack,
 } from "../ContainerDecoder";
+import {
+  type AudioTrack,
+  TrackType,
+  type VideoTrack,
+} from "../Track";
 import { getESDSBoxFromMP4File, parseAudioInfo4ESDSBox } from "./ESDS";
 
 /**
@@ -50,10 +52,10 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
       const esdsBox = getESDSBoxFromMP4File(file);
       const { numberOfChannels, sampleRate } = parseAudioInfo4ESDSBox(esdsBox);
 
-      const processedVideoTrack: MFXVideoTrack<MP4Sample> | null = videoTrack
+      const processedVideoTrack: VideoTrack<MP4Sample> | null = videoTrack
         ? {
             id: videoTrack.id,
-            type: MFXTrackType.Video,
+            type: TrackType.Video,
             duration: videoTrack.duration / videoTrack.timescale,
             createdAt: videoTrack.created.getTime(),
             config: {
@@ -81,10 +83,10 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
           }
         : null;
 
-      const processedAudioTracks = audioTracks.map<MFXAudioTrack<MP4Sample>>(
+      const processedAudioTracks = audioTracks.map<AudioTrack<MP4Sample>>(
         (track) => ({
           id: track.id,
-          type: MFXTrackType.Audio,
+          type: TrackType.Audio,
           duration: track.duration / track.timescale,
           createdAt: track.created.getTime(),
           config: {

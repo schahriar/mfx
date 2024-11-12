@@ -13,8 +13,8 @@ import {
   shaders,
   decode,
   encode,
+  writeToFile,
   GLEffect,
-  FileWriter,
 } from "mfx";
 
 // Files can be fetched locally
@@ -31,6 +31,7 @@ const videoOutput = video.pipeThrough(new GLEffect([ // Apply zoom out effect
   shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
 ]));
 
+// Readable WebStream
 const outputStream = encode({
   mimeType: `video/webm; codecs="vp8,opus"`, // Transcode to WebM VP8 (video) and Opus (audio)
   video: {
@@ -45,10 +46,16 @@ const outputStream = encode({
     ...audio.track.config, // Inherit configuration from input audio
     stream: audio
   }
-})
+});
 
-outputStream.pipeTo(new FileWriter("output.webm")); // Opens a save dialog in the browser
+// Opens a save dialog in the browser
+await writeToFile(outputStream, "output.webm");
+
 // Alternatively you can pipeTo a fetch POST request
+await fetch("example.com/save", {
+  method: "POST",
+  body: outputStream
+});
 ```
 
 ## Support Table
@@ -68,17 +75,6 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 | WebM      | Opus        | Both            |
 | WebM      | Vorbis      | Both            |
 
-## Contributing
-Install git-lfs to pull sample files:
-```
-brew install git-lfs
-```
-
-```
-npm install
-npm start
-```
-
 ## Roadmap
 
 ### Soon
@@ -90,19 +86,25 @@ npm start
   - `compose` function to quickly merge 
 - API Documentation
   - Add note on VP9 probe
-- GIF (https://github.com/jnordberg/gif.js)
-- Testing: Source videos with frame duration > fps to showcase FrameFiller
+- GIF codec
+  - decode: https://github.com/mattdesl/gifenc
+  - encode: https://github.com/jnordberg/gif.js
+- Testing: Source videos with frame duration > fps to showcase frameRate
 - Run tests on Github actions
 - Contribution Guide
 
 ### Later
-- Decode WebM via Matroska decoder to resolve issues of jswebm dependency (https://www.npmjs.com/package/ebml-stream), alternatively build libwebm for WebAssembly https://github.com/webmproject/libwebm/tree/main/webm_parser
+- Decode WebM via Matroska decoder to resolve issues of jswebm dependency (https://www.npmjs.com/package/ebml-stream), alternatively build libwebm for WebAssembly https://github.com/webmproject/libwebm/tree/main/webm_parser (e.g. https://github.com/ForeverSc/web-demuxer/blob/main/lib/web-demuxer/web_demuxer.cpp)
 - Utilize (https://github.com/dmnsgn/media-codecs?tab=readme-ov-file) for codec string generation
 - Canvas frame generator
   - Add threejs demo
 - SVG → Image → Frame animated pipeline
 - Audio effect support
   - Audio waveform
+- Color Grading
+  - HSV support
+  - Palette detection / Adjustment
+  - Mask: Alpha/Green-screen
 - Audio Containers (mp3, flac, wav, opus)
 - Improve encoding performance by reverting fill behavior for nearly identical frames (high effort)
 - Seek
@@ -111,6 +113,20 @@ npm start
 - Reduce CPU → GPU → CPU copy times using texture atlas
 - Benchmarks (during test) against ffmpeg (AVC https://trac.ffmpeg.org/wiki/Encode/H.264#FAQ and possibly WebM)
 - Integrate GLSL debugger using [Spector](https://github.com/BabylonJS/Spector.js?tab=readme-ov-file#use-as-a-script-reference)
+
+----
+
+## Contributing
+Install git-lfs to pull sample files:
+```
+brew install git-lfs
+```
+
+```
+npm install
+npm start
+```
+----
 
 ### License
 MIT [License](LICENSE)

@@ -1,10 +1,10 @@
 import { cloneFrame, ExtendedVideoFrame } from "../frame";
-import { FrameSampler } from "../sampler";
+import { Sampler } from "../sampler";
 
 /**
  * @group Effects
  */
-export class Cutter extends FrameSampler {
+export class Cutter extends Sampler<ExtendedVideoFrame> {
   get identifier() {
     return "Cutter";
   }

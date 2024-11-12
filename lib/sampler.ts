@@ -4,21 +4,18 @@ import { MFXTransformStream } from "./stream";
 /**
  * @group Stream
  */
-export class FrameSampler extends MFXTransformStream<
-  ExtendedVideoFrame,
-  ExtendedVideoFrame
-> {
+export class Sampler<T = ExtendedVideoFrame | AudioData> extends MFXTransformStream<T, T> {
   get identifier() {
-    return "FrameSampler";
+    return "Sampler";
   }
 
   constructor(
-    filter = (frame: ExtendedVideoFrame, i: number) => Promise.resolve(true),
+    filter = (_: T, _n: number) => Promise.resolve(true),
     {
       transform = (frame) => frame,
       closer = true,
     }: {
-      transform?: (frame: ExtendedVideoFrame) => ExtendedVideoFrame;
+      transform?: (frame: T) => T;
       closer?: boolean;
     } = {},
   ) {
@@ -28,7 +25,7 @@ export class FrameSampler extends MFXTransformStream<
         if (await filter(chunk, i)) {
           controller.enqueue(transform(chunk));
         } else if (closer) {
-          chunk.close();
+          (chunk as AudioData | ExtendedVideoFrame)?.close();
         }
 
         i++;

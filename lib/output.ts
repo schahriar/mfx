@@ -1,9 +1,15 @@
 import { MFXBlob } from "./blob";
-import { MFXTransformStream } from "./stream";
+import { MFXTransformStream, Void } from "./stream";
 
 /**
  * @group Encode
  */
+export const writeToFile = (stream: ReadableStream<MFXBlob>, fileName: string, description = "Video File") => {
+  const writer = new FileWriter(fileName, description);
+
+  return stream.pipeThrough(writer).pipeTo(new Void());
+};
+
 export class FileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
   get identifier() {
     return "FileWriter";
@@ -28,7 +34,12 @@ export class FileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
       },
     });
 
-    // TODO: Read one chunk to determine type before initializing saver
+    const mapping = {
+      ".webm": { "video/webm": [".webm"] },
+      ".mp4": { "video/mp4": [".mp4"] },
+      ".gif": { "image/gif": [".gif"] },
+    };
+
     this.writer = (async () => {
       const fileHandle = await window.showSaveFilePicker({
         suggestedName: fileName,
@@ -36,7 +47,7 @@ export class FileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
         types: [
           {
             description,
-            accept: { "video/webm": [".webm"] },
+            accept: mapping[Object.keys(mapping).find((ext) => fileName.endsWith(ext))],
           },
         ],
       });

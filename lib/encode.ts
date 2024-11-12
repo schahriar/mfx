@@ -1,5 +1,5 @@
 import { getCodecFromMimeType, getContainerFromMimeType, next } from "./utils";
-import { Collector, MFXTransformStream, PassThroughStream } from "./stream";
+import { MFXTransformStream } from "./stream";
 import { ExtendedVideoFrame } from "./frame";
 import { vp9 } from "./codec/vp9";
 import { MP4ContainerEncoder } from "./container/mp4/MP4ContainerEncoder";

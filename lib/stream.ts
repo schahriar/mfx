@@ -1,20 +1,6 @@
-import type { MFXTrack } from "./container/ContainerDecoder";
+import type { GenericTrack } from "./container/Track";
 import { ExtendedVideoFrame } from "./frame";
 import { next } from "./utils";
-
-export class Collector {
-  _streams: PassThroughStream<any>[] = [];
-
-  add() {
-    const stream = new PassThroughStream();
-    this._streams.push(stream);
-    return stream;
-  }
-
-  async wait() {
-    await Promise.all(this._streams.map((s) => s.flushed));
-  }
-}
 
 /**
  * @group Stream
@@ -69,7 +55,7 @@ export abstract class MFXWritableStream<I> extends WritableStream {
  * @group Stream
  */
 export abstract class MFXTransformStream<I, O> extends TransformStream {
-  protected _track: MFXTrack<any>;
+  protected _track: GenericTrack<any>;
   protected _buffer: O[];
   protected _eventTarget: EventTarget;
   protected _controller: TransformStreamDefaultController<O>;
@@ -177,7 +163,7 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
     return this._track;
   }
 
-  setTrack(track: MFXTrack<any>) {
+  setTrack(track: GenericTrack<any>) {
     this._track = track;
 
     return this;
@@ -228,9 +214,6 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
   }
 }
 
-/**
- * @group Stream
- */
 export class MFXBufferCopy<T> extends MFXWritableStream<T> {
   get identifier() {
     return "MFXBufferCopy";
@@ -257,7 +240,7 @@ export class MFXBufferCopy<T> extends MFXWritableStream<T> {
 }
 
 /**
- * @group Stream
+ * @group Video
  */
 export class FrameTee extends MFXTransformStream<
   ExtendedVideoFrame,
@@ -295,7 +278,8 @@ export class Void extends WritableStream<any> {
       write: (chunk) => {
         if (
           chunk instanceof ExtendedVideoFrame ||
-          chunk instanceof VideoFrame
+          chunk instanceof VideoFrame ||
+          chunk instanceof AudioData
         ) {
           chunk.close();
         }

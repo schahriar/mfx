@@ -10,19 +10,23 @@ import { MP4ContainerDecoder } from "./container/mp4/MP4ContainerDecoder";
 import {
   ContainerDecoder,
   type MFXDecodableTrackChunk,
-  MFXTrackType,
-  type MFXTrack,
 } from "./container/ContainerDecoder";
+import {
+  TrackType,
+  type GenericTrack,
+  Track,
+} from "./container/Track";
 import { WebMContainerDecoder } from "./container/webM/WebMContainerDecoder";
 import type { MFXEncodedChunk } from "./types";
-import { MFXWebMContainerProbe } from "./container/webM/WebMContainerProbe";
+import { WebMContainerProbe } from "./container/webM/WebMContainerProbe";
+import { FrameRateAdjuster } from "./keyframes";
 
 /**
  * @group Decode
  */
 export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
   context?: ContainerContext;
-  track?: MFXTrack<Sample>;
+  track?: GenericTrack<Sample>;
   video?: MFXEncodedChunk["video"] & {
     config: VideoDecoderConfig;
   };
@@ -33,7 +37,7 @@ export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
 
 /**
  * @group Decode
- * Forces a VideoFrame to be copied to Software (CPU)
+ * @note Forces a VideoFrame to be copied to Software (CPU)
  */
 export const forceCopyFrame = async (
   frame: VideoFrame,
@@ -58,9 +62,21 @@ export const forceCopyFrame = async (
   return ExtendedVideoFrame.revise(frame, imageBitmap);
 };
 
+/**
+ * @group Decode
+ */
 export interface DecodeOptions {
+  trim?: {
+    // Inclusive number of milliseconds to start cutting from (supports for microsecond fractions)
+    start?: number;
+    // Exclusive number of milliseconds to cut to (supports for microsecond fractions)
+    end?: number;
+  };
+  // Ensures frames are filled or reduced regardless of the container framerate
+  frameRate?: number;
+   // Addresses Chromium WebCodecs bug, Set to true for HEVC or if "Can't readback frame textures" is thrown. Has ~10% performance impact.
   forceDecodeToSoftware?: boolean;
-}
+};
 
 /**
  * @group Decode
@@ -70,22 +86,22 @@ export const decode = async (
   mimeType: string,
   opt: DecodeOptions = {},
 ) => {
-  let videoTracks: MFXVideoDecoder[] = [];
-  let audioTracks: MFXAudioDecoder[] = [];
+  let videoStreams: MFXVideoDecoder[] = [];
+  let audioStreams: MFXAudioDecoder[] = [];
   let root = input;
   const containerType = getContainerFromMimeType(mimeType);
   let { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
   let decoder: ContainerDecoder<any>;
 
-  // Slow path
+  // Slow path, probe webM containers for a codec by performing a full read
   if (containerType === "webm" && !videoCodec) {
     const measure = "Time-spent on codec probing";
     console.time(measure);
     console.warn(`No video codec provided in mimeType = (${mimeType}): a slow full container decode is required.
 
 Please provided a full mimeType if video/audio codec is known ahead of time.`);
-    const probe = new MFXWebMContainerProbe();
+    const probe = new WebMContainerProbe();
     const s1 = new TransformStream();
     const s2 = new TransformStream();
     const copier = new MFXBufferCopy(s1.writable, s2.writable);
@@ -112,10 +128,10 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
       const track = chunk.track;
       let stream: MFXTransformStream<MFXDecodableChunk, any>;
 
-      if (track.type === MFXTrackType.Video) {
-        stream = videoTracks.find((s) => s.track.id === track.id);
+      if (track.type === TrackType.Video) {
+        stream = videoStreams.find((s) => s.track.id === track.id);
       } else {
-        stream = audioTracks.find((s) => s.track.id === track.id);
+        stream = audioStreams.find((s) => s.track.id === track.id);
       }
 
       if (!stream) {
@@ -139,33 +155,46 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
     },
     close: async () => {
       await Promise.all(
-        [...videoTracks, ...audioTracks].map((track) => track.writable.close()),
+        [...videoStreams, ...audioStreams].map((track) => track.writable.close()),
       );
     },
   });
 
   root.pipeThrough(decoder).pipeTo(splitter);
   const tracks = await decoder.tracks;
-  videoTracks = tracks
-    .filter((track) => track.type === MFXTrackType.Video)
+  // Decode tracks
+  videoStreams = tracks
+    .filter((track) => track.type === TrackType.Video)
     .map((track) =>
       new MFXVideoDecoder(track.config as VideoDecoderConfig, {
         forceDecodeToSoftware: opt.forceDecodeToSoftware,
       }).setTrack(track),
     );
-  audioTracks = tracks
-    .filter((track) => track.type === MFXTrackType.Audio)
+  audioStreams = tracks
+    .filter((track) => track.type === TrackType.Audio)
     .map((track) =>
       new MFXAudioDecoder(track.config as AudioDecoderConfig).setTrack(track),
     );
+
+  // Apply filters
+  const videoTracks = videoStreams.map(({ readable, track }) => {
+    let stream = readable;
+
+    if (Number.isInteger(opt.frameRate) && opt.frameRate > 0) {
+      stream = stream.pipeThrough(new FrameRateAdjuster(opt.frameRate));
+    }
+
+    return new Track(track, stream);
+  });
+  const audioTracks = audioStreams.map((stream) => new Track(stream.track, stream.readable));
 
   return {
     // Convinience properties, first track of each type in container
     video: videoTracks?.[0],
     audio: audioTracks?.[0],
 
-    videoTracks,
-    audioTracks,
+    videoTracks: videoTracks,
+    audioTracks: audioTracks,
   };
 };
 

@@ -1,10 +1,12 @@
 import JsWebm from "jswebm";
 import {
   ContainerDecoder,
-  type MFXAudioTrack,
-  MFXTrackType,
-  type MFXVideoTrack,
 } from "../ContainerDecoder";
+import {
+  type AudioTrack,
+  TrackType,
+  type VideoTrack,
+} from "../Track";
 import { next } from "../../utils";
 
 /**
@@ -31,10 +33,10 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
 
         const { videoTrack, audioTrack } = demuxer;
 
-        const processedVideoTrack: MFXVideoTrack<any> | null = videoTrack
+        const processedVideoTrack: VideoTrack<any> | null = videoTrack
           ? {
               id: videoTrack.trackUID,
-              type: MFXTrackType.Video,
+              type: TrackType.Video,
               duration: 0,
               config: {
                 codec: videoCodec,
@@ -52,10 +54,10 @@ export class WebMContainerDecoder extends ContainerDecoder<any> {
             }
           : null;
 
-        const processedAudioTrack: MFXAudioTrack<any> | null = audioTrack
+        const processedAudioTrack: AudioTrack<any> | null = audioTrack
           ? {
               id: audioTrack.trackUID,
-              type: MFXTrackType.Audio,
+              type: TrackType.Audio,
               config: {
                 codec: audioCodec || demuxer.audioCodec,
                 numberOfChannels: audioTrack.channels,

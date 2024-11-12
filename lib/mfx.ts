@@ -9,7 +9,7 @@ export { Cutter } from "./effects/Cutter";
 export { Scaler } from "./effects/Scaler";
 export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
 export { Compositor } from "./effects/Compositor";
-export { FrameSampler } from "./sampler";
+export { Sampler } from "./sampler";
 export { FPSDebugger, ConsoleWritableStream, Digest } from "./debug";
 export { MFXBlob } from "./blob";
 export {
@@ -21,9 +21,10 @@ export {
 export * from "./types";
 export * from "./output";
 export * from "./decode";
+export * from "./container/Track";
 export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
 export { FrameTee, MFXTransformStream, Void } from "./stream";
-export { keyframes, FrameFiller } from "./keyframes";
+export { keyframes } from "./keyframes";
 /** @ignore */
 export { rawShaders };
 /** @group Effects */

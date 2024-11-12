@@ -3,12 +3,13 @@
     PassthroughCanvas,
     FPSDebugger,
     Digest,
-    FrameSampler,
+    Sampler,
     FrameTee,
     Void,
     MFXMediaSourceStream,
     ExtendedVideoFrame,
     Scaler,
+    type GenericTrack,
   } from "mfx";
   import * as mfx from "mfx";
   import bwipjs from "bwip-js";
@@ -18,7 +19,6 @@
   import FramePreview from "./FramePreview.svelte";
   import { circInOut } from "svelte/easing";
   import type { TestDefinition } from "../types";
-  import type { MFXTrack } from "../../lib/container/ContainerDecoder";
 
   export let definition: TestDefinition;
 
@@ -114,8 +114,8 @@
   onMount(async () => {
     let inputStream: ReadableStream<ExtendedVideoFrame>;
     let inputAudioStream: ReadableStream<AudioData> | undefined;
-    let videoTrack: MFXTrack<any>;
-    let audioTrack: MFXTrack<any>;
+    let videoTrack: GenericTrack<any>;
+    let audioTrack: GenericTrack<any>;
 
     if (typeof definition.decode === "function") {
       inputStream = await definition.decode(definition.input);
@@ -127,8 +127,8 @@
         definition.decodeOptions
       );
 
-      inputAudioStream = audio?.readable;
-      inputStream = video.readable;
+      inputAudioStream = audio;
+      inputStream = video;
       videoTrack = video?.track;
       audioTrack = audio?.track;
     }
@@ -141,12 +141,12 @@
       new FrameTee((stream) => {
         stream
           .pipeThrough(
-            new FrameSampler(async (f, i) => i === 0 || !Boolean(i % 30))
+            new Sampler(async (f, i) => i === 0 || !Boolean(i % 30))
           )
           .pipeThrough(new Scaler(0.1))
           .pipeThrough(digest)
           .pipeThrough(
-            new FrameSampler(
+            new Sampler<ExtendedVideoFrame>(
               async (frame, i) => {
                 samples = [
                   ...samples,
