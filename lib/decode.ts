@@ -12,11 +12,7 @@ import {
   ContainerDecoder,
   type MFXDecodableTrackChunk,
 } from "./container/ContainerDecoder";
-import {
-  TrackType,
-  type GenericTrack,
-  Track,
-} from "./container/Track";
+import { TrackType, type GenericTrack, Track } from "./container/Track";
 import { WebMContainerDecoder } from "./container/webM/WebMContainerDecoder";
 import type { GenericData, MFXEncodedChunk } from "./types";
 import { WebMContainerProbe } from "./container/webM/WebMContainerProbe";
@@ -75,9 +71,9 @@ export interface DecodeOptions {
   };
   // Ensures frames are filled or reduced regardless of the container framerate
   frameRate?: number;
-   // Addresses Chromium WebCodecs bug, Set to true for HEVC or if "Can't readback frame textures" is thrown. Has ~10% performance impact.
+  // Addresses Chromium WebCodecs bug, Set to true for HEVC or if "Can't readback frame textures" is thrown. Has ~10% performance impact.
   forceDecodeToSoftware?: boolean;
-};
+}
 
 /**
  * @group Decode
@@ -117,7 +113,7 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
   if (containerType === "mp4") {
     decoder = new MP4ContainerDecoder({
       // Assist on trimming using file seek
-      seek: (opt.trim?.start || 0) / 1000
+      seek: (opt.trim?.start || 0) / 1000,
     });
   } else if (containerType === "webm") {
     decoder = new WebMContainerDecoder({ videoCodec, audioCodec });
@@ -159,7 +155,9 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
     },
     close: async () => {
       await Promise.all(
-        [...videoStreams, ...audioStreams].map((track) => track.writable.close()),
+        [...videoStreams, ...audioStreams].map((track) =>
+          track.writable.close(),
+        ),
       );
     },
   });
@@ -180,26 +178,34 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
       new MFXAudioDecoder(track.config as AudioDecoderConfig).setTrack(track),
     );
 
-  const createTrimmer = <T extends GenericData>(trim: DecodeOptions["trim"]) => new TransformStream<T, T>({
-    transform: (chunk, controller) => {
-      const { start = 0, end = 0 } = trim;
-      const time = chunk.timestamp / 1e3;
-      const shouldInclude = time >= start && (end > 0 && (time < end));
+  const createTrimmer = <T extends GenericData>(trim: DecodeOptions["trim"]) =>
+    new TransformStream<T, T>({
+      transform: (chunk, controller) => {
+        const { start = 0, end = 0 } = trim;
+        const time = chunk.timestamp / 1e3;
+        const shouldInclude = time >= start && end > 0 && time < end;
 
-      if (shouldInclude) {
-        if (chunk instanceof AudioData) {
-          const data = chunk as AudioData;
-          controller.enqueue(cloneAudioData(data, {
-            timestamp: data.timestamp - (start * 1e3),
-          }) as T);
-        } else if (chunk instanceof ExtendedVideoFrame || chunk instanceof VideoFrame) {
-          controller.enqueue(cloneFrame(chunk, {
-            timestamp: chunk.timestamp - (start * 1e3),
-          }) as T);
+        if (shouldInclude) {
+          if (chunk instanceof AudioData) {
+            const data = chunk as AudioData;
+            controller.enqueue(
+              cloneAudioData(data, {
+                timestamp: data.timestamp - start * 1e3,
+              }) as T,
+            );
+          } else if (
+            chunk instanceof ExtendedVideoFrame ||
+            chunk instanceof VideoFrame
+          ) {
+            controller.enqueue(
+              cloneFrame(chunk, {
+                timestamp: chunk.timestamp - start * 1e3,
+              }) as T,
+            );
+          }
         }
-      }
-    }
-  });
+      },
+    });
 
   // Apply filters
   const videoTracks = videoStreams.map(({ readable, track }) => {

@@ -1,13 +1,7 @@
 import MP4Box, { type MP4ArrayBuffer, type MP4Sample } from "mp4box";
 import { getVideoBoxDescription } from "./utils";
-import {
-  ContainerDecoder,
-} from "../ContainerDecoder";
-import {
-  type AudioTrack,
-  TrackType,
-  type VideoTrack,
-} from "../Track";
+import { ContainerDecoder } from "../ContainerDecoder";
+import { type AudioTrack, TrackType, type VideoTrack } from "../Track";
 import { getESDSBoxFromMP4File, parseAudioInfo4ESDSBox } from "./ESDS";
 
 /**

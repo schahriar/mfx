@@ -1,12 +1,6 @@
 import JsWebm from "jswebm";
-import {
-  ContainerDecoder,
-} from "../ContainerDecoder";
-import {
-  type AudioTrack,
-  TrackType,
-  type VideoTrack,
-} from "../Track";
+import { ContainerDecoder } from "../ContainerDecoder";
+import { type AudioTrack, TrackType, type VideoTrack } from "../Track";
 import { next } from "../../utils";
 
 /**

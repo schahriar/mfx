@@ -22,7 +22,6 @@ export interface AudioTrack<Sample> {
 
 export type GenericTrack<Sample> = VideoTrack<Sample> | AudioTrack<Sample>;
 
-
 export class Track<T> extends ReadableStream<T> {
   _track: GenericTrack<T>;
 
@@ -50,4 +49,4 @@ export class Track<T> extends ReadableStream<T> {
   get track() {
     return this._track;
   }
-};
+}

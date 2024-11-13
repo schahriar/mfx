@@ -4,7 +4,9 @@ import { MFXTransformStream } from "./stream";
 /**
  * @group Stream
  */
-export class Sampler<T = ExtendedVideoFrame | AudioData> extends MFXTransformStream<T, T> {
+export class Sampler<
+  T = ExtendedVideoFrame | AudioData,
+> extends MFXTransformStream<T, T> {
   get identifier() {
     return "Sampler";
   }

@@ -4,7 +4,11 @@ import { MFXTransformStream, Void } from "./stream";
 /**
  * @group Encode
  */
-export const writeToFile = (stream: ReadableStream<MFXBlob>, fileName: string, description = "Video File") => {
+export const writeToFile = (
+  stream: ReadableStream<MFXBlob>,
+  fileName: string,
+  description = "Video File",
+) => {
   const writer = new FileWriter(fileName, description);
 
   return stream.pipeThrough(writer).pipeTo(new Void());
@@ -47,7 +51,10 @@ export class FileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
         types: [
           {
             description,
-            accept: mapping[Object.keys(mapping).find((ext) => fileName.endsWith(ext))],
+            accept:
+              mapping[
+                Object.keys(mapping).find((ext) => fileName.endsWith(ext))
+              ],
           },
         ],
       });
