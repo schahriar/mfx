@@ -5,7 +5,6 @@ import { vp9 } from "./codec/vp9";
 
 export { convolution3x3 } from "./effects/convolution";
 export { GLEffect } from "./effects/GLEffect";
-export { Cutter } from "./effects/Cutter";
 export { Scaler } from "./effects/Scaler";
 export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
 export { Compositor } from "./effects/Compositor";

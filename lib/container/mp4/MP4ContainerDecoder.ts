@@ -18,7 +18,7 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
     return "MP4ContainerDecoder";
   }
 
-  constructor() {
+  constructor({ seek }: { seek: number }) {
     const file = MP4Box.createFile();
     let position = 0;
 
@@ -123,6 +123,10 @@ export class MP4ContainerDecoder extends ContainerDecoder<MP4Sample> {
       tracks.forEach((track) => {
         file.setExtractionOptions(track.id as number);
       });
+
+      if (seek) {
+        file.seek(seek / 1000);
+      }
 
       file.start();
     };

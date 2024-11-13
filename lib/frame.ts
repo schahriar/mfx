@@ -50,11 +50,11 @@ export class ExtendedVideoFrame extends VideoFrame {
 
   static revise(
     frame: ExtendedVideoFrame | VideoFrame,
-    source: CanvasImageSource | ImageData,
+    source: CanvasImageSource | ImageData | ExtendedVideoFrame,
     init?: VideoFrameInit,
   ) {
     return new ExtendedVideoFrame(
-      source,
+      source as any,
       {
         timestamp: frame.timestamp,
         ...(frame.duration

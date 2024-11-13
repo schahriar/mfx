@@ -1,10 +1,11 @@
 import {
+  cloneAudioData,
   getCodecFromMimeType,
   getContainerFromMimeType,
   next,
   nextTick,
 } from "./utils";
-import { type ContainerContext, ExtendedVideoFrame } from "./frame";
+import { type ContainerContext, ExtendedVideoFrame, cloneFrame } from "./frame";
 import { MFXBufferCopy, MFXTransformStream } from "./stream";
 import { MP4ContainerDecoder } from "./container/mp4/MP4ContainerDecoder";
 import {
@@ -17,7 +18,7 @@ import {
   Track,
 } from "./container/Track";
 import { WebMContainerDecoder } from "./container/webM/WebMContainerDecoder";
-import type { MFXEncodedChunk } from "./types";
+import type { GenericData, MFXEncodedChunk } from "./types";
 import { WebMContainerProbe } from "./container/webM/WebMContainerProbe";
 import { FrameRateAdjuster } from "./keyframes";
 
@@ -114,7 +115,10 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
   }
 
   if (containerType === "mp4") {
-    decoder = new MP4ContainerDecoder();
+    decoder = new MP4ContainerDecoder({
+      // Assist on trimming using file seek
+      seek: (opt.trim?.start || 0) / 1000
+    });
   } else if (containerType === "webm") {
     decoder = new WebMContainerDecoder({ videoCodec, audioCodec });
   }
@@ -176,17 +180,51 @@ Please provided a full mimeType if video/audio codec is known ahead of time.`);
       new MFXAudioDecoder(track.config as AudioDecoderConfig).setTrack(track),
     );
 
+  const createTrimmer = <T extends GenericData>(trim: DecodeOptions["trim"]) => new TransformStream<T, T>({
+    transform: (chunk, controller) => {
+      const { start = 0, end = 0 } = trim;
+      const time = chunk.timestamp / 1e3;
+      const shouldInclude = time >= start && (end > 0 && (time < end));
+
+      if (shouldInclude) {
+        if (chunk instanceof AudioData) {
+          const data = chunk as AudioData;
+          controller.enqueue(cloneAudioData(data, {
+            timestamp: data.timestamp - (start * 1e3),
+          }) as T);
+        } else if (chunk instanceof ExtendedVideoFrame || chunk instanceof VideoFrame) {
+          controller.enqueue(cloneFrame(chunk, {
+            timestamp: chunk.timestamp - (start * 1e3),
+          }) as T);
+        }
+      }
+    }
+  });
+
   // Apply filters
   const videoTracks = videoStreams.map(({ readable, track }) => {
-    let stream = readable;
+    let stream: ReadableStream<ExtendedVideoFrame> = readable;
 
     if (Number.isInteger(opt.frameRate) && opt.frameRate > 0) {
       stream = stream.pipeThrough(new FrameRateAdjuster(opt.frameRate));
     }
 
+    if (opt.trim) {
+      stream = stream.pipeThrough(createTrimmer<ExtendedVideoFrame>(opt.trim));
+    }
+
     return new Track(track, stream);
   });
-  const audioTracks = audioStreams.map((stream) => new Track(stream.track, stream.readable));
+
+  const audioTracks = audioStreams.map(({ readable, track }) => {
+    let stream: ReadableStream<AudioData> = readable;
+
+    if (opt.trim) {
+      stream = stream.pipeThrough(createTrimmer<AudioData>(opt.trim));
+    }
+
+    return new Track(track, stream);
+  });
 
   return {
     // Convinience properties, first track of each type in container
