@@ -3,4 +3,4 @@ export interface ContainerEncoderConfig {
   audio?: AudioEncoderConfig;
   // Configure whether encoding is meant for livestreaming or storage
   streaming?: boolean;
-};
+}
