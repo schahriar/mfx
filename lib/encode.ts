@@ -16,6 +16,7 @@ export const encode = ({
   mimeType,
   video,
   audio,
+  ...config
 }: {
   mimeType: string;
   video?: Omit<VideoEncoderConfig, "codec"> & {
@@ -26,7 +27,7 @@ export const encode = ({
     stream: MFXTransformStream<any, AudioData> | ReadableStream<AudioData>;
     codec?: string;
   };
-}) => {
+} & Omit<ContainerEncoderConfig, "video" | "audio">) => {
   const containerType = getContainerFromMimeType(mimeType);
   const { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
@@ -45,6 +46,7 @@ export const encode = ({
     ...audioConfigRaw,
   } as AudioEncoderConfig;
   const containerConfig: ContainerEncoderConfig = {
+    ...config,
     ...(video
       ? {
           video: videoConfig,

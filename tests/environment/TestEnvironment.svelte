@@ -124,7 +124,7 @@
       const { video, audio } = await mfx.decode(
         stream,
         `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}; codecs="${definition.codec || ""}"`,
-        definition.decodeOptions
+        definition.decodeOptions,
       );
 
       inputAudioStream = audio;

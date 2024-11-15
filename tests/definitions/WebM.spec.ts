@@ -43,6 +43,7 @@ export const definitions: TestDefinition[] = [{
   },
   output: async (s) => {
     return encode({
+      streaming: true,
       mimeType: `video/webm; codecs="vp9"`,
       video: {
         stream: s,
@@ -63,6 +64,7 @@ export const definitions: TestDefinition[] = [{
   },
   output: async (s) => {
     return encode({
+      streaming: true,
       mimeType: `video/webm; codecs="vp9"`,
       video: {
         stream: s,
@@ -86,6 +88,7 @@ export const definitions: TestDefinition[] = [{
   },
   output: async (s) => {
     return encode({
+      streaming: true,
       mimeType: `video/webm; codecs="vp9"`,
       video: {
         stream: s,
@@ -113,6 +116,7 @@ export const definitions: TestDefinition[] = [{
   },
   output: async (s) => {
     return encode({
+      streaming: true,
       mimeType: `video/webm; codecs="vp8"`,
       video: {
         stream: s,

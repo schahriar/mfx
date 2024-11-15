@@ -91,7 +91,7 @@ export class WebMContainerEncoder extends MFXTransformStream<
         : {}),
       firstTimestampBehavior: "offset",
       type: "matroska",
-      streaming: false,
+      streaming: config.streaming,
       target: new WebMStreamTarget({
         onData: (data, position) => {
           this.queue(

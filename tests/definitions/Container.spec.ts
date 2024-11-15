@@ -15,6 +15,7 @@ export const definitions: TestDefinition[] = [{
   output: async (v, a) => {
     return encode({
       mimeType: `video/webm; codecs="vp09.00.40.08,opus"`,
+      streaming: true,
       video: {
         stream: v,
         width: 640 * 3,
@@ -44,6 +45,7 @@ export const definitions: TestDefinition[] = [{
   output: async (v, a, vt) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,
+      streaming: true,
       video: {
         stream: v,
         width: 640 * 4,
