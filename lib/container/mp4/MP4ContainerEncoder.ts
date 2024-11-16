@@ -16,7 +16,7 @@ export class MP4ContainerEncoder extends MFXTransformStream<
   }
 
   ready: Promise<any>;
-  constructor(config: ContainerEncoderConfig, chunkSize?: number) {
+  constructor(config: ContainerEncoderConfig) {
     const videoCodecMapper = (
       codec: ContainerEncoderConfig["video"]["codec"],
     ): "avc" | "hevc" | "vp9" | "av1" => {
@@ -101,10 +101,10 @@ export class MP4ContainerEncoder extends MFXTransformStream<
             }),
           );
         },
-        ...(Number.isInteger(chunkSize)
+        ...(Number.isInteger(config.chunkSize)
           ? {
               chunked: true,
-              chunkSize,
+              chunkSize: config.chunkSize,
             }
           : {}),
       }),

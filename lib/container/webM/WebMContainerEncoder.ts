@@ -20,7 +20,7 @@ export class WebMContainerEncoder extends MFXTransformStream<
   }
 
   ready: Promise<any>;
-  constructor(config: ContainerEncoderConfig, chunkSize?: number) {
+  constructor(config: ContainerEncoderConfig) {
     const videoCodecMapper = (
       codec: ContainerEncoderConfig["video"]["codec"],
     ) => {
@@ -102,10 +102,10 @@ export class WebMContainerEncoder extends MFXTransformStream<
             }),
           );
         },
-        ...(Number.isInteger(chunkSize)
+        ...(Number.isInteger(config.chunkSize)
           ? {
               chunked: true,
-              chunkSize,
+              chunkSize: config.chunkSize,
             }
           : {}),
       }),
