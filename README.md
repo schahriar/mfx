@@ -1,7 +1,7 @@
 <img src="./Logo.png" width="100">
 
 ## MFX
-In-browser video editing using WebCodec and WebGL
+In-browser video editing using WebCodecs, WebStreams, and WebGL
 → [mfxlib.com](https://mfxlib.com)
 
 ----
