@@ -18,7 +18,7 @@ export interface MFXVideoEncoderConfig extends VideoEncoderConfig {
    * Set to `Infinity` to disable periodic keyframes
    * @default 30 */
   keyframeEveryNthSecond?: number;
-};
+}
 
 /**
  * @group Encode
