@@ -12,6 +12,17 @@ export { MP4ContainerEncoder, WebMContainerEncoder };
 /**
  * @group Encode
  */
+export interface MFXVideoEncoderConfig extends VideoEncoderConfig {
+  /**
+   * Encodes a frame as keyframe every nth second (in seconds)
+   * Set to `Infinity` to disable periodic keyframes
+   * @default 30 */
+  keyframeEveryNthSecond?: number;
+};
+
+/**
+ * @group Encode
+ */
 export const encode = ({
   mimeType,
   video,
@@ -19,7 +30,7 @@ export const encode = ({
   ...config
 }: {
   mimeType: string;
-  video?: Omit<VideoEncoderConfig, "codec"> & {
+  video?: Omit<MFXVideoEncoderConfig, "codec"> & {
     stream: MFXTransformStream<any, VideoFrame> | ReadableStream<VideoFrame>;
     codec?: string;
   };
@@ -109,7 +120,7 @@ export class MFXVideoEncoder extends MFXTransformStream<
     return "MFXVideoEncoder";
   }
 
-  constructor(config: VideoEncoderConfig) {
+  constructor(config: MFXVideoEncoderConfig) {
     let backpressure = Promise.resolve();
     const encoder = new VideoEncoder({
       output: async (chunk, metadata) => {
@@ -140,9 +151,9 @@ export class MFXVideoEncoder extends MFXTransformStream<
         : {}),
     });
 
-    const matroskaMaxInterval = 1e6 * 30;
+    const maxKFInterval = 1e6 * (config.keyframeEveryNthSecond || 30);
     // Force first frame to be keyFrame
-    let lastKeyFrameTimestamp = -matroskaMaxInterval;
+    let lastKFTimestamp = -maxKFInterval;
 
     super(
       {
@@ -177,9 +188,9 @@ export class MFXVideoEncoder extends MFXTransformStream<
             return;
           }
 
-          if (frame.timestamp - lastKeyFrameTimestamp >= matroskaMaxInterval) {
+          if (frame.timestamp - lastKFTimestamp >= maxKFInterval) {
             encoder.encode(frame, { keyFrame: true });
-            lastKeyFrameTimestamp = frame.timestamp;
+            lastKFTimestamp = frame.timestamp;
           } else {
             encoder.encode(frame, { keyFrame: false });
           }
