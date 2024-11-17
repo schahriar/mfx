@@ -95,6 +95,7 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 
 ### Later
 - Decode WebM via Matroska decoder to resolve issues of jswebm dependency (https://www.npmjs.com/package/ebml-stream), alternatively build libwebm for WebAssembly https://github.com/webmproject/libwebm/tree/main/webm_parser (e.g. https://github.com/ForeverSc/web-demuxer/blob/main/lib/web-demuxer/web_demuxer.cpp)
+  - https://github.com/GoogleChromeLabs/webm-wasm/tree/master
 - Utilize (https://github.com/dmnsgn/media-codecs?tab=readme-ov-file) for codec string generation
 - Canvas frame generator
   - Add threejs demo
@@ -109,6 +110,7 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 - Improve encoding performance by reverting fill behavior for nearly identical frames (high effort)
 - Seek
   - Clips view (similar to QuickTime)
+- Per frame quantizer
 - Log WebCodec bug (https://chromium.googlesource.com/chromium/src/+/7786d34a4e7771725b85f354247ad1bb1902c556/third_party/blink/renderer/modules/webcodecs/video_encoder.cc#939)
 - Reduce CPU → GPU → CPU copy times using texture atlas
 - Benchmarks (during test) against ffmpeg (AVC https://trac.ffmpeg.org/wiki/Encode/H.264#FAQ and possibly WebM)

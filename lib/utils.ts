@@ -9,7 +9,6 @@ export const nextTick = (dur = 1) =>
 /** @ignore */
 export const next = nextTick;
 
-/** @ignore */
 export const cloneAudioData = (
   data: AudioData,
   init: Partial<AudioDataInit>,

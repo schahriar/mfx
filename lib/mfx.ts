@@ -3,6 +3,7 @@ import * as shaders from "./effects/shaders";
 import { avc } from "./codec/avc";
 import { vp9 } from "./codec/vp9";
 
+export { cloneAudioData } from "./utils";
 export { convolution3x3 } from "./effects/convolution";
 export { GLEffect } from "./effects/GLEffect";
 export { Scaler } from "./effects/Scaler";
@@ -21,7 +22,7 @@ export * from "./types";
 export * from "./output";
 export * from "./decode";
 export * from "./container/Track";
-export { MFXVideoSource, ExtendedVideoFrame } from "./frame";
+export { MFXVideoSource, ExtendedVideoFrame, cloneFrame } from "./frame";
 export { FrameTee, MFXTransformStream, Void } from "./stream";
 export { keyframes } from "./keyframes";
 /** @ignore */
