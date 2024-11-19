@@ -188,7 +188,7 @@ export class MFXVideoEncoder extends MFXTransformStream<
             return;
           }
 
-          if (frame.timestamp - lastKFTimestamp >= maxKFInterval) {
+          if (frame.keyFrame || frame.timestamp - lastKFTimestamp >= maxKFInterval) {
             encoder.encode(frame, { keyFrame: true });
             lastKFTimestamp = frame.timestamp;
           } else {

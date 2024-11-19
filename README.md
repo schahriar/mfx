@@ -78,6 +78,7 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 ## Roadmap
 
 ### Soon
+- Fix Audio trimming to include subframes
 - Functional APIs as abstractions to WebStreams
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions

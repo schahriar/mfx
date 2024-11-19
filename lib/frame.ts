@@ -39,6 +39,7 @@ export const cloneFrame = (
 
 export class ExtendedVideoFrame extends VideoFrame {
   containerContext?: ContainerContext;
+  keyFrame?: boolean;
   constructor(
     source: CanvasImageSource | ImageData,
     init?: VideoFrameInit,
