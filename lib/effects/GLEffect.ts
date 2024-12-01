@@ -140,7 +140,7 @@ export class GLEffect extends MFXTransformStream<
           if (!frameBufferInfo) {
             textureIn = twgl.createTexture(gl, {
               min: gl.NEAREST,
-              mag: gl.NEAREST,
+              mag: gl.LINEAR,
               wrapS: gl.CLAMP_TO_EDGE,
               wrapT: gl.CLAMP_TO_EDGE,
               width,
@@ -148,7 +148,7 @@ export class GLEffect extends MFXTransformStream<
             });
             textureOut = twgl.createTexture(gl, {
               min: gl.NEAREST,
-              mag: gl.NEAREST,
+              mag: gl.LINEAR,
               wrapS: gl.CLAMP_TO_EDGE,
               wrapT: gl.CLAMP_TO_EDGE,
               width,
