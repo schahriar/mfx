@@ -83,7 +83,8 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 - Compositor texture alpha masks
   - Blend mode and opacity as compositor functions
   - Dynamic layer counts using GLSL generation / Or Canvas based
-  - `compose` function to quickly merge 
+  - `compose` function to quickly merge
+- Temporal Noise Reduction
 - Deprecate ExtendedVideoFrame
 - API Documentation
   - Add note on VP9 probe

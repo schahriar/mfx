@@ -11,7 +11,7 @@ uniform vec2 position;
 
 void main() {
   // Adjust coordinates where top, left = 0, 0
-  float adjustedY = 1.0 - position.y;
+  float adjustedY = position.y;
   vec2 calculatedPosition = vec2(position.x, adjustedY);
   // Calculate the offset from the zoom position based on the zoom factor
   vec2 zoomedCoord = (uv - calculatedPosition) / zoomFactor + calculatedPosition;

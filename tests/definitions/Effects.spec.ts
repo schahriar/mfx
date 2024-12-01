@@ -14,6 +14,18 @@ export const definitions: TestDefinition[] = [{
     ])
   ]
 }, {
+  id: "effect_zoom_stacked",
+  title: "Stacked Zoom Effects",
+  description: "Zoom at a scale into a video coordinate",
+  path: "/zoom_stacked",
+  input: "AI.mp4",
+  process: async () => [
+    new GLEffect([
+      shaders.zoom({ factor: 1.5, x: 0, y: 0 }),
+      shaders.zoom({ factor: 1.25, x: 0, y: 0 }),
+    ])
+  ]
+}, {
   id: "effect_zoom_out",
   title: "Zoom Out",
   description: "Zoom out adjusting the alpha channel on area out of zoom",

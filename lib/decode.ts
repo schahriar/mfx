@@ -389,7 +389,7 @@ export class MFXVideoDecoder extends MFXTransformStream<
         if (duration <= 0) {
           // Last frame is out of order, discard
           console.warn(
-            "Discarding out of order frame, MFX is not currently able to handle out of order frames",
+            "Discarding out of order frame, MFX is not currently able to handle out of order frames or B-frames",
             {
               discarded: lastFrame,
             },

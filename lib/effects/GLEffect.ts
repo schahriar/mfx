@@ -60,18 +60,16 @@ export class GLEffect extends MFXTransformStream<
   ExtendedVideoFrame,
   ExtendedVideoFrame
 > {
+  _gl: WebGL2RenderingContext;
+  _programs: Record<string, any> = {};
+  _programsInfos: ReturnType<typeof twgl.createProgramInfos>;
+
   get identifier() {
     return "GLEffect";
   }
 
-  constructor(
-    pipeline: Effect[],
-    canvas: HTMLCanvasElement = document.createElement("canvas"),
-    writableStrategy?: QueuingStrategy<ExtendedVideoFrame>,
-    readableStrategy?: QueuingStrategy<ExtendedVideoFrame>,
-  ) {
-    const gl = canvas.getContext("webgl2");
-    const programmedPipeline = pipeline.reduce(
+  setEffects(effects: Effect[]) {
+    this._programs = effects.reduce(
       (accu, v, i) => ({
         ...accu,
         [i]: {
@@ -81,7 +79,17 @@ export class GLEffect extends MFXTransformStream<
       }),
       {},
     );
-    const programInfos = twgl.createProgramInfos(gl, programmedPipeline);
+
+    this._programsInfos = twgl.createProgramInfos(this._gl, this._programs);
+  }
+
+  constructor(
+    effects: Effect[],
+    canvas: HTMLCanvasElement = document.createElement("canvas"),
+    writableStrategy?: QueuingStrategy<ExtendedVideoFrame>,
+    readableStrategy?: QueuingStrategy<ExtendedVideoFrame>,
+  ) {
+    const gl = canvas.getContext("webgl2");
     const paintProgramInfo = twgl.createProgramInfo(gl, [
       vertexShaderSource,
       paintShaderSource,
@@ -128,11 +136,6 @@ export class GLEffect extends MFXTransformStream<
           const height = frame.displayHeight;
           canvas.width = width;
           canvas.height = height;
-
-          gl.pixelStorei(
-            gl.UNPACK_FLIP_Y_WEBGL,
-            Object.keys(programInfos).length % 2,
-          );
 
           if (!frameBufferInfo) {
             textureIn = twgl.createTexture(gl, {
@@ -181,9 +184,11 @@ export class GLEffect extends MFXTransformStream<
           // Free resource after GPU paint
           frame.close();
 
-          Object.keys(programInfos).map((programId) => {
-            const programInfo = programInfos[programId];
-            const pipeline = programmedPipeline[programId];
+          let flips = 0;
+
+          Object.keys(this._programsInfos).map((programId, i) => {
+            const programInfo = this._programsInfos[programId];
+            const pipeline = this._programs[programId];
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, textureIn);
             attachTextureToFramebuffer(textureOut);
@@ -197,12 +202,17 @@ export class GLEffect extends MFXTransformStream<
               {},
             );
 
+            const flipY = i % 2 ? 1 : 0;
+            if (flipY) {
+              flips++;
+            }
             gl.useProgram(programInfo.program);
             twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
             twgl.setUniforms(programInfo, {
               ...uniforms,
               frame: textureIn,
               frameSize: [width, height],
+              flipY,
             });
             twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
@@ -220,6 +230,7 @@ export class GLEffect extends MFXTransformStream<
           twgl.setUniforms(paintProgramInfo, {
             frame: textureIn,
             frameSize: [width, height],
+            flipY: flips % 2 ? 0 : 1,
           });
           twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
@@ -229,5 +240,8 @@ export class GLEffect extends MFXTransformStream<
       writableStrategy,
       readableStrategy,
     );
+
+    this._gl = gl;
+    this.setEffects(effects);
   }
 }

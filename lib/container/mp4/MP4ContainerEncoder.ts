@@ -74,6 +74,7 @@ export class MP4ContainerEncoder extends MFXTransformStream<
       ...(config.video
         ? {
             video: {
+              frameRate: config.video.framerate,
               height: config.video.height,
               width: config.video.width,
               codec: videoCodecMapper(config.video.codec),
