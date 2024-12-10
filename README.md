@@ -78,19 +78,21 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 ## Roadmap
 
 ### Soon
-- Fix Audio trimming to include subframes
 - Functional APIs as abstractions to WebStreams
-- Compositor texture alpha masks
+- Compositor
   - Blend mode and opacity as compositor functions
-  - Dynamic layer counts using GLSL generation / Or Canvas based
+  - Two layer compositor with blend mode
   - `compose` function to quickly merge
+- `clip` to mask a VideoStream
+- `transform` function for X/Y/Z translation and rotation (matrix3d equivalent)
+- Fix Audio trimming to include subframes
+- GIF codec
+  - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)
+  - encode: https://github.com/jnordberg/gif.js
 - Temporal Noise Reduction
 - Deprecate ExtendedVideoFrame
 - API Documentation
   - Add note on VP9 probe
-- GIF codec
-  - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)
-  - encode: https://github.com/jnordberg/gif.js
 - Testing: Source videos with frame duration > fps to showcase frameRate
 - Run tests on Github actions
 - Contribution Guide

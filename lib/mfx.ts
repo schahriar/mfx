@@ -8,7 +8,6 @@ export { convolution3x3 } from "./effects/convolution";
 export { GLEffect } from "./effects/GLEffect";
 export { Scaler } from "./effects/Scaler";
 export { PaintToCanvas, PassthroughCanvas } from "./effects/Draw";
-export { Compositor } from "./effects/Compositor";
 export { Sampler } from "./sampler";
 export { FPSDebugger, ConsoleWritableStream, Digest } from "./debug";
 export { MFXBlob } from "./blob";

@@ -202,17 +202,18 @@ export class GLEffect extends MFXTransformStream<
               {},
             );
 
-            const flipY = i % 2 ? 1 : 0;
-            if (flipY) {
+            const MFXInternalFlipY = i % 2 ? 1 : 0;
+            if (MFXInternalFlipY) {
               flips++;
             }
+
             gl.useProgram(programInfo.program);
             twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
             twgl.setUniforms(programInfo, {
               ...uniforms,
               frame: textureIn,
               frameSize: [width, height],
-              flipY,
+              MFXInternalFlipY,
             });
             twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
@@ -230,7 +231,7 @@ export class GLEffect extends MFXTransformStream<
           twgl.setUniforms(paintProgramInfo, {
             frame: textureIn,
             frameSize: [width, height],
-            flipY: flips % 2 ? 0 : 1,
+            MFXInternalFlipY: flips % 2 ? 0 : 1,
           });
           twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
