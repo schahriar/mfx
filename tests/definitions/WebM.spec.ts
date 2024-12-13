@@ -1,9 +1,8 @@
 import {
-  convolution3x3,
-  GLEffect,
-  rawShaders,
   codecs,
+  effect,
   encode,
+  visual,
 } from "mfx";
 import type { TestDefinition } from "../types";
 
@@ -18,9 +17,6 @@ export const definitions: TestDefinition[] = [{
   path: "/webm_decode",
   input: "beach.webm",
   codec: "vp09.02.41.08",
-  process: async () => {
-    return []
-  },
   output: async (s) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
@@ -38,9 +34,6 @@ export const definitions: TestDefinition[] = [{
   description: "Coding / Decoding WebM file",
   path: "/webm_codec",
   input: "beach.webm",
-  process: async () => {
-    return []
-  },
   output: async (s) => {
     return encode({
       streaming: true,
@@ -59,9 +52,6 @@ export const definitions: TestDefinition[] = [{
   description: "Coding / Decoding WebM file with out of order frames",
   path: "/webm_codec_ooo",
   input: "BeachWithAudio.webm",
-  process: async () => {
-    return []
-  },
   output: async (s) => {
     return encode({
       streaming: true,
@@ -83,9 +73,6 @@ export const definitions: TestDefinition[] = [{
   expect: async () => {
     return true;
   },
-  process: async () => {
-    return []
-  },
   output: async (s) => {
     return encode({
       streaming: true,
@@ -104,16 +91,9 @@ export const definitions: TestDefinition[] = [{
   description: "Converts sample mp4 file to WebM encoding",
   path: "/webm",
   input: "AI.mp4",
-  process: async () => {
-    return [
-      new GLEffect([{
-        shader: rawShaders.convolution,
-        uniforms: {
-          kernel: convolution3x3.emboss
-        }
-      }])
-    ]
-  },
+  process: (stream) => effect(stream, [
+    visual.emboss()
+  ]),
   output: async (s) => {
     return encode({
       streaming: true,

@@ -133,10 +133,6 @@
       audioTrack = audio?.track;
     }
 
-    const computedPipeline = definition.process
-      ? await definition.process()
-      : [];
-
     const decodeStream = inputStream.pipeThrough(
       new FrameTee((stream) => {
         stream
@@ -169,12 +165,7 @@
       })
     );
 
-    const processStream = computedPipeline.length
-      ? computedPipeline.reduce(
-          (stream, pipe) => stream.pipeThrough(pipe),
-          decodeStream
-        )
-      : decodeStream;
+    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process ? definition.process(decodeStream) : decodeStream;
 
     const displayStream = processStream
       .pipeThrough(new PassthroughCanvas(canvasEl))

@@ -1,4 +1,4 @@
-import { keyframes, GLEffect, MFXVideoSource, shaders } from "mfx";
+import { keyframes, effect, MFXVideoSource, visual } from "mfx";
 import { easing } from "ts-easing";
 import type { TestDefinition } from "../types";
 
@@ -19,33 +19,29 @@ export const definitions: TestDefinition[] = [{
 
     return stream;
   },
-  process: async () => {
-    return [
-      new GLEffect([
-        shaders.zoom({
-          factor: keyframes([{
-            time: 0,
-            value: 1
-          }, {
-            time: 5000,
-            value: 20
-          }, {
-            time: 10000,
-            value: 1
-          }], easing.inOutSine),
-          x: 0.5,
-          y: keyframes([{
-            time: 0,
-            value: 0
-          }, {
-            time: 5000,
-            value: 0
-          }, {
-            time: 15000,
-            value: 0.5
-          }], easing.inOutSine)
-        }),
-      ])
-    ]
-  }
+  process: (stream) => effect(stream, [
+    visual.zoom({
+      factor: keyframes([{
+        time: 0,
+        value: 1
+      }, {
+        time: 5000,
+        value: 20
+      }, {
+        time: 10000,
+        value: 1
+      }], easing.inOutSine),
+      x: 0.5,
+      y: keyframes([{
+        time: 0,
+        value: 0
+      }, {
+        time: 5000,
+        value: 0
+      }, {
+        time: 15000,
+        value: 0.5
+      }], easing.inOutSine)
+    })
+  ])
 }];

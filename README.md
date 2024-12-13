@@ -10,11 +10,11 @@ In-browser video editing using WebCodecs, WebStreams, and WebGL
 Decode MP4 Video -> zoom out -> encode to WebM keeping original Audio (vp8):
 ```javascript
 import {
-  shaders,
   decode,
   encode,
+  effect,
+  visual,
   writeToFile,
-  GLEffect,
 } from "mfx";
 
 // Files can be fetched locally
@@ -26,10 +26,12 @@ const { video, audio } = await decode(file, "video/mp4", {
   forceDecodeToSoftware: false,
 });
 
-// Create video pipeline taking raw frames through Web Streams
-const videoOutput = video.pipeThrough(new GLEffect([ // Apply zoom out effect
-  shaders.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
-]));
+// Hardware accelerated (WebGL2) effect pipeline
+const videoOutput = effect(video, [
+  // Apply zoom out effect
+  visual.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
+  visual.add(video2, {}),
+]);
 
 // Readable WebStream
 const outputStream = encode({
@@ -78,7 +80,6 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 ## Roadmap
 
 ### Soon
-- Functional APIs as abstractions to WebStreams
 - Compositor
   - Blend mode and opacity as compositor functions
   - Two layer compositor with blend mode

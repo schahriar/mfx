@@ -9,9 +9,6 @@ export const definitions: TestDefinition[] = [{
   path: "/mm_webm_decode",
   input: "BeachWithAudio.webm",
   codec: "vp09.00.40.08,opus",
-  process: async () => {
-    return []
-  },
   output: async (v, a) => {
     return encode({
       mimeType: `video/webm; codecs="vp09.00.40.08,opus"`,
@@ -41,7 +38,6 @@ export const definitions: TestDefinition[] = [{
   decodeOptions: {
     forceDecodeToSoftware: true
   },
-  process: async () => [],
   output: async (v, a, vt) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,

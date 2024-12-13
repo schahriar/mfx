@@ -15,6 +15,6 @@ export interface TestDefinition {
   decodeOptions?: DecodeOptions;
   decode?: (input: string) => Promise<ReadableStream<ExtendedVideoFrame>>,
   expect?: () => Promise<boolean>;
-  process?: () => Promise<MFXTransformStream<ExtendedVideoFrame, ExtendedVideoFrame>[]>,
+  process?: ((_: ReadableStream<ExtendedVideoFrame>) => ReadableStream<ExtendedVideoFrame>);
   output?: (v: ReadableStream<ExtendedVideoFrame>, a?: ReadableStream<AudioData>, vt?: GenericTrack<any>, at?: GenericTrack<any>) => Promise<(MFXTransformStream<ExtendedVideoFrame, any>[]) | ReadableStream<MFXBlob>>,
 };

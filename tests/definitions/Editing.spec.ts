@@ -1,4 +1,4 @@
-import { codecs, GLEffect, shaders, keyframes, encode } from "mfx";
+import { codecs, keyframes, encode, effect, visual } from "mfx";
 import { easing } from "ts-easing";
 import type { TestDefinition } from "../types";
 
@@ -16,8 +16,6 @@ export const definitions: TestDefinition[] = [{
       end: 2000, // End at 2 seconds
     }
   },
-  process: async () => [
-  ],
   output: async (s) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
@@ -42,8 +40,6 @@ export const definitions: TestDefinition[] = [{
       end: 4000, // End at 4 seconds
     }
   },
-  process: async () => [
-  ],
   output: async (v, a) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,
@@ -69,33 +65,31 @@ export const definitions: TestDefinition[] = [{
   decodeOptions: {
     frameRate: 30
   },
-  process: async () => [
-    new GLEffect([
-      shaders.zoom({
-        factor: keyframes([{
-          time: 0,
-          value: 1
-        }, {
-          time: 5000,
-          value: 2
-        }, {
-          time: 10000,
-          value: 1
-        }], easing.inOutSine),
-        x: 0.5,
-        y: keyframes([{
-          time: 0,
-          value: 0
-        }, {
-          time: 5000,
-          value: 0
-        }, {
-          time: 15000,
-          value: 0.5
-        }], easing.inOutSine)
-      }),
-    ])
-  ],
+  process: (stream) => effect(stream, [
+    visual.zoom({
+      factor: keyframes([{
+        time: 0,
+        value: 1
+      }, {
+        time: 5000,
+        value: 2
+      }, {
+        time: 10000,
+        value: 1
+      }], easing.inOutSine),
+      x: 0.5,
+      y: keyframes([{
+        time: 0,
+        value: 0
+      }, {
+        time: 5000,
+        value: 0
+      }, {
+        time: 15000,
+        value: 0.5
+      }], easing.inOutSine)
+    })
+  ]),
   output: async (s) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
