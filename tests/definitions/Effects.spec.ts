@@ -31,26 +31,13 @@ export const definitions: TestDefinition[] = [{
   process: (stream) => effect(stream, [
     visual.zoom({ factor: 0.5, x: 0.5, y: 0.25 })
   ])
-}, /*{
+}, {
   id: "effect_blur",
   title: "Blur",
   description: "Blur video using fast gaussian and convolution",
   path: "/blur",
   input: "boats.mp4",
-  process: async () => [
-    new Scaler(0.2),
-    new GLEffect([{
-      shader: rawShaders.blur,
-    }, {
-      shader: rawShaders.convolution,
-      uniforms: {
-        kernel: convolution3x3.gaussianBlur
-      }
-    }, {
-      shader: rawShaders.blur,
-    }, , {
-      shader: rawShaders.blur,
-    }]),
-    new Scaler(5),
-  ]
-}*/];
+  process: (stream) => effect(stream, [
+    visual.blur({ passes: 5, quality: 0.1 })
+  ])
+}];

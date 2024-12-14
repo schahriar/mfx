@@ -29,6 +29,18 @@ export const visual = {
   }) => [
       new MFXGLEffect(shaders.zoom, { position: [x, y], factor })
     ],
+  blur: ({
+    passes = 5,
+    quality = 0.5
+  }: {
+    passes?: number;
+    // Between 0 to 1, The higher the quality the more passes you need to blur the image
+    quality?: number;
+  }) => [
+      new MFXGLEffect(shaders.zoom, { factor: quality, position: [0.5, 0.5] }),
+      ...repeat(passes, () => new MFXGLEffect(shaders.blur)),
+      new MFXGLEffect(shaders.zoom, { factor: 1 / quality, position: [0.5, 0.5] }),
+    ],
   edge: conv(convolution3x3Kernels.edge0),
   edge1: conv(convolution3x3Kernels.edge1),
   edge2: conv(convolution3x3Kernels.edge2),
