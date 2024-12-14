@@ -8,7 +8,6 @@ export const definitions: TestDefinition[] = [{
   id: "editing_cut",
   title: "Trimming",
   description: "Trim videos at specific points",
-  path: "/cut",
   input: "boats.mp4",
   decodeOptions: {
     trim: {
@@ -31,7 +30,6 @@ export const definitions: TestDefinition[] = [{
   id: "editing_trim_with_audio",
   title: "Trimming with Audio",
   description: "Trim media at specific points",
-  path: "/trim_with_audio",
   input: "BeachWithAudio.webm",
   codec: "vp09.00.40.08,opus",
   decodeOptions: {
@@ -60,7 +58,6 @@ export const definitions: TestDefinition[] = [{
   id: "editing_keyframes",
   title: "Keyframes",
   description: "Keyframes animating values",
-  path: "/keyframes",
   input: "beach.webm",
   decodeOptions: {
     frameRate: 30

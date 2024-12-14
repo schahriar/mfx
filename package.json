@@ -57,6 +57,7 @@
     "webpack-dev-server": "^5.1.0"
   },
   "dependencies": {
+    "gl-matrix": "^3.4.3",
     "jswebm": "^0.1.2",
     "mp4-muxer": "^5.1.5",
     "mp4box": "^0.5.3",

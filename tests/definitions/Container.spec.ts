@@ -6,7 +6,6 @@ export const definitions: TestDefinition[] = [{
   id: "multimedia_webm",
   title: "MultiMedia WebM Decoding",
   description: "Decodes/encodes WebM audio/video",
-  path: "/mm_webm_decode",
   input: "BeachWithAudio.webm",
   codec: "vp09.00.40.08,opus",
   output: async (v, a) => {
@@ -33,7 +32,6 @@ export const definitions: TestDefinition[] = [{
   id: "multimedia_mp4",
   title: "MultiMedia MP4 Decoding",
   description: "Decodes/encodes MP4 audio/video",
-  path: "/mm_mp4_decode",
   input: "HEVC4KWithAudio.mp4",
   decodeOptions: {
     forceDecodeToSoftware: true

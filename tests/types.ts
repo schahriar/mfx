@@ -6,7 +6,6 @@ import type { MFXTransformStream } from "../lib/stream";
 
 export interface TestDefinition {
   id: string;
-  path: string;
   title: string;
   description: string;
   skip?: boolean | string;

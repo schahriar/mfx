@@ -4,7 +4,9 @@ import definitions from "../definitions";
 
 const url = new URL(window.location.href);
 
-const def = definitions.find((def) => def.path === url.pathname);
+console.log({definitions});
+
+const def = definitions.filter(Boolean).find((def) => `/${def.id}` === url.pathname);
 
 if (def) {
   new (TestEnvironment as any)({

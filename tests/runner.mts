@@ -76,7 +76,7 @@ const main = async () => {
     const testName = `Testing ${def.title}`;
     herb.group(testName);
     herb.log(herb.blue("Running test"));
-    await page.goto(path.join(buildURL, def.path));
+    await page.goto(path.join(buildURL, def.id));
     await page.waitForSelector(".container");
     const { hash, snapshot } = await page.evaluate(async () => {
       await window["results"].done;

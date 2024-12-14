@@ -14,7 +14,6 @@ export const definitions: TestDefinition[] = [{
   id: "webm_decoding",
   title: "WebM Decoding",
   description: "Decodes WebM file",
-  path: "/webm_decode",
   input: "beach.webm",
   codec: "vp09.02.41.08",
   output: async (s) => {
@@ -32,7 +31,6 @@ export const definitions: TestDefinition[] = [{
   id: "webm_codec",
   title: "WebM Codec",
   description: "Coding / Decoding WebM file",
-  path: "/webm_codec",
   input: "beach.webm",
   output: async (s) => {
     return encode({
@@ -50,7 +48,6 @@ export const definitions: TestDefinition[] = [{
   id: "webm_codec_ooo",
   title: "WebM Codec Out of Order frames",
   description: "Coding / Decoding WebM file with out of order frames",
-  path: "/webm_codec_ooo",
   input: "BeachWithAudio.webm",
   output: async (s) => {
     return encode({
@@ -68,7 +65,6 @@ export const definitions: TestDefinition[] = [{
   id: "webm_codec_10bit",
   title: "WebM Codec 10Bit",
   description: "Coding / Decoding 10Bit WebM file",
-  path: "/webm_codec_10bit",
   input: "beach10bit.webm",
   expect: async () => {
     return true;
@@ -89,7 +85,6 @@ export const definitions: TestDefinition[] = [{
   id: "webm_encoding",
   title: "WebM Encoding",
   description: "Converts sample mp4 file to WebM encoding",
-  path: "/webm",
   input: "AI.mp4",
   process: (stream) => effect(stream, [
     visual.emboss()

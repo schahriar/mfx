@@ -3,7 +3,11 @@ import vertexShaderSource from "!!raw-loader!./shaders/vertex.glsl";
 import paintShaderSource from "!!raw-loader!./shaders/paint.glsl";
 import { MFXTransformStream } from "../stream";
 import { ExtendedVideoFrame } from "../frame";
-import type { Uniform } from "./shaders";
+import type { Uniform, UniformProducer } from "./shaders";
+import { mat4 } from "gl-matrix";
+
+const identity = mat4.create();
+mat4.identity(identity);
 
 const checkStatus = (gl: WebGL2RenderingContext) => {
   const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -39,17 +43,17 @@ export interface Effect<T = any> {
   uniforms?: Record<string, Uniform<T>>;
 }
 
-const resolveUniforms = (o: any, frame: ExtendedVideoFrame) => {
+export const u = <T>(o: Uniform<T>, frame: ExtendedVideoFrame): T => {
   if (["string", "number", "boolean"].includes(typeof o)) {
-    return o;
+    return o as T;
   }
 
   if (typeof o === "function") {
-    return o(frame);
+    return (o as UniformProducer<T>)(frame);
   }
 
   if (Array.isArray(o)) {
-    return o.map((v) => resolveUniforms(v, frame));
+    return (o as any).map((v) => u(v, frame)) as T;
   }
 
   throw new Error(`Invalid uniform type ${typeof o}`);
@@ -59,6 +63,8 @@ export class MFXGLHandle {
   frame: VideoFrame;
   context: MFXGLContext;
   closed: boolean;
+  // Dirty handles don't clear buffer between paints
+  isDirty: boolean = false;
   private flips: number = 0;
   private paintCount: number = 0;
 
@@ -80,7 +86,6 @@ export class MFXGLHandle {
     );
 
     context.attachTextureToFramebuffer(textureIn);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   }
 
   compile(shader: string) {
@@ -90,17 +95,27 @@ export class MFXGLHandle {
     ]);
   }
 
+  dirty() {
+    this.isDirty = true;
+  }
+
+  clean() {
+    this.isDirty = false;
+  }
+
   paint(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
     const { gl, textureIn, textureOut, bufferInfo } = this.context;
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureIn);
     this.context.attachTextureToFramebuffer(textureOut);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    if (!this.isDirty) {
+      this.context.clear();
+    }
 
     const resolvedUniforms = Object.keys(uniforms || {}).reduce(
       (accu, key) => ({
         ...accu,
-        [key]: resolveUniforms(uniforms[key], this.frame),
+        [key]: u(uniforms[key], this.frame),
       }),
       {},
     );
@@ -113,6 +128,7 @@ export class MFXGLHandle {
     gl.useProgram(programInfo.program);
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
     twgl.setUniforms(programInfo, {
+      transform: identity,
       ...resolvedUniforms,
       frame: textureIn,
       frameSize: [this.frame.displayWidth, this.frame.displayHeight],
@@ -151,6 +167,7 @@ export class MFXGLHandle {
     twgl.setUniforms(paintProgramInfo, {
       frame: textureIn,
       frameSize: [width, height],
+      transform: identity,
       MFXInternalFlipY: this.flips % 2 ? 0 : 1,
     });
     twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
@@ -228,7 +245,12 @@ export class MFXGLContext {
     );
 
     // Clear frame
-    gl.clearColor(1.0, 0.0, 0.0, 1.0);
+    this.clear();
+  }
+
+  clear() {
+    const { gl } = this;
+    gl.clearColor(0.0, 0.0, 0.0, 0.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
@@ -243,6 +265,8 @@ export class MFXGLContext {
       0,
     );
     checkStatus(gl);
+
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   };
 };
 
@@ -254,7 +278,11 @@ export class MFXGLEffect extends MFXTransformStream<
     return "MFXGLEffect";
   }
 
-  constructor(shader: string, uniforms: Record<string, any> = {}) {
+  constructor(shader: string, uniforms: Record<string, Uniform<any>> = {}, {
+    isDirty = false
+  }: {
+    isDirty?: boolean;
+  } = {}) {
     let program: twgl.ProgramInfo;
 
     super(
@@ -262,6 +290,10 @@ export class MFXGLEffect extends MFXTransformStream<
         transform: async (handle, controller) => {
           if (!program) {
             program = handle.compile(shader);
+          }
+
+          if (isDirty) {
+            handle.dirty();
           }
 
           handle.paint(program, uniforms);

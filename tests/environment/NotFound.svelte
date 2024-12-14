@@ -10,7 +10,7 @@
 
 <div class="container">
   {#each definitions as def}
-    <a href={def.path}>
+    <a href={`/${def.id}`}>
       <div>
         <h3>{def.title}</h3>
         <p>{def.description}</p>
