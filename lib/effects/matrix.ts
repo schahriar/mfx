@@ -33,6 +33,7 @@ export const scale = (factors: number[] = [1, 1, 1], originPoint: number[] = [0.
  * @returns A mat4 rotation matrix.
  */
 export const rotate = (angle: number = 0, axis: number[] = [0, 0, 1], originPoint: number[] = [0.5, 0.5, 0]) => {
+  console.log("rotate", { angle, axis, originPoint });
   const rad = (angle * Math.PI) / 180; // Convert degrees to radians
   const matrix = mat4.create();
   mat4.rotate(matrix, matrix, rad, vec3.fromValues(axis[0], axis[1], axis[2]));

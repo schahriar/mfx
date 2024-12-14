@@ -74,7 +74,7 @@ export const keyframes = <T>(
   }[],
   easing: (number) => number = (v) => v,
 ): UniformProducer<T> => {
-  return (frame) => {
+  return async (frame) => {
     const ts = frame.timestamp / 1000;
     const idx = defs.findIndex((_, i) => {
       const nextTime = defs[i + 1]?.time || Infinity;

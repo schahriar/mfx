@@ -81,9 +81,7 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 
 ### Soon
 - Compositor
-  - Blend mode and opacity as compositor functions
-  - Two layer compositor with blend mode
-  - `compose` function to quickly merge
+  - Readback from frame stream (should buffer and take duration into account)
 - `clip` to mask a VideoStream
 - `transform` function for X/Y/Z translation and rotation (matrix3d equivalent)
 - Fix Audio trimming to include subframes

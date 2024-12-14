@@ -43,7 +43,7 @@ export interface Effect<T = any> {
   uniforms?: Record<string, Uniform<T>>;
 }
 
-export const u = <T>(o: Uniform<T>, frame: ExtendedVideoFrame): T => {
+export const u = async <T>(o: Uniform<T>, frame: ExtendedVideoFrame): Promise<T> => {
   if (["string", "number", "boolean"].includes(typeof o)) {
     return o as T;
   }
@@ -53,7 +53,7 @@ export const u = <T>(o: Uniform<T>, frame: ExtendedVideoFrame): T => {
   }
 
   if (Array.isArray(o)) {
-    return (o as any).map((v) => u(v, frame)) as T;
+    return Promise.all((o as any).map((v) => u(v, frame))) as T;
   }
 
   throw new Error(`Invalid uniform type ${typeof o}`);
@@ -62,6 +62,7 @@ export const u = <T>(o: Uniform<T>, frame: ExtendedVideoFrame): T => {
 export class MFXGLHandle {
   frame: VideoFrame;
   context: MFXGLContext;
+  textures: number[];
   closed: boolean;
   // Dirty handles don't clear buffer between paints
   isDirty: boolean = false;
@@ -85,6 +86,19 @@ export class MFXGLHandle {
       frame,
     );
 
+    // 8 textures are guaranteed by WebGL
+    // this is a theoretical minimum and browsers support significantly higher
+    // texture counts but 8 textures should cover all use-cases for MFX
+    this.textures = [
+      gl.TEXTURE1,
+      gl.TEXTURE2,
+      gl.TEXTURE3,
+      gl.TEXTURE4,
+      gl.TEXTURE5,
+      gl.TEXTURE6,
+      gl.TEXTURE7,
+    ];
+
     context.attachTextureToFramebuffer(textureIn);
   }
 
@@ -103,7 +117,7 @@ export class MFXGLHandle {
     this.isDirty = false;
   }
 
-  paint(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
+  async paint(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
     const { gl, textureIn, textureOut, bufferInfo } = this.context;
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureIn);
@@ -112,13 +126,45 @@ export class MFXGLHandle {
       this.context.clear();
     }
 
-    const resolvedUniforms = Object.keys(uniforms || {}).reduce(
-      (accu, key) => ({
-        ...accu,
-        [key]: u(uniforms[key], this.frame),
-      }),
-      {},
-    );
+    let resolvedUniforms = {};
+
+    await Promise.all(Object.keys(uniforms || {}).map(async (key) => {
+      const value = await u(uniforms[key], this.frame);
+      resolvedUniforms[key] = value;
+    }));
+
+    // Bind any textures assigned to uniforms
+    Object.keys(resolvedUniforms).filter((k) => resolvedUniforms[k] instanceof VideoFrame || resolvedUniforms[k] instanceof ExtendedVideoFrame).forEach((key: string, i) => {
+      const frame = resolvedUniforms[key] as VideoFrame;
+      const textureUnit = this.textures[i];
+
+      if (!textureUnit) {
+        throw new Error(`Attempted to bind too many textures, total textures supported by MFX are capped at ${this.textures.length}`);
+      }
+
+      const texture = twgl.createTexture(gl, {
+        min: gl.NEAREST,
+        mag: gl.LINEAR,
+        wrapS: gl.CLAMP_TO_EDGE,
+        wrapT: gl.CLAMP_TO_EDGE,
+        width: frame.displayWidth,
+        height: frame.displayHeight,
+      });
+
+      gl.activeTexture(textureUnit);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        frame,
+      );
+
+      resolvedUniforms[key] = texture;
+    });
 
     const MFXInternalFlipY = this.paintCount % 2 ? 1 : 0;
     if (MFXInternalFlipY) {
@@ -296,7 +342,7 @@ export class MFXGLEffect extends MFXTransformStream<
             handle.dirty();
           }
 
-          handle.paint(program, uniforms);
+          await handle.paint(program, uniforms);
 
           controller.enqueue(handle);
         },

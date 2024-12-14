@@ -76,7 +76,26 @@ export const definitions: TestDefinition[] = [{
     }], easing.linear), values: [1, 1, 1] }),
     visual.scale({ values: [1.5, 1.5, 1.5] }),
   ]),
-
+  output: async (v, a, vt) => {
+    return encode({
+      mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,
+      streaming: true,
+      video: {
+        stream: v,
+        width: 640 * 4,
+        height: 360 * 4,
+        bitrate: 1e6 * 30,
+      },
+    });
+  }
+}, {
+  id: "composition_add",
+  title: "Composition: Add",
+  description: "Adding a new layer via composition",
+  input: "boats.mp4",
+  process: (stream) => effect(stream, [
+    visual.add(),
+  ]),
   output: async (v, a, vt) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,

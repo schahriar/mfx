@@ -10,6 +10,22 @@ const conv = (kernel: number[]) => ({ passes = 1 } = {}) => repeat(passes, () =>
 export type Vec3 = [number, number, number];
 export type Origin = Vec3;
 
+const createFakeFrame = (base: VideoFrame) => {
+  const canvas = new OffscreenCanvas(base.displayWidth, base.displayHeight);
+  const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "blue";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "60px Arial";
+  ctx.fillText(`Frame time: ${base.timestamp}`, 50, 100);
+
+  return new VideoFrame(canvas, {
+    timestamp: 0
+  });
+};
+
 export const visual = {
   adjustment: ({
     saturation = 1,
@@ -22,6 +38,16 @@ export const visual = {
   }) => [
       new MFXGLEffect(shaders.adjustment, { saturation, brightness, contrast })
     ],
+  add: () => [
+    new MFXGLEffect(shaders.composition, {
+      layer: (f) => createFakeFrame(f),
+      layerSize: (f) => [f.displayWidth, f.displayHeight],
+      normal: 0,
+      additive: 0,
+      multiply: 0,
+      screen: 1
+    })
+  ],
   scale: ({
     values = [1, 1, 1], // Provided as an example
     origin = [0.5, 0.5, 0],
@@ -30,7 +56,7 @@ export const visual = {
     origin?: Uniform<Origin>;
   }) => [
       new MFXGLEffect(shaders.paint, {
-        transform: (f) => scale(u(values, f), u(origin, f))
+        transform: async (f) => scale(await u(values, f), await u(origin, f))
       })
     ],
   rotate: ({
@@ -43,7 +69,7 @@ export const visual = {
     origin?: Uniform<Origin>;
   }) => [
       new MFXGLEffect(shaders.paint, {
-        transform: (f) => rotate(u(angle, f), u(values, f), u(origin, f))
+        transform: async (f) => rotate(await u(angle, f), await u(values, f), await u(origin, f))
       })
     ],
   zoom: ({
@@ -60,13 +86,13 @@ export const visual = {
     isDirty?: boolean
   } = {}) => [
       new MFXGLEffect(shaders.paint, {
-        transform: (f) => scale([
-          u(factor, f),
-          u(factor, f),
+        transform: async (f) => scale([
+          await u(factor, f),
+          await u(factor, f),
           1
         ], [
-          u(x, f),
-          u(y, f),
+          await u(x, f),
+          await u(y, f),
           0
         ])
       }, { isDirty })
@@ -84,7 +110,7 @@ export const visual = {
         // Ensures vignetting effect is reduced while maintaining optimal performance 
         isDirty: true,
       })),
-      ...visual.zoom({ factor: (f) => 1 / u(quality, f), x: 0.5, y: 0.5 }),
+      ...visual.zoom({ factor: async (f) => 1 / (await u(quality, f)), x: 0.5, y: 0.5 }),
     ],
   edge: conv(convolution3x3Kernels.edge0),
   edge1: conv(convolution3x3Kernels.edge1),
