@@ -115,7 +115,6 @@ export const definitions: TestDefinition[] = [{
 
     return effect(stream, [
       visual.add(effect(video, [
-        visual.blur({ passes: 10, quality: 0.5 }),
         visual.mask(new ReadableStream({
           pull: (controller) => {
             controller.enqueue(createMaskFrame(videoConfig.codedWidth, videoConfig.codedHeight));
@@ -135,7 +134,11 @@ export const definitions: TestDefinition[] = [{
           value: 0
         }], easing.inOutCubic)) as any, origin: [0.95, 0.95, 1]}),
       ])),
-    ])
+    ], {
+      trim: {
+        start: 5000
+      }
+    })
   },
   output: async (v, a, vt) => {
     return encode({

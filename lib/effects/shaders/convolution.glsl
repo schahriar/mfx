@@ -69,5 +69,5 @@ void main() {
   vec4 color = texture(frame, uv);
   ConvSamples s = createSamples(frame, uv);
 
-  fragColor = vec4(conv3x3(kernel, s), 1);
+  fragColor = vec4(conv3x3(kernel, s), color.a);
 }

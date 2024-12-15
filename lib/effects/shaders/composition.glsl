@@ -16,6 +16,7 @@ uniform float normal;
 uniform float additive;
 uniform float multiply;
 uniform float screen;
+uniform float alpha;
 
 void main() {
   vec4 baseColor = texture(frame, uv);
@@ -28,11 +29,14 @@ void main() {
   vec4 additiveBlend = baseColor + layerColor * layerAlpha;
   vec4 multiplyBlend = mix(baseColor, baseColor * layerColor, layerAlpha);
   vec4 screenBlend = mix(baseColor, 1.0 - (1.0 - baseColor) * (1.0 - layerColor), layerAlpha);
+  vec4 alphaBlend = mix(baseColor, layerColor, layerAlpha * (1.0 - baseColor.a));
+
 
   fragColor = normal * normalBlend +
               additive * additiveBlend +
               multiply * multiplyBlend +
-              screen * screenBlend;
+              screen * screenBlend +
+              alpha * alphaBlend;
 
   // Prevent clipping using clamp
   fragColor = clamp(fragColor, 0.0, 1.0);

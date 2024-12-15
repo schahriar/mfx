@@ -80,14 +80,13 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 ## Roadmap
 
 ### Soon
-- Compositor
-  - Readback from frame stream (should buffer and take duration into account)
-- Timed effects
-- Replace Scaler with cropper (+ scale, fit)
 - Fix Audio trimming to include subframes
 - GIF codec
-  - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)
   - encode: https://github.com/jnordberg/gif.js
+- Replace Scaler with cropper (+ scale, fit)
+- Regional effects
+- GIF decoder 
+  - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)
 - Temporal Noise Reduction
 - Deprecate ExtendedVideoFrame
 - API Documentation

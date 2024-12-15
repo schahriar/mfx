@@ -9,6 +9,8 @@ import { mat4 } from "gl-matrix";
 const identity = mat4.create();
 mat4.identity(identity);
 
+export type Uniforms = Record<string, Uniform<any>> | ((frame: VideoFrame) => Promise<Record<string, Uniform<any>>>);
+
 const checkStatus = (gl: WebGL2RenderingContext) => {
   const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
   if (status !== gl.FRAMEBUFFER_COMPLETE) {
@@ -54,6 +56,10 @@ export const u = async <T>(o: Uniform<T>, frame: ExtendedVideoFrame): Promise<T>
 
   if (Array.isArray(o)) {
     return Promise.all((o as any).map((v) => u(v, frame))) as T;
+  }
+
+  if (o instanceof VideoFrame || o instanceof ExtendedVideoFrame) {
+    return o;
   }
 
   throw new Error(`Invalid uniform type ${typeof o}`);
@@ -115,7 +121,7 @@ export class MFXGLHandle {
     this.isDirty = false;
   }
 
-  async paint(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
+  async paint(programInfo: twgl.ProgramInfo, uniforms: Uniforms) {
     if (this.busy > 0) {
       throw new Error("Encountered a busy MFXGLHandle. GL paints in MFX are not allowed to paint more than one frame per stream in order to re-use the framebuffer.");
     }
@@ -125,9 +131,10 @@ export class MFXGLHandle {
 
     let resolvedUniforms = {};
     let openFrames = new Set<VideoFrame>();
+    const inputUniforms = typeof uniforms === "function" ? await uniforms(this.frame) : uniforms;
 
-    await Promise.all(Object.keys(uniforms || {}).map(async (key) => {
-      const value = await u(uniforms[key], this.frame);
+    await Promise.all(Object.keys(inputUniforms || {}).map(async (key) => {
+      const value = await u(inputUniforms[key], this.frame);
       resolvedUniforms[key] = value;
     }));
 
@@ -330,7 +337,7 @@ export class MFXGLEffect extends MFXTransformStream<
     return "MFXGLEffect";
   }
 
-  constructor(shader: string, uniforms: Record<string, Uniform<any>> = {}, {
+  constructor(shader: string, uniforms: Uniforms = {}, {
     isDirty = false
   }: {
     isDirty?: boolean;
@@ -422,30 +429,52 @@ export class GLToFrame extends MFXTransformStream<
 };
 
 export const effect = (input: ReadableStream<VideoFrame>, effects: MFXTransformStream<MFXGLHandle, MFXGLHandle>[][], {
-  start,
-  end,
+  trim = {},
   writableStrategy,
   readableStrategy
 }: {
-  start?: number;
-  end?: number;
+  trim?: {
+    // Inclusive number of milliseconds to start cutting from (supports for microsecond fractions)
+    start?: number;
+    // Exclusive number of milliseconds to cut to (supports for microsecond fractions)
+    end?: number;
+  };
   writableStrategy?: QueuingStrategy<any>,
   readableStrategy?: QueuingStrategy<any>,
 } = {}) => {
   // Converts VideoFrames to a WebGL2 handle (framebuffer)
   const stream = new FrameToGL() as TransformStream;
-
-  const trim = new TransformStream({
-    transform: (frame, controller) => {
-      // TODO: Implement
-    }
-  })
-
-  return effects.flat().reduce((accu, effect) =>
+  const effectPipeline: ReadableStream<VideoFrame> = effects.flat().reduce((accu, effect) =>
     accu.pipeThrough(effect),
-    input.pipeThrough(stream) // Pipe to starting stream
+    stream.readable,
   ).pipeThrough(
     // Converts framebuffers back to VideoFrame
     new GLToFrame(writableStrategy, readableStrategy)
   );
+
+  const trimPipeline = new TransformStream<VideoFrame, VideoFrame>({
+    transform: async (frame, controller) => {
+      if (frame.timestamp / 1e3 < (trim.start || 0) || (trim.end > 0 && frame.timestamp / 1e3 > trim.end)) {
+        controller.enqueue(frame);
+        return;
+      }
+
+      const writer = stream.writable.getWriter();
+      const reader = effectPipeline.getReader();
+      writer.write(frame);
+
+      const { value } = await reader.read();
+
+      controller.enqueue(value);
+
+      writer.releaseLock();
+      reader.releaseLock();
+
+    },
+    flush: async () => {
+      await stream.writable.close();
+    }
+  });
+
+  return input.pipeThrough(trimPipeline);
 };

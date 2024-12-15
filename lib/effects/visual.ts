@@ -32,21 +32,39 @@ export const visual = {
     ]
   },
   add: (video: ReadableStream<VideoFrame>, {
+    // Normal blend
     normal = 1,
+    // Additive blend
     additive = 0,
+    // Multiply blend
     multiply = 0,
-    screen =  0
+    // Screen blend
+    screen = 0,
+    // Alpha blend, applies to alpha channel of frame
+    alpha = 0,
+  }: {
+    normal?: Uniform<number>;
+    additive?: Uniform<number>;
+    multiply?: Uniform<number>;
+    screen?: Uniform<number>;
+    alpha?: Uniform<number>;
   } = {}) => {
+    const coalescer = coalesce(video);
     return [
-      new MFXGLEffect(shaders.composition, {
-        layer: coalesce(video),
-        layerSize: (f) => [f.displayWidth, f.displayHeight],
-        normal,
-        additive,
-        multiply,
-        screen
+      new MFXGLEffect(shaders.composition, async (f) => {
+        const newFrame = await coalescer(f);
+
+        return {
+          layer: newFrame,
+          layerSize: [newFrame.displayWidth, newFrame.displayHeight],
+          normal,
+          additive,
+          multiply,
+          screen,
+          alpha
+        };
       }, {
-        isDirty: true
+        isDirty: false
       })
     ];
   },
@@ -101,27 +119,30 @@ export const visual = {
     ],
   blur: ({
     passes = 5,
-    quality = 0.5
+    quality = 0.5,
+    dirty = false
   }: {
+    // Indicates whether background of the frame should be cleared after each draw, apply to remove vignetting effect on full-screen blurs
+    dirty?: boolean;
     passes?: number;
     // Between 0 to 1, The higher the quality the more passes you need to blur the image
-    quality?: number;
+    quality?: Uniform<number>;
   }) => [
-      ...visual.zoom({ factor: quality, x: 0.5, y: 0.5 }, { isDirty: true }),
+      ...visual.zoom({ factor: quality, x: 0.5, y: 0.5 }, { isDirty: dirty }),
       ...repeat(passes, () => new MFXGLEffect(shaders.convolution, {
         kernel: convolution3x3Kernels.boxBlur
       }, {
         // Ensures vignetting effect is reduced while maintaining optimal performance 
-        isDirty: true,
+        isDirty: dirty,
       })),
       ...repeat(Math.round(Math.log(passes)), () => new MFXGLEffect(shaders.convolution, {
         kernel: convolution3x3Kernels.gaussianBlur
       }, {
         // Ensures vignetting effect is reduced while maintaining optimal performance 
-        isDirty: true,
+        isDirty: dirty,
       })),
       ...visual.zoom({ factor: async (f) => 1 / (await u(quality, f)), x: 0.5, y: 0.5 }, {
-        isDirty: true
+        isDirty: dirty
       }),
     ],
   edge: conv(convolution3x3Kernels.edge0),
