@@ -9,7 +9,9 @@ import { mat4 } from "gl-matrix";
 const identity = mat4.create();
 mat4.identity(identity);
 
-export type Uniforms = Record<string, Uniform<any>> | ((frame: VideoFrame) => Promise<Record<string, Uniform<any>>>);
+export type Uniforms =
+  | Record<string, Uniform<any>>
+  | ((frame: VideoFrame) => Promise<Record<string, Uniform<any>>>);
 
 const checkStatus = (gl: WebGL2RenderingContext) => {
   const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
@@ -45,7 +47,10 @@ export interface Effect<T = any> {
   uniforms?: Record<string, Uniform<T>>;
 }
 
-export const u = async <T>(o: Uniform<T>, frame: ExtendedVideoFrame): Promise<T> => {
+export const u = async <T>(
+  o: Uniform<T>,
+  frame: ExtendedVideoFrame,
+): Promise<T> => {
   if (["string", "number", "boolean"].includes(typeof o)) {
     return o as T;
   }
@@ -81,14 +86,7 @@ export class MFXGLHandle {
 
     twgl.bindFramebufferInfo(gl, frameBufferInfo);
     gl.bindTexture(gl.TEXTURE_2D, textureIn);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      frame,
-    );
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, frame);
 
     // 8 textures are guaranteed by WebGL
     // this is a theoretical minimum and browsers support significantly higher
@@ -123,7 +121,9 @@ export class MFXGLHandle {
 
   async paint(programInfo: twgl.ProgramInfo, uniforms: Uniforms) {
     if (this.busy > 0) {
-      throw new Error("Encountered a busy MFXGLHandle. GL paints in MFX are not allowed to paint more than one frame per stream in order to re-use the framebuffer.");
+      throw new Error(
+        "Encountered a busy MFXGLHandle. GL paints in MFX are not allowed to paint more than one frame per stream in order to re-use the framebuffer.",
+      );
     }
 
     this.busy++;
@@ -131,46 +131,57 @@ export class MFXGLHandle {
 
     let resolvedUniforms = {};
     let openFrames = new Set<VideoFrame>();
-    const inputUniforms = typeof uniforms === "function" ? await uniforms(this.frame) : uniforms;
+    const inputUniforms =
+      typeof uniforms === "function" ? await uniforms(this.frame) : uniforms;
 
-    await Promise.all(Object.keys(inputUniforms || {}).map(async (key) => {
-      const value = await u(inputUniforms[key], this.frame);
-      resolvedUniforms[key] = value;
-    }));
+    await Promise.all(
+      Object.keys(inputUniforms || {}).map(async (key) => {
+        const value = await u(inputUniforms[key], this.frame);
+        resolvedUniforms[key] = value;
+      }),
+    );
 
     // Bind any textures assigned to uniforms
-    Object.keys(resolvedUniforms).filter((k) => resolvedUniforms[k] instanceof VideoFrame || resolvedUniforms[k] instanceof ExtendedVideoFrame).forEach((key: string, i) => {
-      const frame = resolvedUniforms[key] as VideoFrame;
-      const textureUnit = this.textures[i];
+    Object.keys(resolvedUniforms)
+      .filter(
+        (k) =>
+          resolvedUniforms[k] instanceof VideoFrame ||
+          resolvedUniforms[k] instanceof ExtendedVideoFrame,
+      )
+      .forEach((key: string, i) => {
+        const frame = resolvedUniforms[key] as VideoFrame;
+        const textureUnit = this.textures[i];
 
-      if (!textureUnit) {
-        throw new Error(`Attempted to bind too many textures, total textures supported by MFX are capped at ${this.textures.length}`);
-      }
+        if (!textureUnit) {
+          throw new Error(
+            `Attempted to bind too many textures, total textures supported by MFX are capped at ${this.textures.length}`,
+          );
+        }
 
-      const texture = twgl.createTexture(gl, {
-        min: gl.NEAREST,
-        mag: gl.LINEAR,
-        wrapS: gl.CLAMP_TO_EDGE,
-        wrapT: gl.CLAMP_TO_EDGE,
-        width: frame.displayWidth,
-        height: frame.displayHeight,
+        const texture = twgl.createTexture(gl, {
+          min: gl.NEAREST,
+          mag: gl.LINEAR,
+          wrapS: gl.CLAMP_TO_EDGE,
+          wrapT: gl.CLAMP_TO_EDGE,
+          width: frame.displayWidth,
+          height: frame.displayHeight,
+        });
+
+        gl.activeTexture(textureUnit);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          frame,
+        );
+
+        resolvedUniforms[key] = texture;
+
+        openFrames.add(frame);
       });
-
-      gl.activeTexture(textureUnit);
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        frame,
-      );
-
-      resolvedUniforms[key] = texture;
-
-      openFrames.add(frame);
-    });
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureIn);
@@ -200,7 +211,7 @@ export class MFXGLHandle {
   // Draw action
   close() {
     if (this.busy > 0) {
-      console.error("Attempted to close a busy MFXGLHandle")
+      console.error("Attempted to close a busy MFXGLHandle");
       throw new Error("Attempted to close a busy MFXGLHandle");
     }
 
@@ -234,7 +245,6 @@ export class MFXGLHandle {
     return ExtendedVideoFrame.revise(this.frame, gl.canvas);
   }
 }
-
 
 export class MFXGLContext {
   gl: WebGL2RenderingContext;
@@ -326,22 +336,23 @@ export class MFXGLContext {
     checkStatus(gl);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  };
-};
+  }
+}
 
-export class MFXGLEffect extends MFXTransformStream<
-  MFXGLHandle,
-  MFXGLHandle
-> {
+export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
   get identifier() {
     return "MFXGLEffect";
   }
 
-  constructor(shader: string, uniforms: Uniforms = {}, {
-    isDirty = false
-  }: {
-    isDirty?: boolean;
-  } = {}) {
+  constructor(
+    shader: string,
+    uniforms: Uniforms = {},
+    {
+      isDirty = false,
+    }: {
+      isDirty?: boolean;
+    } = {},
+  ) {
     let program: twgl.ProgramInfo;
 
     super(
@@ -401,7 +412,7 @@ export class FrameToGL extends MFXTransformStream<
       new CountQueuingStrategy({ highWaterMark: 1 }),
     );
   }
-};
+}
 
 /** @group Effects */
 export class GLToFrame extends MFXTransformStream<
@@ -426,35 +437,42 @@ export class GLToFrame extends MFXTransformStream<
       readableStrategy,
     );
   }
-};
+}
 
-export const effect = (input: ReadableStream<VideoFrame>, effects: MFXTransformStream<MFXGLHandle, MFXGLHandle>[][], {
-  trim = {},
-  writableStrategy,
-  readableStrategy
-}: {
-  trim?: {
-    // Inclusive number of milliseconds to start cutting from (supports for microsecond fractions)
-    start?: number;
-    // Exclusive number of milliseconds to cut to (supports for microsecond fractions)
-    end?: number;
-  };
-  writableStrategy?: QueuingStrategy<any>,
-  readableStrategy?: QueuingStrategy<any>,
-} = {}) => {
+export const effect = (
+  input: ReadableStream<VideoFrame>,
+  effects: MFXTransformStream<MFXGLHandle, MFXGLHandle>[][],
+  {
+    trim = {},
+    writableStrategy,
+    readableStrategy,
+  }: {
+    trim?: {
+      // Inclusive number of milliseconds to start cutting from (supports for microsecond fractions)
+      start?: number;
+      // Exclusive number of milliseconds to cut to (supports for microsecond fractions)
+      end?: number;
+    };
+    writableStrategy?: QueuingStrategy<any>;
+    readableStrategy?: QueuingStrategy<any>;
+  } = {},
+) => {
   // Converts VideoFrames to a WebGL2 handle (framebuffer)
   const stream = new FrameToGL() as TransformStream;
-  const effectPipeline: ReadableStream<VideoFrame> = effects.flat().reduce((accu, effect) =>
-    accu.pipeThrough(effect),
-    stream.readable,
-  ).pipeThrough(
-    // Converts framebuffers back to VideoFrame
-    new GLToFrame(writableStrategy, readableStrategy)
-  );
+  const effectPipeline: ReadableStream<VideoFrame> = effects
+    .flat()
+    .reduce((accu, effect) => accu.pipeThrough(effect), stream.readable)
+    .pipeThrough(
+      // Converts framebuffers back to VideoFrame
+      new GLToFrame(writableStrategy, readableStrategy),
+    );
 
   const trimPipeline = new TransformStream<VideoFrame, VideoFrame>({
     transform: async (frame, controller) => {
-      if (frame.timestamp / 1e3 < (trim.start || 0) || (trim.end > 0 && frame.timestamp / 1e3 > trim.end)) {
+      if (
+        frame.timestamp / 1e3 < (trim.start || 0) ||
+        (trim.end > 0 && frame.timestamp / 1e3 > trim.end)
+      ) {
         controller.enqueue(frame);
         return;
       }
@@ -469,11 +487,10 @@ export const effect = (input: ReadableStream<VideoFrame>, effects: MFXTransformS
 
       writer.releaseLock();
       reader.releaseLock();
-
     },
     flush: async () => {
       await stream.writable.close();
-    }
+    },
   });
 
   return input.pipeThrough(trimPipeline);

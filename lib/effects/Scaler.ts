@@ -48,4 +48,4 @@ export class Scaler extends MFXTransformStream<
       },
     });
   }
-};
+}

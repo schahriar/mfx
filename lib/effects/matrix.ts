@@ -10,7 +10,11 @@ export const origin = (origin: number[] = [0, 0, 0]): [mat4, () => mat4] => {
   const [x, y, z] = origin.map((v) => v * 2 - 1);
   const vecTransform = vec3.fromValues(x, y, z);
   mat4.translate(matrix, matrix, vecTransform);
-  return [matrix, () => mat4.translate(matrix, matrix, vec3.negate(vecTransform, vecTransform))];
+  return [
+    matrix,
+    () =>
+      mat4.translate(matrix, matrix, vec3.negate(vecTransform, vecTransform)),
+  ];
 };
 
 /**
@@ -19,9 +23,16 @@ export const origin = (origin: number[] = [0, 0, 0]): [mat4, () => mat4] => {
  * @param originPoint - Transform origin [x, y, z].
  * @returns A mat4 scaling matrix.
  */
-export const scale = (factors: number[] = [1, 1, 1], originPoint: number[] = [0.5, 0.5, 0]) => {
+export const scale = (
+  factors: number[] = [1, 1, 1],
+  originPoint: number[] = [0.5, 0.5, 0],
+) => {
   const [matrix, revert] = origin(originPoint);
-  mat4.scale(matrix, matrix, vec3.fromValues(factors[0], factors[1], factors[2]));
+  mat4.scale(
+    matrix,
+    matrix,
+    vec3.fromValues(factors[0], factors[1], factors[2]),
+  );
   return revert();
 };
 
@@ -32,7 +43,11 @@ export const scale = (factors: number[] = [1, 1, 1], originPoint: number[] = [0.
  * @param originPoint - Transform origin [x, y, z].
  * @returns A mat4 rotation matrix.
  */
-export const rotate = (angle: number = 0, axis: number[] = [0, 0, 1], originPoint: number[] = [0.5, 0.5, 0]) => {
+export const rotate = (
+  angle: number = 0,
+  axis: number[] = [0, 0, 1],
+  originPoint: number[] = [0.5, 0.5, 0],
+) => {
   const rad = (angle * Math.PI) / 180; // Convert degrees to radians
   const matrix = mat4.create();
   mat4.rotate(matrix, matrix, rad, vec3.fromValues(axis[0], axis[1], axis[2]));
@@ -46,7 +61,11 @@ export const rotate = (angle: number = 0, axis: number[] = [0, 0, 1], originPoin
  */
 export const translate = (vector: number[] = [0, 0, 0]) => {
   const matrix = mat4.create();
-  mat4.translate(matrix, matrix, vec3.fromValues(vector[0], vector[1], vector[2]));
+  mat4.translate(
+    matrix,
+    matrix,
+    vec3.fromValues(vector[0], vector[1], vector[2]),
+  );
   return matrix;
 };
 
@@ -58,19 +77,31 @@ export const translate = (vector: number[] = [0, 0, 0]) => {
  */
 export const skew = (
   skewFactors: number[] = [0, 0, 0, 0, 0, 0],
-  originPoint: number[] = [0.5, 0.5, 0]
+  originPoint: number[] = [0.5, 0.5, 0],
 ) => {
   const [skewXY, skewXZ, skewYX, skewYZ, skewZX, skewZY] = skewFactors.map(
-    (angle) => Math.tan((angle * Math.PI) / 180) // Convert degrees to radians and apply tan
+    (angle) => Math.tan((angle * Math.PI) / 180), // Convert degrees to radians and apply tan
   );
 
   const [matrix, revert] = origin(originPoint);
 
   const skewMatrix = mat4.fromValues(
-    1, skewXY, skewXZ, 0,
-    skewYX, 1, skewYZ, 0,
-    skewZX, skewZY, 1, 0,
-    0, 0, 0, 1
+    1,
+    skewXY,
+    skewXZ,
+    0,
+    skewYX,
+    1,
+    skewYZ,
+    0,
+    skewZX,
+    skewZY,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
   );
 
   mat4.multiply(matrix, matrix, skewMatrix);

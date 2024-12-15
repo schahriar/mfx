@@ -4,10 +4,9 @@ export const createEmptyFrame = (base: VideoFrame) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   return new VideoFrame(canvas, {
-    timestamp: 0
+    timestamp: 0,
   });
 };
-
 
 export const coalesce = (stream: ReadableStream<VideoFrame>) => {
   let buffer: VideoFrame | undefined;
@@ -35,7 +34,10 @@ export const coalesce = (stream: ReadableStream<VideoFrame>) => {
     }
 
     // Check if current frame is within range
-    if (buffer && (buffer?.timestamp + buffer?.duration) >= (frame.timestamp - offset)) {
+    if (
+      buffer &&
+      buffer?.timestamp + buffer?.duration >= frame.timestamp - offset
+    ) {
       return buffer.clone();
     }
 

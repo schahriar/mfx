@@ -38,7 +38,10 @@ export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
  */
 export const forceCopyFrame = async (
   frame: VideoFrame,
-  canvas: OffscreenCanvas = new OffscreenCanvas(frame.displayWidth, frame.displayHeight),
+  canvas: OffscreenCanvas = new OffscreenCanvas(
+    frame.displayWidth,
+    frame.displayHeight,
+  ),
 ) => {
   if (!frame) return;
 
