@@ -82,8 +82,8 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 ### Soon
 - Compositor
   - Readback from frame stream (should buffer and take duration into account)
-- `clip` to mask a VideoStream
-- `transform` function for X/Y/Z translation and rotation (matrix3d equivalent)
+- Timed effects
+- Replace Scaler with cropper (+ scale, fit)
 - Fix Audio trimming to include subframes
 - GIF codec
   - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)

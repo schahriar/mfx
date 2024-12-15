@@ -1,8 +1,8 @@
 #version 300 es
 precision mediump float;
 
-uniform mat4 transform; // 4x4 transformation matrix
-uniform float MFXInternalFlipY;
+uniform mat4 transform;       // 4x4 transformation matrix
+uniform float MFXInternalFlipY; // Flip Y axis if needed
 
 in vec2 texcoord;
 out vec2 uv;

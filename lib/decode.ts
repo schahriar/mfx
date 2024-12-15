@@ -38,13 +38,13 @@ export interface MFXDecodableChunk<Sample = any> extends MFXEncodedChunk {
  */
 export const forceCopyFrame = async (
   frame: VideoFrame,
-  canvas: HTMLCanvasElement = document.createElement("canvas"),
+  canvas: OffscreenCanvas = new OffscreenCanvas(frame.displayWidth, frame.displayHeight),
 ) => {
   if (!frame) return;
 
   const ctx = canvas.getContext("2d", {
     willReadFrequently: true,
-  });
+  }) as OffscreenCanvasRenderingContext2D;
 
   const width = frame.displayWidth;
   const height = frame.displayHeight;
@@ -283,7 +283,7 @@ export class MFXAudioDecoder extends MFXTransformStream<
           await backpressure;
 
           // Prevent backwards backpressure
-          while (decoder.decodeQueueSize > 10) {
+          while (decoder.decodeQueueSize > 120) {
             await nextTick();
           }
 

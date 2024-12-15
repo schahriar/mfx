@@ -165,7 +165,7 @@
       })
     );
 
-    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process ? definition.process(decodeStream) : decodeStream;
+    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process ? await definition.process(decodeStream) : decodeStream;
 
     const displayStream = processStream
       .pipeThrough(new PassthroughCanvas(canvasEl))

@@ -1,11 +1,27 @@
-import { codecs, effect, encode, keyframes, visual } from "mfx";
+import { codecs, decode, effect, encode, keyframes, visual } from "mfx";
 import { easing } from "ts-easing";
 import type { TestDefinition } from "../types";
+import { openURL } from "../utils";
 
 const step = (v: number[], size = 2500) => v.map((s, i) => ({
   time: i * size,
   value: s
 }))
+
+const createMaskFrame = (width: number, height: number) => {
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "black";
+  ctx.beginPath();
+  ctx.roundRect(0, 0, width, height, 50);
+  ctx.fill();
+
+  return new VideoFrame(canvas, {
+    timestamp: 0
+  });
+};
+
 
 const cornerXKeyframes = keyframes(step([
   0, 0, 1, 1, 0, 0, 1, 1
@@ -41,8 +57,8 @@ export const definitions: TestDefinition[] = [{
   description: "Zoom at a scale into a video coordinate",
   input: "AI.mp4",
   process: (stream) => effect(stream, [
-    visual.zoom({ factor: 1.5, x: 0, y: 0 }),
-    visual.zoom({ factor: 1.25, x: 0, y: 0 }),
+    visual.zoom({ factor: 1.5, x: 1, y: 1 }),
+    visual.zoom({ factor: 1.25, x: 1, y: 1 }),
   ]),
 }, {
   id: "effect_zoom_out",
@@ -58,7 +74,7 @@ export const definitions: TestDefinition[] = [{
   description: "Blur video using fast gaussian and convolution",
   input: "boats.mp4",
   process: (stream) => effect(stream, [
-    visual.blur({ passes: 8, quality: 0.5 })
+    visual.blur({ passes: 10, quality: 0.05 })
   ])
 }, {
   id: "effect_rotate",
@@ -93,9 +109,34 @@ export const definitions: TestDefinition[] = [{
   title: "Composition: Add",
   description: "Adding a new layer via composition",
   input: "boats.mp4",
-  process: (stream) => effect(stream, [
-    visual.add(),
-  ]),
+  process: async (stream) => {
+    const { video } = await decode(await openURL("beach.mp4"), "video/mp4");
+    const videoConfig = video.track.config as VideoDecoderConfig;
+
+    return effect(stream, [
+      visual.add(effect(video, [
+        visual.blur({ passes: 10, quality: 0.5 }),
+        visual.mask(new ReadableStream({
+          pull: (controller) => {
+            controller.enqueue(createMaskFrame(videoConfig.codedWidth, videoConfig.codedHeight));
+          },
+        })),
+        visual.scale({ values: [0.25, 0.25, 1].map((v) => keyframes([{
+          time: 0,
+          value: 0,
+        }, {
+          time: 300,
+          value: v
+        }, {
+          time: 3000,
+          value: v
+        }, {
+          time: 3500,
+          value: 0
+        }], easing.inOutCubic)) as any, origin: [0.95, 0.95, 1]}),
+      ])),
+    ])
+  },
   output: async (v, a, vt) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,

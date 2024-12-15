@@ -64,15 +64,13 @@ export class MFXGLHandle {
   context: MFXGLContext;
   textures: number[];
   closed: boolean;
+  busy: number;
   // Dirty handles don't clear buffer between paints
   isDirty: boolean = false;
-  private flips: number = 0;
-  private paintCount: number = 0;
 
   constructor(frame: VideoFrame, context: MFXGLContext) {
     this.context = context;
     this.frame = frame;
-
     const { gl, frameBufferInfo, textureIn } = context;
 
     twgl.bindFramebufferInfo(gl, frameBufferInfo);
@@ -118,15 +116,15 @@ export class MFXGLHandle {
   }
 
   async paint(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
-    const { gl, textureIn, textureOut, bufferInfo } = this.context;
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, textureIn);
-    this.context.attachTextureToFramebuffer(textureOut);
-    if (!this.isDirty) {
-      this.context.clear();
+    if (this.busy > 0) {
+      throw new Error("Encountered a busy MFXGLHandle. GL paints in MFX are not allowed to paint more than one frame per stream in order to re-use the framebuffer.");
     }
 
+    this.busy++;
+    const { gl, textureIn, textureOut, bufferInfo } = this.context;
+
     let resolvedUniforms = {};
+    let openFrames = new Set<VideoFrame>();
 
     await Promise.all(Object.keys(uniforms || {}).map(async (key) => {
       const value = await u(uniforms[key], this.frame);
@@ -153,7 +151,6 @@ export class MFXGLHandle {
 
       gl.activeTexture(textureUnit);
       gl.bindTexture(gl.TEXTURE_2D, texture);
-
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -164,11 +161,15 @@ export class MFXGLHandle {
       );
 
       resolvedUniforms[key] = texture;
+
+      openFrames.add(frame);
     });
 
-    const MFXInternalFlipY = this.paintCount % 2 ? 1 : 0;
-    if (MFXInternalFlipY) {
-      this.flips++;
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureIn);
+    this.context.attachTextureToFramebuffer(textureOut);
+    if (!this.isDirty) {
+      this.context.clear();
     }
 
     gl.useProgram(programInfo.program);
@@ -178,19 +179,24 @@ export class MFXGLHandle {
       ...resolvedUniforms,
       frame: textureIn,
       frameSize: [this.frame.displayWidth, this.frame.displayHeight],
-      MFXInternalFlipY,
+      MFXInternalFlipY: 0,
     });
     twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
     // Swap textures
     [this.context.textureIn, this.context.textureOut] = [textureOut, textureIn];
 
-    // Increment paint count
-    this.paintCount++;
+    [...openFrames].forEach((frame) => frame.close());
+    this.busy--;
   }
 
   // Draw action
   close() {
+    if (this.busy > 0) {
+      console.error("Attempted to close a busy MFXGLHandle")
+      throw new Error("Attempted to close a busy MFXGLHandle");
+    }
+
     if (this.closed) {
       throw new Error("Attempted to close an already closed MFXGLHandle");
     }
@@ -214,7 +220,7 @@ export class MFXGLHandle {
       frame: textureIn,
       frameSize: [width, height],
       transform: identity,
-      MFXInternalFlipY: this.flips % 2 ? 0 : 1,
+      MFXInternalFlipY: 1,
     });
     twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
@@ -340,9 +346,16 @@ export class MFXGLEffect extends MFXTransformStream<
 
           if (isDirty) {
             handle.dirty();
+          } else {
+            handle.clean();
           }
 
-          await handle.paint(program, uniforms);
+          try {
+            await handle.paint(program, uniforms);
+          } catch (e) {
+            controller.error(e);
+            return;
+          }
 
           controller.enqueue(handle);
         },
@@ -363,10 +376,7 @@ export class FrameToGL extends MFXTransformStream<
     return "FrameToGL";
   }
 
-  constructor(
-    writableStrategy?: QueuingStrategy<ExtendedVideoFrame>,
-    readableStrategy?: QueuingStrategy<MFXGLHandle>,
-  ) {
+  constructor() {
     let context: MFXGLContext;
     super(
       {
@@ -378,8 +388,10 @@ export class FrameToGL extends MFXTransformStream<
           controller.enqueue(handle);
         },
       },
-      writableStrategy,
-      readableStrategy,
+      // Allow up to 1 minute of 60fps frames to buffer waiting for effects pipeline
+      // TODO: Make this configurable, needed for composing async effects without dropping frames
+      new CountQueuingStrategy({ highWaterMark: 60 * 60 }),
+      new CountQueuingStrategy({ highWaterMark: 1 }),
     );
   }
 };
@@ -410,14 +422,24 @@ export class GLToFrame extends MFXTransformStream<
 };
 
 export const effect = (input: ReadableStream<VideoFrame>, effects: MFXTransformStream<MFXGLHandle, MFXGLHandle>[][], {
+  start,
+  end,
   writableStrategy,
   readableStrategy
 }: {
+  start?: number;
+  end?: number;
   writableStrategy?: QueuingStrategy<any>,
   readableStrategy?: QueuingStrategy<any>,
 } = {}) => {
   // Converts VideoFrames to a WebGL2 handle (framebuffer)
-  const stream = new FrameToGL(writableStrategy, readableStrategy) as TransformStream;
+  const stream = new FrameToGL() as TransformStream;
+
+  const trim = new TransformStream({
+    transform: (frame, controller) => {
+      // TODO: Implement
+    }
+  })
 
   return effects.flat().reduce((accu, effect) =>
     accu.pipeThrough(effect),
