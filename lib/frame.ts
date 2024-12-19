@@ -40,20 +40,20 @@ export const cloneFrame = (
 export interface ExtendedVideoFrameProperties {
   keyFrame?: boolean;
   keepOpen?: boolean;
-};
+}
 
 export class ExtendedVideoFrame extends VideoFrame {
   properties?: ExtendedVideoFrameProperties;
   constructor(
     source: CanvasImageSource | ImageData,
     init?: VideoFrameInit,
-    properties: ExtendedVideoFrameProperties = {}
+    properties: ExtendedVideoFrameProperties = {},
   ) {
     super(source as any, init);
-    
+
     this.properties = {
-      ...properties
-    }
+      ...properties,
+    };
   }
 
   static revise(
@@ -90,8 +90,8 @@ export class ExtendedVideoFrame extends VideoFrame {
       },
       {
         ...(source as ExtendedVideoFrame).properties,
-        ...properties
-      }
+        ...properties,
+      },
     );
   }
 }
@@ -103,14 +103,11 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
     let handle = -1;
     const callback = () => {
       buffer.push(
-        new ExtendedVideoFrame(
-          source,
-          {
-            timestamp: source.currentTime * 1e6,
-            displayWidth: source.videoWidth,
-            displayHeight: source.videoHeight,
-          }
-        ),
+        new ExtendedVideoFrame(source, {
+          timestamp: source.currentTime * 1e6,
+          displayWidth: source.videoWidth,
+          displayHeight: source.videoHeight,
+        }),
       );
       handle = source.requestVideoFrameCallback(callback);
     };
