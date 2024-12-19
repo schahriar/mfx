@@ -1,5 +1,7 @@
-export const createEmptyFrame = (base: VideoFrame) => {
-  const canvas = new OffscreenCanvas(base.displayWidth, base.displayHeight);
+import { ExtendedVideoFrame } from "../frame";
+
+export const createEmptyFrame = () => {
+  const canvas = new OffscreenCanvas(1, 1);
   const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -16,15 +18,21 @@ export const coalesce = (stream: ReadableStream<VideoFrame>) => {
   let offset = -1;
 
   const pull = async () => {
+    if (isDone) {
+      return;
+    }
+
     const { done, value } = await reader.read();
 
     if (done) {
-      buffer = createEmptyFrame(buffer);
+      buffer = createEmptyFrame();
       isDone = true;
       return;
     }
 
-    buffer?.close();
+    if (!(buffer as ExtendedVideoFrame)?.properties?.keepOpen) {
+      buffer?.close();
+    }
     buffer = value;
   };
 

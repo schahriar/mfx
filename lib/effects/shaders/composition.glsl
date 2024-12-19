@@ -29,8 +29,7 @@ void main() {
   vec4 additiveBlend = baseColor + layerColor * layerAlpha;
   vec4 multiplyBlend = mix(baseColor, baseColor * layerColor, layerAlpha);
   vec4 screenBlend = mix(baseColor, 1.0 - (1.0 - baseColor) * (1.0 - layerColor), layerAlpha);
-  vec4 alphaBlend = mix(baseColor, layerColor, layerAlpha * (1.0 - baseColor.a));
-
+  vec4 alphaBlend = mix(baseColor, layerColor, 1.0 - baseColor.a);
 
   fragColor = normal * normalBlend +
               additive * additiveBlend +

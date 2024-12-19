@@ -1,4 +1,4 @@
-import { codecs, decode, effect, encode, keyframes, visual } from "mfx";
+import { codecs, decode, effect, encode, ExtendedVideoFrame, keyframes, visual } from "mfx";
 import { easing } from "ts-easing";
 import type { TestDefinition } from "../types";
 import { openURL } from "../utils";
@@ -6,7 +6,17 @@ import { openURL } from "../utils";
 const step = (v: number[], size = 2500) => v.map((s, i) => ({
   time: i * size,
   value: s
-}))
+}));
+
+async function createVideoFrameFromURL(url: string): Promise<VideoFrame> {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = url;
+  await img.decode();
+
+  const imageBitmap = await createImageBitmap(img);
+  return new VideoFrame(imageBitmap, { timestamp: 0 });
+};
 
 const createMaskFrame = (width: number, height: number) => {
   const canvas = new OffscreenCanvas(width, height);
@@ -21,7 +31,6 @@ const createMaskFrame = (width: number, height: number) => {
     timestamp: 0
   });
 };
-
 
 const cornerXKeyframes = keyframes(step([
   0, 0, 1, 1, 0, 0, 1, 1
@@ -76,6 +85,28 @@ export const definitions: TestDefinition[] = [{
   process: (stream) => effect(stream, [
     visual.blur({ passes: 10, quality: 0.05 })
   ])
+}, {
+  id: "effect_scale_alpha",
+  title: "Scale with Alpha",
+  description: "Scale video down with an underlying background",
+  input: "boats.mp4",
+  process: async (stream) => {
+    const background = await createVideoFrameFromURL("https://images.unsplash.com/photo-1730982045412-326c81810ace?q=80&w=2970&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+    const backgroundFrame = ExtendedVideoFrame.revise(background, background, {}, {
+      keepOpen: true
+    });
+
+    return effect(stream, [
+      visual.scale({ values: [0.7, 0.7, 1] }),
+      visual.add(new ReadableStream<VideoFrame>({
+        pull: async (controller) => {
+          controller.enqueue(backgroundFrame);
+        },
+      }), {
+        alpha: 1
+      })
+    ]);
+  }
 }, {
   id: "effect_rotate",
   title: "Rotate",

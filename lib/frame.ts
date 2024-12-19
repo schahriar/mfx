@@ -37,22 +37,30 @@ export const cloneFrame = (
   });
 };
 
-export class ExtendedVideoFrame extends VideoFrame {
-  containerContext?: ContainerContext;
+export interface ExtendedVideoFrameProperties {
   keyFrame?: boolean;
+  keepOpen?: boolean;
+};
+
+export class ExtendedVideoFrame extends VideoFrame {
+  properties?: ExtendedVideoFrameProperties;
   constructor(
     source: CanvasImageSource | ImageData,
     init?: VideoFrameInit,
-    container?: ContainerContext,
+    properties: ExtendedVideoFrameProperties = {}
   ) {
     super(source as any, init);
-    this.containerContext = container;
+    
+    this.properties = {
+      ...properties
+    }
   }
 
   static revise(
     frame: ExtendedVideoFrame | VideoFrame,
     source: CanvasImageSource | ImageData | ExtendedVideoFrame,
     init?: VideoFrameInit,
+    properties: ExtendedVideoFrameProperties = {},
   ) {
     return new ExtendedVideoFrame(
       source as any,
@@ -80,18 +88,11 @@ export class ExtendedVideoFrame extends VideoFrame {
           : {}),
         ...init,
       },
-      (frame as ExtendedVideoFrame)?.containerContext,
+      {
+        ...(source as ExtendedVideoFrame).properties,
+        ...properties
+      }
     );
-  }
-
-  static cut(frame: ExtendedVideoFrame, duration: number) {
-    const clone = frame.clone() as ExtendedVideoFrame;
-    clone.containerContext = {
-      duration,
-      createdAt: new Date(),
-    };
-
-    return clone;
   }
 }
 
@@ -100,7 +101,6 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
     let ended = false;
     let buffer = [];
     let handle = -1;
-    const start = new Date();
     const callback = () => {
       buffer.push(
         new ExtendedVideoFrame(
@@ -109,11 +109,7 @@ export class MFXVideoSource extends ReadableStream<ExtendedVideoFrame> {
             timestamp: source.currentTime * 1e6,
             displayWidth: source.videoWidth,
             displayHeight: source.videoHeight,
-          },
-          {
-            duration: source.duration,
-            createdAt: start,
-          },
+          }
         ),
       );
       handle = source.requestVideoFrameCallback(callback);

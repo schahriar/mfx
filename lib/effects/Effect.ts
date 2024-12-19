@@ -180,7 +180,9 @@ export class MFXGLHandle {
 
         resolvedUniforms[key] = texture;
 
-        openFrames.add(frame);
+        if (!(frame as ExtendedVideoFrame).properties?.keepOpen) {
+          openFrames.add(frame);
+        }
       });
 
     gl.activeTexture(gl.TEXTURE0);

@@ -4,6 +4,7 @@ import type { Uniform } from "./shaders";
 import * as shaders from "./shaders/raw";
 import { rotate, scale } from "./matrix";
 import { coalesce, createEmptyFrame } from "./coalesce";
+import { ExtendedVideoFrame } from "../frame";
 
 const repeat = (n: number, fn: () => MFXGLEffect) => [...new Array(n)].map(fn);
 const conv =
@@ -38,7 +39,7 @@ export const visual = {
     video: ReadableStream<VideoFrame>,
     {
       // Normal blend
-      normal = 1,
+      normal = 0,
       // Additive blend
       additive = 0,
       // Multiply blend
