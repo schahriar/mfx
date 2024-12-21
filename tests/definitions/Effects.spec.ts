@@ -164,7 +164,9 @@ export const definitions: TestDefinition[] = [{
           time: 3500,
           value: 0
         }], easing.inOutCubic)) as any, origin: [0.95, 0.95, 1]}),
-      ])),
+      ]), {
+        normal: 1
+      }),
     ], {
       trim: {
         start: 5000
