@@ -2,9 +2,8 @@ import { convolution3x3Kernels } from "./convolution";
 import { MFXGLEffect, u } from "./Effect";
 import type { Uniform } from "./shaders";
 import * as shaders from "./shaders/raw";
-import { rotate, scale } from "./matrix";
+import { rotate, scale, translate } from "./matrix";
 import { coalesce, createEmptyFrame } from "./coalesce";
-import { ExtendedVideoFrame } from "../frame";
 
 const repeat = (n: number, fn: () => MFXGLEffect) => [...new Array(n)].map(fn);
 const conv =
@@ -88,6 +87,15 @@ export const visual = {
   }) => [
     new MFXGLEffect(shaders.paint, {
       transform: async (f) => scale(await u(values, f), await u(origin, f)),
+    }),
+  ],
+  translate: ({
+    values = [0, 0, 0], // Provided as an example
+  }: {
+    values: Uniform<Vec3>;
+  }) => [
+    new MFXGLEffect(shaders.paint, {
+      transform: async (f) => translate(await u(values, f)),
     }),
   ],
   rotate: ({
