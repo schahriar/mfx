@@ -2,7 +2,7 @@ import { type UniformProducer } from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
 import { easing as tsEasing } from "ts-easing";
-import parseTime from 'parse-duration';
+import parseTime from "parse-duration";
 
 export class FrameRateAdjuster extends MFXTransformStream<
   ExtendedVideoFrame,
@@ -66,11 +66,14 @@ export class FrameRateAdjuster extends MFXTransformStream<
 }
 
 /**
- * 
+ *
  * @group Advanced
  * @example animate("0s 100, 0.5s 200", "elastic");
  */
-export const animate = (value: string, easing: string | ((number) => (number)) = (v) => v) => {
+export const animate = (
+  value: string,
+  easing: string | ((number) => number) = (v) => v,
+) => {
   const steps = value.split(",");
 
   const parsedSteps = steps.map((step) => {
@@ -82,7 +85,10 @@ export const animate = (value: string, easing: string | ((number) => (number)) =
     };
   });
 
-  return keyframes(parsedSteps, typeof easing === "function" ? easing : tsEasing[easing]);
+  return keyframes(
+    parsedSteps,
+    typeof easing === "function" ? easing : tsEasing[easing],
+  );
 };
 
 /**

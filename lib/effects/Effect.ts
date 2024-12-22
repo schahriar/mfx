@@ -9,7 +9,12 @@ import { mat4 } from "gl-matrix";
 const identity = mat4.create();
 mat4.identity(identity);
 
-export type BoundTextureTransformer = (gl: WebGL2RenderingContext,type: "frameIn" | "frameOut" | "uniform", key: string, v: WebGLTexture) => void;
+export type BoundTextureTransformer = (
+  gl: WebGL2RenderingContext,
+  type: "frameIn" | "frameOut" | "uniform",
+  key: string,
+  v: WebGLTexture,
+) => void;
 
 export type Uniforms =
   | Record<string, Uniform<any>>
@@ -121,11 +126,15 @@ export class MFXGLHandle {
     this.isDirty = false;
   }
 
-  async paint(programInfo: twgl.ProgramInfo, uniforms: Uniforms, {
-    transformBoundTexture = (ctx, type, key, v) => v,
-  }: {
-    transformBoundTexture?: BoundTextureTransformer
-  } = {}) {
+  async paint(
+    programInfo: twgl.ProgramInfo,
+    uniforms: Uniforms,
+    {
+      transformBoundTexture = (ctx, type, key, v) => v,
+    }: {
+      transformBoundTexture?: BoundTextureTransformer;
+    } = {},
+  ) {
     if (this.busy > 0) {
       throw new Error(
         "Encountered a busy MFXGLHandle. GL paints in MFX are not allowed to paint more than one frame per stream in order to re-use the framebuffer.",
@@ -172,7 +181,7 @@ export class MFXGLHandle {
           width: frame.displayWidth,
           height: frame.displayHeight,
         });
-   
+
         gl.activeTexture(textureUnit);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(
@@ -283,7 +292,7 @@ export class MFXGLContext {
       desynchronized: true,
       depth: true,
       preserveDrawingBuffer: true,
-      premultipliedAlpha: false
+      premultipliedAlpha: false,
     }) as WebGL2RenderingContext;
 
     this.gl = gl;
@@ -395,7 +404,7 @@ export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
 
           try {
             await handle.paint(program, uniforms, {
-              transformBoundTexture
+              transformBoundTexture,
             });
           } catch (e) {
             controller.error(e);
