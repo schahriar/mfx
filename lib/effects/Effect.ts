@@ -16,6 +16,13 @@ export type BoundTextureTransformer = (
   v: WebGLTexture,
 ) => void;
 
+export interface Crop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type Uniforms =
   | Record<string, Uniform<any>>
   | ((frame: VideoFrame) => Promise<Record<string, Uniform<any>>>);
@@ -266,7 +273,7 @@ export class MFXGLHandle {
     // Free resource after GPU paint
     this.frame.close();
 
-    const { gl, bufferInfo, paintProgramInfo, textureIn } = this.context;
+    const { gl, bufferInfo, paintProgramInfo, textureIn, crop } = this.context;
     const { width, height } = gl.canvas;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, width, height);
@@ -284,7 +291,26 @@ export class MFXGLHandle {
     });
     twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_FAN);
 
-    return ExtendedVideoFrame.revise(this.frame, gl.canvas);
+    let source = gl.canvas;
+
+    // TODO: Pass scaling into a final resize/crop
+    if (crop) {
+      const final = new OffscreenCanvas(Math.max(1, crop.width), Math.max(1, crop.height));
+      const ctx2D = final.getContext("2d") as unknown as CanvasRenderingContext2D;
+
+      ctx2D.drawImage(
+        gl.canvas,
+        crop.x, crop.y, crop.width, crop.height,
+        0, 0, crop.width, crop.height
+      );
+
+      source = final;
+    }
+
+    return ExtendedVideoFrame.revise(this.frame, source, {
+      displayWidth: source.width,
+      displayHeight: source.height,
+    });
   }
 }
 
@@ -295,6 +321,7 @@ export class MFXGLContext {
   frameBufferInfo: twgl.FramebufferInfo;
   textureIn: WebGLTexture;
   textureOut: WebGLTexture;
+  crop: Crop | null = null;
   cachedTextures: WeakMap<VideoFrame, WebGLTexture> = new WeakMap();
 
   constructor(width: number, height: number) {
@@ -367,6 +394,10 @@ export class MFXGLContext {
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
+  setCrop(crop: Crop) {
+    this.crop = crop;
+  }
+
   attachTextureToFramebuffer(texture: WebGLTexture) {
     const { gl, frameBufferInfo } = this;
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBufferInfo.framebuffer);
@@ -394,8 +425,10 @@ export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
     {
       isDirty = false,
       transformBoundTexture,
+      transformContext = async () => {},
     }: {
       transformBoundTexture?: BoundTextureTransformer;
+      transformContext?: (context: MFXGLContext, frame: VideoFrame) => Promise<void>;
       isDirty?: boolean;
     } = {},
   ) {
@@ -422,6 +455,8 @@ export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
             controller.error(e);
             return;
           }
+
+          await transformContext(handle.context, handle.frame);
 
           controller.enqueue(handle);
         },

@@ -37,6 +37,7 @@ export const visual = {
   add: (
     video: ReadableStream<VideoFrame>,
     {
+      offset = [0, 0],
       // Normal blend
       normal = 0,
       // Additive blend
@@ -48,6 +49,7 @@ export const visual = {
       // Alpha blend, applies to alpha channel of frame
       alpha = 0,
     }: {
+      offset?: Uniform<number[]>;
       normal?: Uniform<number>;
       additive?: Uniform<number>;
       multiply?: Uniform<number>;
@@ -65,6 +67,7 @@ export const visual = {
           return {
             layer: newFrame,
             layerSize: [newFrame.displayWidth, newFrame.displayHeight],
+            offset,
             normal,
             additive,
             multiply,
@@ -87,6 +90,33 @@ export const visual = {
   }) => [
     new MFXGLEffect(shaders.paint, {
       transform: async (f) => scale(await u(values, f), await u(origin, f)),
+    }),
+  ],
+  crop: ({
+    values = [1, 1, 1], // Provided as an example
+    origin = [0.5, 0.5, 0],
+  }: {
+    values: Uniform<Vec3>;
+    origin?: Uniform<Origin>;
+  }) => [
+    new MFXGLEffect(shaders.paint, {}, {
+      transformContext: async (ctx, frame) => {
+        const scale = await u(values, frame);
+        const resolvedOrigin = await u(origin, frame);
+
+        const width = scale[0] * ctx.gl.canvas.width;
+        const height = scale[1] * ctx.gl.canvas.height;
+
+        const x = ctx.gl.canvas.width * resolvedOrigin[0] - width * resolvedOrigin[0];
+        const y = ctx.gl.canvas.height * resolvedOrigin[1] - height * resolvedOrigin[1];
+
+        ctx.setCrop({
+          x,
+          y,
+          width,
+          height
+        });
+      }
     }),
   ],
   translate: ({

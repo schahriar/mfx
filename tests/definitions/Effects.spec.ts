@@ -161,7 +161,7 @@ export const definitions: TestDefinition[] = [{
   description: "Adding a new layer via composition",
   input: "boats.mp4",
   process: async (stream) => {
-    const { video } = await decode(await openURL("beach.mp4"), "video/mp4");
+    const { video } = await decode(await openURL("city.mp4"), "video/mp4");
     const videoConfig = video.track.config as VideoDecoderConfig;
 
     return effect(stream, [
@@ -183,8 +183,10 @@ export const definitions: TestDefinition[] = [{
         }, {
           time: 3500,
           value: 0
-        }], easing.inOutCubic)) as any, origin: [0.95, 0.95, 1]}),
+        }], easing.inOutCubic)) as any, origin: [1, 1, 1]}),
+        visual.crop({ values: [0.25, 0.25, 1], origin: [1, 1, 1] }),
       ]), {
+        offset: [0.95, 0.9],
         normal: 1
       }),
     ], {

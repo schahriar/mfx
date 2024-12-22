@@ -80,13 +80,11 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 ## Roadmap
 
 ### Soon
-- Texture caching for GLHandle
 - Fix Audio trimming to include subframes
 - GIF codec
   - encode: https://github.com/jnordberg/gif.js
-- Replace Scaler with cropper (+ scale, fit)
 - Regional effects
-- GIF decoder 
+- GIF decoder
   - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)
 - Temporal Noise Reduction
 - Deprecate ExtendedVideoFrame

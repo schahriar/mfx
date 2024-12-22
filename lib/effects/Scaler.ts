@@ -1,12 +1,9 @@
 import { ExtendedVideoFrame } from "../frame";
 import { MFXTransformStream } from "../stream";
 
-// TODO: Implement x, y position for cropping
-
-// Used for scaling in the same aspect-ratio or to crop
-// Note: Faster than MipMaps per frame as in/out is downscaled in the entire pipeline
 /**
  * @group Effects
+ * @note Use visual.scale and visual.crop in effect pipelines for most cases, this is intended for downsampling on CPU
  */
 export class Scaler extends MFXTransformStream<
   ExtendedVideoFrame,
