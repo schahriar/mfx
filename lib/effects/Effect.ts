@@ -142,7 +142,8 @@ export class MFXGLHandle {
     }
 
     this.busy++;
-    const { gl, cachedTextures, textureIn, textureOut, bufferInfo } = this.context;
+    const { gl, cachedTextures, textureIn, textureOut, bufferInfo } =
+      this.context;
 
     let resolvedUniforms = {};
     let openFrames = new Set<VideoFrame>();
@@ -184,7 +185,7 @@ export class MFXGLHandle {
             width: frame.displayWidth,
             height: frame.displayHeight,
           });
-     
+
           gl.activeTexture(textureUnit);
           gl.bindTexture(gl.TEXTURE_2D, texture);
           gl.texImage2D(
@@ -201,7 +202,7 @@ export class MFXGLHandle {
             cachedTextures.set(frame, texture);
           }
         }
-        
+
         transformBoundTexture(gl, "uniform", key, texture);
 
         resolvedUniforms[key] = texture;

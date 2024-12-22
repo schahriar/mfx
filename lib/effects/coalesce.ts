@@ -16,7 +16,7 @@ export const cloneOrReuse = (frame: ExtendedVideoFrame) => {
   }
 
   return frame.clone();
-}
+};
 
 export const coalesce = (stream: ReadableStream<VideoFrame>) => {
   let buffer: VideoFrame | undefined;
