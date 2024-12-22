@@ -142,7 +142,7 @@ export class MFXGLHandle {
     }
 
     this.busy++;
-    const { gl, textureIn, textureOut, bufferInfo } = this.context;
+    const { gl, cachedTextures, textureIn, textureOut, bufferInfo } = this.context;
 
     let resolvedUniforms = {};
     let openFrames = new Set<VideoFrame>();
@@ -173,25 +173,35 @@ export class MFXGLHandle {
           );
         }
 
-        const texture = twgl.createTexture(gl, {
-          min: gl.NEAREST,
-          mag: gl.NEAREST,
-          wrapS: gl.CLAMP_TO_EDGE,
-          wrapT: gl.CLAMP_TO_EDGE,
-          width: frame.displayWidth,
-          height: frame.displayHeight,
-        });
+        let texture = cachedTextures.get(frame);
 
-        gl.activeTexture(textureUnit);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(
-          gl.TEXTURE_2D,
-          0,
-          gl.RGBA,
-          gl.RGBA,
-          gl.UNSIGNED_BYTE,
-          frame,
-        );
+        if (!texture) {
+          texture = twgl.createTexture(gl, {
+            min: gl.NEAREST,
+            mag: gl.NEAREST,
+            wrapS: gl.CLAMP_TO_EDGE,
+            wrapT: gl.CLAMP_TO_EDGE,
+            width: frame.displayWidth,
+            height: frame.displayHeight,
+          });
+     
+          gl.activeTexture(textureUnit);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            frame,
+          );
+
+          if ((frame as ExtendedVideoFrame).properties?.keepOpen) {
+            // Cache frames that remain open after painting
+            cachedTextures.set(frame, texture);
+          }
+        }
+        
         transformBoundTexture(gl, "uniform", key, texture);
 
         resolvedUniforms[key] = texture;
@@ -284,6 +294,7 @@ export class MFXGLContext {
   frameBufferInfo: twgl.FramebufferInfo;
   textureIn: WebGLTexture;
   textureOut: WebGLTexture;
+  cachedTextures: WeakMap<VideoFrame, WebGLTexture> = new WeakMap();
 
   constructor(width: number, height: number) {
     const canvas = new OffscreenCanvas(width, height);

@@ -10,6 +10,14 @@ export const createEmptyFrame = () => {
   });
 };
 
+export const cloneOrReuse = (frame: ExtendedVideoFrame) => {
+  if (frame.properties?.keepOpen) {
+    return frame;
+  }
+
+  return frame.clone();
+}
+
 export const coalesce = (stream: ReadableStream<VideoFrame>) => {
   let buffer: VideoFrame | undefined;
   // Lock stream for coalescing
@@ -46,13 +54,13 @@ export const coalesce = (stream: ReadableStream<VideoFrame>) => {
       buffer &&
       buffer?.timestamp + buffer?.duration >= frame.timestamp - offset
     ) {
-      return buffer.clone();
+      return cloneOrReuse(buffer);
     }
 
     if (!isDone) {
       await pull();
     }
 
-    return buffer.clone();
+    return cloneOrReuse(buffer);
   };
 };
