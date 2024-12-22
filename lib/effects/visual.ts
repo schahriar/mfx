@@ -99,25 +99,32 @@ export const visual = {
     values: Uniform<Vec3>;
     origin?: Uniform<Origin>;
   }) => [
-    new MFXGLEffect(shaders.paint, {}, {
-      transformContext: async (ctx, frame) => {
-        const scale = await u(values, frame);
-        const resolvedOrigin = await u(origin, frame);
+    new MFXGLEffect(
+      shaders.paint,
+      {},
+      {
+        transformContext: async (ctx, frame) => {
+          const scale = await u(values, frame);
+          const resolvedOrigin = await u(origin, frame);
 
-        const width = scale[0] * ctx.gl.canvas.width;
-        const height = scale[1] * ctx.gl.canvas.height;
+          const width = scale[0] * ctx.gl.canvas.width;
+          const height = scale[1] * ctx.gl.canvas.height;
 
-        const x = ctx.gl.canvas.width * resolvedOrigin[0] - width * resolvedOrigin[0];
-        const y = ctx.gl.canvas.height * resolvedOrigin[1] - height * resolvedOrigin[1];
+          const x =
+            ctx.gl.canvas.width * resolvedOrigin[0] - width * resolvedOrigin[0];
+          const y =
+            ctx.gl.canvas.height * resolvedOrigin[1] -
+            height * resolvedOrigin[1];
 
-        ctx.setCrop({
-          x,
-          y,
-          width,
-          height
-        });
-      }
-    }),
+          ctx.setCrop({
+            x,
+            y,
+            width,
+            height,
+          });
+        },
+      },
+    ),
   ],
   translate: ({
     values = [0, 0, 0], // Provided as an example

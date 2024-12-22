@@ -21,7 +21,7 @@ export interface Crop {
   y: number;
   width: number;
   height: number;
-};
+}
 
 export type Uniforms =
   | Record<string, Uniform<any>>
@@ -295,13 +295,24 @@ export class MFXGLHandle {
 
     // TODO: Pass scaling into a final resize/crop
     if (crop) {
-      const final = new OffscreenCanvas(Math.max(1, crop.width), Math.max(1, crop.height));
-      const ctx2D = final.getContext("2d") as unknown as CanvasRenderingContext2D;
+      const final = new OffscreenCanvas(
+        Math.max(1, crop.width),
+        Math.max(1, crop.height),
+      );
+      const ctx2D = final.getContext(
+        "2d",
+      ) as unknown as CanvasRenderingContext2D;
 
       ctx2D.drawImage(
         gl.canvas,
-        crop.x, crop.y, crop.width, crop.height,
-        0, 0, crop.width, crop.height
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        0,
+        0,
+        crop.width,
+        crop.height,
       );
 
       source = final;
@@ -428,7 +439,10 @@ export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
       transformContext = async () => {},
     }: {
       transformBoundTexture?: BoundTextureTransformer;
-      transformContext?: (context: MFXGLContext, frame: VideoFrame) => Promise<void>;
+      transformContext?: (
+        context: MFXGLContext,
+        frame: VideoFrame,
+      ) => Promise<void>;
       isDirty?: boolean;
     } = {},
   ) {
