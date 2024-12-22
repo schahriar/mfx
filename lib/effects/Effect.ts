@@ -9,6 +9,8 @@ import { mat4 } from "gl-matrix";
 const identity = mat4.create();
 mat4.identity(identity);
 
+export type BoundTextureTransformer = (gl: WebGL2RenderingContext,type: "frameIn" | "frameOut" | "uniform", key: string, v: WebGLTexture) => void;
+
 export type Uniforms =
   | Record<string, Uniform<any>>
   | ((frame: VideoFrame) => Promise<Record<string, Uniform<any>>>);
@@ -119,7 +121,11 @@ export class MFXGLHandle {
     this.isDirty = false;
   }
 
-  async paint(programInfo: twgl.ProgramInfo, uniforms: Uniforms) {
+  async paint(programInfo: twgl.ProgramInfo, uniforms: Uniforms, {
+    transformBoundTexture = (ctx, type, key, v) => v,
+  }: {
+    transformBoundTexture?: BoundTextureTransformer
+  } = {}) {
     if (this.busy > 0) {
       throw new Error(
         "Encountered a busy MFXGLHandle. GL paints in MFX are not allowed to paint more than one frame per stream in order to re-use the framebuffer.",
@@ -160,13 +166,13 @@ export class MFXGLHandle {
 
         const texture = twgl.createTexture(gl, {
           min: gl.NEAREST,
-          mag: gl.LINEAR,
+          mag: gl.NEAREST,
           wrapS: gl.CLAMP_TO_EDGE,
           wrapT: gl.CLAMP_TO_EDGE,
           width: frame.displayWidth,
           height: frame.displayHeight,
         });
-
+   
         gl.activeTexture(textureUnit);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(
@@ -177,6 +183,7 @@ export class MFXGLHandle {
           gl.UNSIGNED_BYTE,
           frame,
         );
+        transformBoundTexture(gl, "uniform", key, texture);
 
         resolvedUniforms[key] = texture;
 
@@ -187,7 +194,12 @@ export class MFXGLHandle {
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, textureIn);
+    this.resetBoundTexture();
+    transformBoundTexture(gl, "frameIn", "", textureIn);
+
     this.context.attachTextureToFramebuffer(textureOut);
+    this.resetBoundTexture();
+    transformBoundTexture(gl, "frameOut", "", textureOut);
     if (!this.isDirty) {
       this.context.clear();
     }
@@ -208,6 +220,14 @@ export class MFXGLHandle {
 
     [...openFrames].forEach((frame) => frame.close());
     this.busy--;
+  }
+
+  resetBoundTexture() {
+    const { gl } = this.context;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   }
 
   // Draw action
@@ -263,6 +283,7 @@ export class MFXGLContext {
       desynchronized: true,
       depth: true,
       preserveDrawingBuffer: true,
+      premultipliedAlpha: false
     }) as WebGL2RenderingContext;
 
     this.gl = gl;
@@ -293,7 +314,7 @@ export class MFXGLContext {
 
     this.textureIn = twgl.createTexture(gl, {
       min: gl.NEAREST,
-      mag: gl.LINEAR,
+      mag: gl.NEAREST,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
       width,
@@ -301,7 +322,7 @@ export class MFXGLContext {
     });
     this.textureOut = twgl.createTexture(gl, {
       min: gl.NEAREST,
-      mag: gl.LINEAR,
+      mag: gl.NEAREST,
       wrapS: gl.CLAMP_TO_EDGE,
       wrapT: gl.CLAMP_TO_EDGE,
       width,
@@ -351,7 +372,9 @@ export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
     uniforms: Uniforms = {},
     {
       isDirty = false,
+      transformBoundTexture,
     }: {
+      transformBoundTexture?: BoundTextureTransformer;
       isDirty?: boolean;
     } = {},
   ) {
@@ -371,7 +394,9 @@ export class MFXGLEffect extends MFXTransformStream<MFXGLHandle, MFXGLHandle> {
           }
 
           try {
-            await handle.paint(program, uniforms);
+            await handle.paint(program, uniforms, {
+              transformBoundTexture
+            });
           } catch (e) {
             controller.error(e);
             return;

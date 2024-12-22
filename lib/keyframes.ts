@@ -1,6 +1,8 @@
 import { type UniformProducer } from "./effects/shaders";
 import { ExtendedVideoFrame } from "./frame";
 import { MFXTransformStream } from "./stream";
+import { easing as tsEasing } from "ts-easing";
+import parseTime from 'parse-duration';
 
 export class FrameRateAdjuster extends MFXTransformStream<
   ExtendedVideoFrame,
@@ -62,6 +64,26 @@ export class FrameRateAdjuster extends MFXTransformStream<
     });
   }
 }
+
+/**
+ * 
+ * @group Advanced
+ * @example animate("0s 100, 0.5s 200", "elastic");
+ */
+export const animate = (value: string, easing: string | ((number) => (number)) = (v) => v) => {
+  const steps = value.split(",");
+
+  const parsedSteps = steps.map((step) => {
+    const [time, value] = step.trim().split(" ");
+
+    return {
+      time: parseTime(time),
+      value: JSON.parse(value.trim()),
+    };
+  });
+
+  return keyframes(parsedSteps, typeof easing === "function" ? easing : tsEasing[easing]);
+};
 
 /**
  * @group Advanced

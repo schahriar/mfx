@@ -20,7 +20,7 @@ export * from "./decode";
 export * from "./container/Track";
 export { MFXVideoSource, ExtendedVideoFrame, cloneFrame } from "./frame";
 export { FrameTee, MFXTransformStream, Void } from "./stream";
-export { keyframes } from "./keyframes";
+export { keyframes, animate } from "./keyframes";
 /** @group Effects */
 export { effect } from "./effects/Effect";
 /** @group Effects */

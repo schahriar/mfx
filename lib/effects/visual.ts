@@ -129,7 +129,9 @@ export const visual = {
             [await u(x, f), await u(y, f), 0],
           ),
       },
-      { isDirty },
+      {
+        isDirty,
+      },
     ),
   ],
   blur: ({

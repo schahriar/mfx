@@ -18,17 +18,27 @@ async function createVideoFrameFromURL(url: string): Promise<VideoFrame> {
   return new VideoFrame(imageBitmap, { timestamp: 0 });
 };
 
-const createMaskFrame = (width: number, height: number) => {
-  const canvas = new OffscreenCanvas(width, height);
+const createMaskFrame = (width: number, height: number, roundness = 50, color = "black") => {
+  const scale = 1;
+  const canvas = new OffscreenCanvas(width * scale, height * scale);
   const ctx = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "black";
+  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.roundRect(0, 0, width, height, 50);
+  ctx.roundRect(0, 0, canvas.width, canvas.height, roundness * scale);
   ctx.fill();
 
   return new VideoFrame(canvas, {
-    timestamp: 0
+    alpha: "keep",
+    timestamp: 0,
+    displayWidth: canvas.width,
+    displayHeight: canvas.height,
+    visibleRect: {
+      width: canvas.width,
+      height: canvas.height,
+      x: 0,
+      y: 0
+    },
   });
 };
 
@@ -48,6 +58,16 @@ export const definitions: TestDefinition[] = [{
   process: (stream) => (
     effect(stream, [
       visual.zoom({ factor: 2, x: 0.5, y: 0.5 })
+    ])
+  )
+}, {
+  id: "effect_zoom_sampling_check",
+  title: "Zoom Sampling",
+  description: "Verify zoom bilinear sampling",
+  input: "AI.mp4",
+  process: (stream) => (
+    effect(stream, [
+      visual.zoom({ factor: 10, x: 0.5, y: 0.5 })
     ])
   )
 }, {
@@ -170,6 +190,56 @@ export const definitions: TestDefinition[] = [{
     ], {
       trim: {
         start: 5000
+      }
+    })
+  },
+  output: async (v, a, vt) => {
+    return encode({
+      mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,
+      streaming: true,
+      video: {
+        stream: v,
+        width: 640 * 4,
+        height: 360 * 4,
+        bitrate: 1e6 * 30,
+      },
+    });
+  }
+}, {
+  id: "effect_mask",
+  title: "Masking",
+  description: "Masking a layer",
+  input: "AI.mp4",
+  process: async (stream, track) => {
+    return effect(stream, [
+      visual.mask(new ReadableStream({
+        pull: (controller) => {
+          controller.enqueue(createMaskFrame(track.config.codedWidth, track.config.codedHeight));
+        },
+      })),
+      visual.scale({ values: [0.9, 0.9, 1].map((v) => keyframes([{
+        time: 0,
+        value: 0,
+      }, {
+        time: 300,
+        value: v
+      }, {
+        time: 4000,
+        value: v
+      }, {
+        time: 4500,
+        value: 0
+      }], easing.inOutCubic)) as any, origin: [0.5, 0.5, 1]}),
+      visual.add(new ReadableStream({
+        pull: (controller) => {
+          controller.enqueue(createMaskFrame(track.config.codedWidth, track.config.codedHeight, 0, "red"));
+        },
+      }), {
+        alpha: 1
+      })
+    ], {
+      trim: {
+        end: 4500
       }
     })
   },

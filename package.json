@@ -61,6 +61,7 @@
     "jswebm": "^0.1.2",
     "mp4-muxer": "^5.1.5",
     "mp4box": "^0.5.3",
+    "parse-duration": "^1.1.1",
     "ring-buffer-ts": "^1.2.0",
     "ts-easing": "^0.2.0",
     "twgl.js": "^5.5.4",

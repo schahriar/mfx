@@ -114,7 +114,7 @@
   onMount(async () => {
     let inputStream: ReadableStream<ExtendedVideoFrame>;
     let inputAudioStream: ReadableStream<AudioData> | undefined;
-    let videoTrack: GenericTrack<any>;
+    let videoTrack: mfx.VideoTrack<any>;
     let audioTrack: GenericTrack<any>;
 
     if (typeof definition.decode === "function") {
@@ -129,7 +129,7 @@
 
       inputAudioStream = audio;
       inputStream = video;
-      videoTrack = video?.track;
+      videoTrack = video?.track as mfx.VideoTrack<any>;
       audioTrack = audio?.track;
     }
 
@@ -165,7 +165,7 @@
       })
     );
 
-    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process ? await definition.process(decodeStream) : decodeStream;
+    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process ? await definition.process(decodeStream, videoTrack) : decodeStream;
 
     const displayStream = processStream
       .pipeThrough(new PassthroughCanvas(canvasEl))

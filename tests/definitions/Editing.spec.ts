@@ -1,5 +1,6 @@
 import { codecs, keyframes, encode, effect, visual } from "mfx";
 import { easing } from "ts-easing";
+import { animate } from "../../lib/keyframes";
 import type { TestDefinition } from "../types";
 
 const scaleFactor = 3;
@@ -64,27 +65,9 @@ export const definitions: TestDefinition[] = [{
   },
   process: (stream) => effect(stream, [
     visual.zoom({
-      factor: keyframes([{
-        time: 0,
-        value: 1
-      }, {
-        time: 5000,
-        value: 2
-      }, {
-        time: 10000,
-        value: 1
-      }], easing.inOutSine),
+      factor: animate("0s 1, 5s 2, 10s 1", "inOutSine"),
       x: 0.5,
-      y: keyframes([{
-        time: 0,
-        value: 0
-      }, {
-        time: 5000,
-        value: 0
-      }, {
-        time: 15000,
-        value: 0.5
-      }], easing.inOutSine)
+      y: animate("0s 0, 5s 0, 15s 0.5", "inOutSine")
     })
   ]),
   output: async (s) => {
