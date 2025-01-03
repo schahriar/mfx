@@ -86,8 +86,15 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 - Regional effects
 - GIF decoder
   - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)
-- Temporal Noise Reduction
-- Deprecate ExtendedVideoFrame
+- Optimization Pipeline
+  - Frame delta GPU pipeline
+    - To remove duplicated or near-identical frames based on controllable parameters
+    - Auto-quantization based on frame hints
+  - RGB -> YUV conversion for better compatibility and output size
+  - Multi-pass adaptive bitrate
+  - Frame rate pinning to auto-adjust timestamps
+    - Optionally disable VFR
+  - Temporal Noise Reduction
 - API Documentation
   - Add note on VP9 probe
 - Testing: Source videos with frame duration > fps to showcase frameRate

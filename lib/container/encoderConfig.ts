@@ -5,4 +5,5 @@ export interface ContainerEncoderConfig {
   chunkSize?: number;
   // Configure whether encoding is meant for livestreaming or storage
   streaming?: boolean;
+  faststart?: boolean;
 }
