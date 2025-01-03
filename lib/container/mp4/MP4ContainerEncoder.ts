@@ -91,7 +91,11 @@ export class MP4ContainerEncoder extends MFXTransformStream<
           }
         : {}),
       firstTimestampBehavior: "offset",
-      fastStart: config.streaming ? "fragmented" : (config?.faststart ? "in-memory" : false),
+      fastStart: config.streaming
+        ? "fragmented"
+        : config?.faststart
+          ? "in-memory"
+          : false,
       target: new MP4StreamTarget({
         onData: (data, position) => {
           this.queue(
