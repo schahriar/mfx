@@ -29,8 +29,7 @@ const { video, audio } = await decode(file, "video/mp4", {
 // Hardware accelerated (WebGL2) effect pipeline
 const videoOutput = effect(video, [
   // Apply zoom out effect
-  visual.zoom({ factor: 0.5, x: 0.5, y: 0.25 }),
-  visual.add(video2, {}),
+  visual.zoom({ factor: 0.5, x: 0.5, y: 0.25 })
 ]);
 
 // Readable WebStream

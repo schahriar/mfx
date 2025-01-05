@@ -27,7 +27,7 @@ void main() {
   vec4 layerColor = texture(layer, luv);
   float layerAlpha = layerColor.a;
 
-  vec4 normalBlend = mix(baseColor, layerColor, layerAlpha);
+  vec4 normalBlend = mix(baseColor, vec4(layerColor.rgb, 1), layerAlpha);
   vec4 additiveBlend = baseColor + layerColor * layerAlpha;
   vec4 multiplyBlend = mix(baseColor, baseColor * layerColor, layerAlpha);
   vec4 screenBlend = mix(baseColor, 1.0 - (1.0 - baseColor) * (1.0 - layerColor), layerAlpha);
