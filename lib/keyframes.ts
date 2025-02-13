@@ -22,7 +22,9 @@ export class FrameRateAdjuster extends MFXTransformStream<
       transform: (frame, controller) => {
         const duration = frame.duration;
         const idealFrameCount = Math.floor(duration / maxDuration);
-        const minFrameCount = Math.floor((duration + borrowedDuration) / maxDuration);
+        const minFrameCount = Math.floor(
+          (duration + borrowedDuration) / maxDuration,
+        );
 
         // Simple path, no need for a fill
         if (idealFrameCount === 1 || minFrameCount === 1) {

@@ -20,19 +20,13 @@ class GIFContainerEncoderStream extends MFXTransformStream<
     const height = config.video.height;
     const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext("2d", {
-      willReadFrequently: true
+      willReadFrequently: true,
     }) as any as CanvasRenderingContext2D;
     const encoder = new Encoder({ width, height });
 
     super({
       transform: async (chunk) => {
-        ctx.drawImage(
-          chunk,
-          0,
-          0,
-          width,
-          height
-        );
+        ctx.drawImage(chunk, 0, 0, width, height);
 
         chunk.close();
 
@@ -66,7 +60,9 @@ export class GIFContainerEncoder extends MFXTransformStream<
 
   constructor(config: ContainerEncoderConfig) {
     const stream = new FrameRateAdjuster(config.video.framerate || 1);
-    const readable = stream.readable.pipeThrough(new GIFContainerEncoderStream(config));
+    const readable = stream.readable.pipeThrough(
+      new GIFContainerEncoderStream(config),
+    );
 
     const writer = stream.writable.getWriter();
 

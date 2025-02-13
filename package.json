@@ -1,6 +1,6 @@
 {
   "name": "mfx",
-  "version": "0.8.6",
+  "version": "0.9.0",
   "description": "In-browser video editing toolkit, with effects accelerated by WebGL",
   "main": "dist/bundle.js",
   "types": "dist/types/mfx.d.ts",

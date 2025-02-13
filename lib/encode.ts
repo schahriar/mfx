@@ -72,9 +72,9 @@ export const encode = ({
   };
 
   const decoderClass = {
-    "mp4": MP4ContainerEncoder,
-    "webm": WebMContainerEncoder,
-    "gif": GIFContainerEncoder
+    mp4: MP4ContainerEncoder,
+    webm: WebMContainerEncoder,
+    gif: GIFContainerEncoder,
   };
 
   const container = new decoderClass[containerType](containerConfig);
