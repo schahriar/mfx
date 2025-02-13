@@ -22,10 +22,40 @@
 
   export let definition: TestDefinition;
 
+  let image = "";
+
+  class ImageBuffer extends WritableStream<mfx.MFXBlob> {
+    buffer: mfx.MFXBlob;
+
+    constructor() {
+      super({
+        write: (chunk) => {
+          this.buffer = chunk;
+        },
+        close: () => {
+          image = this.getSource();
+        },
+      });
+    }
+
+    getSource() {
+      if (!this.buffer) {
+        return "";
+      }
+
+      return URL.createObjectURL(
+        new Blob([this.buffer], {
+          type: "image/gif",
+        })
+      );
+    }
+  }
+
   let canvasEl: HTMLCanvasElement;
   let barcodeEl: HTMLCanvasElement;
   let outputIntegrityEl: HTMLCanvasElement;
   let outputVideo = new MFXMediaSourceStream();
+  let outputImage = new ImageBuffer();
   let hash = "";
   let snapshot = [];
   let samples: {
@@ -124,7 +154,7 @@
       const { video, audio } = await mfx.decode(
         stream,
         `${definition.input.endsWith("mp4") ? "video/mp4" : "video/webm"}; codecs="${definition.codec || ""}"`,
-        definition.decodeOptions,
+        definition.decodeOptions
       );
 
       inputAudioStream = audio;
@@ -136,9 +166,7 @@
     const decodeStream = inputStream.pipeThrough(
       new FrameTee((stream) => {
         stream
-          .pipeThrough(
-            new Sampler(async (f, i) => i === 0 || !Boolean(i % 30))
-          )
+          .pipeThrough(new Sampler(async (f, i) => i === 0 || !Boolean(i % 30)))
           .pipeThrough(new Scaler(0.1))
           .pipeThrough(digest)
           .pipeThrough(
@@ -165,20 +193,33 @@
       })
     );
 
-    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process ? await definition.process(decodeStream, videoTrack) : decodeStream;
+    let processStream: ReadableStream<ExtendedVideoFrame> = definition.process
+      ? await definition.process(decodeStream, videoTrack)
+      : decodeStream;
 
     const displayStream = processStream
       .pipeThrough(new PassthroughCanvas(canvasEl))
       .pipeThrough(fpsCounter);
 
     if (definition.output) {
-      const outputPipeline = await definition.output(displayStream, inputAudioStream, videoTrack, audioTrack);
-      const outputStream = Array.isArray(outputPipeline) ? outputPipeline.reduce(
-        (stream, pipe) => stream.pipeThrough(pipe),
-        displayStream
-      ) : outputPipeline;
+      const outputPipeline = await definition.output(
+        displayStream,
+        inputAudioStream,
+        videoTrack,
+        audioTrack
+      );
+      const outputStream = Array.isArray(outputPipeline)
+        ? outputPipeline.reduce(
+            (stream, pipe) => stream.pipeThrough(pipe),
+            displayStream
+          )
+        : outputPipeline;
 
-      (outputStream as any).pipeThrough(outputDigest).pipeTo(outputVideo);
+      const outputWritablePipe = definition.isImage ? outputImage : outputVideo;
+
+      (outputStream as any)
+        .pipeThrough(outputDigest)
+        .pipeTo(outputWritablePipe);
 
       return;
     }
@@ -245,10 +286,15 @@
   </div>
   {#if definition.output}
     <div class="compare">
-      <!-- svelte-ignore a11y-media-has-caption -->
-      <video controls autoplay muted loop src={definition.input} />
-      <!-- svelte-ignore a11y-media-has-caption -->
-      <video controls autoplay muted loop src={outputVideo.getSource()} />
+      {#if image}
+        <!-- svelte-ignore a11y-missing-attribute -->
+        <img style:max-width="100%" src={image} />
+      {:else}
+        <!-- svelte-ignore a11y-media-has-caption -->
+        <video controls autoplay muted loop src={definition.input} />
+        <!-- svelte-ignore a11y-media-has-caption -->
+        <video controls autoplay muted loop src={outputVideo.getSource()} />
+      {/if}
     </div>
   {/if}
 </section>

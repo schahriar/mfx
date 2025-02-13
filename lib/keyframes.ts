@@ -16,15 +16,18 @@ export class FrameRateAdjuster extends MFXTransformStream<
     // Limit to 500fps to prevent bugs
     const maxDuration = (1 / Math.min(fps, 500)) * 1e6;
     let borrowedDuration = 0;
+    let skippedDuration = 0;
 
     super({
       transform: (frame, controller) => {
         const duration = frame.duration;
         const idealFrameCount = Math.floor(duration / maxDuration);
+        const minFrameCount = Math.floor((duration + borrowedDuration) / maxDuration);
 
         // Simple path, no need for a fill
-        if (idealFrameCount == 1) {
+        if (idealFrameCount === 1 || minFrameCount === 1) {
           controller.enqueue(frame);
+          borrowedDuration = 0;
           return;
         }
 

@@ -53,4 +53,21 @@ export const definitions: TestDefinition[] = [{
       }
     });
   }
+}, {
+  id: "gif",
+  title: "GIF Encoding",
+  description: "Encoding GIFs",
+  input: "AI.mp4",
+  isImage: true,
+  output: async (v, a, vt) => {
+    return encode({
+      mimeType: `image/gif`,
+      video: {
+        stream: v,
+        width: 640,
+        height: 360,
+        bitrate: 1e6 * 30,
+      },
+    });
+  }
 }];

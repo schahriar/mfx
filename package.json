@@ -59,6 +59,7 @@
   "dependencies": {
     "gl-matrix": "^3.4.3",
     "jswebm": "^0.1.2",
+    "modern-gif": "^2.0.4",
     "mp4-muxer": "^5.1.5",
     "mp4box": "^0.5.3",
     "parse-duration": "^1.1.1",

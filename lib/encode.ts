@@ -4,10 +4,11 @@ import { ExtendedVideoFrame } from "./frame";
 import { vp9 } from "./codec/vp9";
 import { MP4ContainerEncoder } from "./container/mp4/MP4ContainerEncoder";
 import { WebMContainerEncoder } from "./container/webM/WebMContainerEncoder";
+import { GIFContainerEncoder } from "./container/gif/GIFContainerEncoder";
 import type { MFXEncodedChunk } from "./types";
 import type { ContainerEncoderConfig } from "./container/encoderConfig";
 
-export { MP4ContainerEncoder, WebMContainerEncoder };
+export { MP4ContainerEncoder, WebMContainerEncoder, GIFContainerEncoder };
 
 /**
  * @group Encode
@@ -42,7 +43,7 @@ export const encode = ({
   const containerType = getContainerFromMimeType(mimeType);
   const { videoCodec, audioCodec } = getCodecFromMimeType(mimeType);
 
-  if (!["mp4", "webm"].includes(containerType)) {
+  if (!["mp4", "webm", "gif"].includes(containerType)) {
     throw new Error(`Unsupported container type ${containerType}`);
   }
 
@@ -70,19 +71,28 @@ export const encode = ({
       : {}),
   };
 
-  const container =
-    containerType === "mp4"
-      ? new MP4ContainerEncoder(containerConfig)
-      : new WebMContainerEncoder(containerConfig);
+  const decoderClass = {
+    "mp4": MP4ContainerEncoder,
+    "webm": WebMContainerEncoder,
+    "gif": GIFContainerEncoder
+  };
+
+  const container = new decoderClass[containerType](containerConfig);
+
   let streams: ReadableStream<any>[] = [];
 
   if (video) {
     const videoOutput = ((videoStream as TransformStream).readable ||
       videoStream) as ReadableStream<VideoFrame>;
-    streams.push(videoOutput.pipeThrough(new MFXVideoEncoder(videoConfig)));
+
+    if (containerType === "gif") {
+      streams.push(videoOutput);
+    } else {
+      streams.push(videoOutput.pipeThrough(new MFXVideoEncoder(videoConfig)));
+    }
   }
 
-  if (audio) {
+  if (audio && containerType !== "gif") {
     const audioOutput = ((audioStream as TransformStream).readable ||
       audioStream) as ReadableStream<AudioData>;
     streams.push(audioOutput.pipeThrough(new MFXAudioEncoder(audioConfig)));

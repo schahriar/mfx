@@ -17,9 +17,6 @@ export abstract class MFXWritableStream<I> extends WritableStream {
     }),
   ) {
     super(underlyingSink, strategy);
-    setTimeout(() => {
-      console.info(`<defined:${this.identifier}>`);
-    }, 0);
     this._eventTarget = new EventTarget();
   }
 
@@ -59,6 +56,7 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
   protected _buffer: O[];
   protected _eventTarget: EventTarget;
   protected _controller: TransformStreamDefaultController<O>;
+  protected _debug = false;
 
   abstract get identifier();
 
@@ -121,7 +119,9 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
         },
         flush: async (controller) => {
           try {
-            console.info(`<flushed:${this.identifier}>`);
+            if (this._debug) {
+              console.info(`<flushed:${this.identifier}>`);
+            }
             clearInterval(streamMonitor);
             this._controller = controller;
             if (this._buffer.length) {
@@ -144,9 +144,11 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
       writableStrategy,
       readableStrategy,
     );
-    setTimeout(() => {
-      console.info(`<defined:${this.identifier}>`);
-    }, 0);
+    if (this._debug) {
+      setTimeout(() => {
+        console.info(`<defined:${this.identifier}>`);
+      }, 0);
+    }
     this._buffer = [];
     this._eventTarget = new EventTarget();
   }
@@ -163,6 +165,10 @@ export abstract class MFXTransformStream<I, O> extends TransformStream {
 
   get track() {
     return this._track;
+  }
+
+  setDebug(value: boolean) {
+    this._debug = value;
   }
 
   setTrack(track: GenericTrack<any>) {

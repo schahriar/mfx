@@ -70,6 +70,7 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 | MP4       | VP9         | Both            |
 | WebM      | VP8         | Both            |
 | WebM      | VP9         | Both            |
+| GIF       | LZW         | Encode          |
 | <hr> | **`Audio`** | <hr>
 | MP4       | Opus        | Both            |
 | MP4       | AAC         | Both            |
@@ -80,8 +81,6 @@ While `codec` support heavily depends on the browser, `mfx` aims to provide supp
 
 ### Soon
 - Fix Audio trimming to include subframes
-- GIF codec
-  - encode: https://github.com/jnordberg/gif.js
 - Regional effects
 - GIF decoder
   - decode: https://github.com/mattdesl/gifenc (or ImageDecoder)

@@ -11,6 +11,7 @@ export interface TestDefinition {
   skip?: boolean | string;
   codec?: string;
   input: string;
+  isImage?: boolean;
   decodeOptions?: DecodeOptions;
   decode?: (input: string) => Promise<ReadableStream<ExtendedVideoFrame>>,
   expect?: () => Promise<boolean>;

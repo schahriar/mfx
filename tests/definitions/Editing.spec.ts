@@ -19,6 +19,7 @@ export const definitions: TestDefinition[] = [{
   output: async (s) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
+      streaming: true,
       video: {
         stream: s,
         width: 640 * scaleFactor,
@@ -42,6 +43,7 @@ export const definitions: TestDefinition[] = [{
   output: async (v, a) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")},opus"`,
+      streaming: true,
       video: {
         stream: v,
         width: 640 * scaleFactor,
@@ -73,6 +75,7 @@ export const definitions: TestDefinition[] = [{
   output: async (s) => {
     return encode({
       mimeType: `video/mp4; codecs="${codecs.avc.generateCodecString("baseline", "5.0")}"`,
+      streaming: true,
       video: {
         stream: s,
         width: 640 * scaleFactor,
