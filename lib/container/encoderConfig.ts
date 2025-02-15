@@ -1,4 +1,4 @@
-import { EncoderOptions as GIFEncoderOptions } from "modern-gif/index";
+import type { EncoderOptions as GIFEncoderOptions } from "modern-gif/index";
 
 export interface ContainerEncoderConfig {
   video?: VideoEncoderConfig;
