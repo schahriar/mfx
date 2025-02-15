@@ -25,7 +25,7 @@ class GIFContainerEncoderStream extends MFXTransformStream<
     const encoder = new Encoder({
       width,
       height,
-      ...config.gif || {},
+      ...(config.gif || {}),
     });
 
     super({
