@@ -22,7 +22,11 @@ class GIFContainerEncoderStream extends MFXTransformStream<
     const ctx = canvas.getContext("2d", {
       willReadFrequently: true,
     }) as any as CanvasRenderingContext2D;
-    const encoder = new Encoder({ width, height });
+    const encoder = new Encoder({
+      width,
+      height,
+      ...config.gif || {},
+    });
 
     super({
       transform: async (chunk) => {
