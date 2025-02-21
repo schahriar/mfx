@@ -35,7 +35,7 @@ export const visual = {
     ];
   },
   add: (
-    video: ReadableStream<VideoFrame> | ((_: VideoFrame) => VideoFrame),
+    video: ReadableStream<VideoFrame> | ((_: VideoFrame) => Promise<VideoFrame>),
     {
       offset = [0, 0],
       // Normal blend
