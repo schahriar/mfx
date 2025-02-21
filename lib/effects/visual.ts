@@ -35,7 +35,7 @@ export const visual = {
     ];
   },
   add: (
-    video: ReadableStream<VideoFrame>,
+    video: ReadableStream<VideoFrame> | ((_: VideoFrame) => VideoFrame),
     {
       offset = [0, 0],
       // Normal blend
@@ -57,7 +57,7 @@ export const visual = {
       alpha?: Uniform<number>;
     } = {},
   ) => {
-    const coalescer = coalesce(video);
+    const coalescer = typeof video === "function" ? video : coalesce(video);
     return [
       new MFXGLEffect(
         shaders.composition,
