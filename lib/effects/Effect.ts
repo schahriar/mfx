@@ -1,7 +1,7 @@
 import * as twgl from "twgl.js";
 import vertexShaderSource from "!!raw-loader!./shaders/vertex.glsl";
 import paintShaderSource from "!!raw-loader!./shaders/paint.glsl";
-import { MFXTransformStream } from "../stream";
+import { MFXTransformStream, PassThroughStream } from "../stream";
 import { ExtendedVideoFrame } from "../frame";
 import type { Uniform, UniformProducer } from "./shaders";
 import { mat4 } from "gl-matrix";
@@ -602,4 +602,34 @@ export const effect = (
   });
 
   return input.pipeThrough(trimPipeline);
+};
+
+export const limit = (effects: MFXGLEffect[][], fn: (frame: VideoFrame | ExtendedVideoFrame) => boolean) => {
+  const input = new PassThroughStream();
+  const pipeline = effects
+    .flat()
+    .reduce((accu, effect) => accu.pipeThrough(effect), input.readable)
+
+  return [
+    new TransformStream<MFXGLHandle, MFXGLHandle>({
+      transform: async (handle, controller) => {
+        if (fn(handle.frame)) {
+          const writer = input.writable.getWriter();
+          await writer.write(handle);
+          writer.releaseLock();
+
+          // Effects intentionally only process one frame at a time as GLHandle
+          // attempts to efficiently re-use a single frame buffer to paint the
+          // entire pipeline
+          const reader = pipeline.getReader();
+          const { value } = await reader.read();
+          reader.releaseLock();
+
+          controller.enqueue(value);
+        } else {
+          controller.enqueue(handle);
+        }
+      }
+    })
+  ];
 };
