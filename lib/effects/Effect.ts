@@ -543,6 +543,7 @@ export const effect = (
     trim = {},
     writableStrategy,
     readableStrategy,
+    filter,
   }: {
     trim?: {
       // Inclusive number of milliseconds to start cutting from (supports for microsecond fractions)
@@ -550,6 +551,7 @@ export const effect = (
       // Exclusive number of milliseconds to cut to (supports for microsecond fractions)
       end?: number;
     };
+    filter?: (frame: VideoFrame | ExtendedVideoFrame) => boolean;
     writableStrategy?: QueuingStrategy<any>;
     readableStrategy?: QueuingStrategy<any>;
   } = {},
@@ -570,6 +572,15 @@ export const effect = (
         frame.timestamp / 1e3 < (trim.start || 0) ||
         (trim.end > 0 && frame.timestamp / 1e3 > trim.end)
       ) {
+        controller.enqueue(frame);
+        return;
+      }
+
+      // Effects intentionally only process one frame at a time as GLHandle
+      // attempts to efficiently re-use a single frame buffer to paint the
+      // entire pipeline
+      if (filter && !filter(frame)) {
+        // Frame is not part of the filter, forward
         controller.enqueue(frame);
         return;
       }
