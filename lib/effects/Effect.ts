@@ -604,11 +604,14 @@ export const effect = (
   return input.pipeThrough(trimPipeline);
 };
 
-export const limit = (effects: MFXGLEffect[][], fn: (frame: VideoFrame | ExtendedVideoFrame) => boolean) => {
+export const limit = (
+  effects: MFXGLEffect[][],
+  fn: (frame: VideoFrame | ExtendedVideoFrame) => boolean,
+) => {
   const input = new PassThroughStream();
   const pipeline = effects
     .flat()
-    .reduce((accu, effect) => accu.pipeThrough(effect), input.readable)
+    .reduce((accu, effect) => accu.pipeThrough(effect), input.readable);
 
   return [
     new TransformStream<MFXGLHandle, MFXGLHandle>({
@@ -629,7 +632,7 @@ export const limit = (effects: MFXGLEffect[][], fn: (frame: VideoFrame | Extende
         } else {
           controller.enqueue(handle);
         }
-      }
-    })
+      },
+    }),
   ];
 };

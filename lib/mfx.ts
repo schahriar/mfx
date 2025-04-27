@@ -22,7 +22,13 @@ export { MFXVideoSource, ExtendedVideoFrame, cloneFrame } from "./frame";
 export { FrameTee, MFXTransformStream, Void } from "./stream";
 export { keyframes, animate } from "./keyframes";
 /** @group Effects */
-export { effect, limit, MFXGLHandle, MFXGLContext, MFXGLEffect } from "./effects/Effect";
+export {
+  effect,
+  limit,
+  MFXGLHandle,
+  MFXGLContext,
+  MFXGLEffect,
+} from "./effects/Effect";
 /** @group Effects */
 export { visual } from "./effects/visual";
 
