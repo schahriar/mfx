@@ -36,9 +36,7 @@ export const visual = {
     ];
   },
   add: (
-    video:
-      FrameProducer
-      | ((_: VideoFrame) => Promise<VideoFrame>),
+    video: FrameProducer | ((_: VideoFrame) => Promise<VideoFrame>),
     {
       offset = [0, 0],
       // Normal blend

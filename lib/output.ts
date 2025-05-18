@@ -20,7 +20,11 @@ export class FileWriter extends MFXTransformStream<MFXBlob, MFXBlob> {
   }
 
   writer: Promise<FileSystemWritableFileStream>;
-  constructor(fileName: string, description = "Video File", startIn: WellKnownDirectory = "downloads") {
+  constructor(
+    fileName: string,
+    description = "Video File",
+    startIn: WellKnownDirectory = "downloads",
+  ) {
     super({
       transform: async (blob, controller) => {
         const writer = await this.writer;
