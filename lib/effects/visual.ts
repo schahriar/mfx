@@ -4,6 +4,7 @@ import type { Uniform } from "./shaders";
 import * as shaders from "./shaders/raw";
 import { rotate, scale, translate } from "./matrix";
 import { coalesce, createEmptyFrame } from "./coalesce";
+import { FrameProducer } from "mfx";
 
 const repeat = (n: number, fn: () => MFXGLEffect) => [...new Array(n)].map(fn);
 const conv =
@@ -26,7 +27,7 @@ export const visual = {
   }) => [
     new MFXGLEffect(shaders.adjustment, { saturation, brightness, contrast }),
   ],
-  mask: (video: ReadableStream<VideoFrame>) => {
+  mask: (video: FrameProducer) => {
     return [
       new MFXGLEffect(shaders.mask, {
         mask: coalesce(video),
@@ -36,7 +37,7 @@ export const visual = {
   },
   add: (
     video:
-      | ReadableStream<VideoFrame>
+      FrameProducer
       | ((_: VideoFrame) => Promise<VideoFrame>),
     {
       offset = [0, 0],

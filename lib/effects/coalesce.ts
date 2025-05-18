@@ -1,3 +1,4 @@
+import { FrameProducer } from "mfx";
 import { ExtendedVideoFrame } from "../frame";
 
 export const createEmptyFrame = () => {
@@ -18,7 +19,24 @@ export const cloneOrReuse = (frame: ExtendedVideoFrame) => {
   return frame.clone();
 };
 
-export const coalesce = (stream: ReadableStream<VideoFrame>) => {
+export const coalesce = (stream: FrameProducer) => {
+  if (stream instanceof TransformStream) {
+    const writer = stream.writable.getWriter();
+    const reader = stream.readable.getReader();
+
+    return async (frame: VideoFrame): Promise<VideoFrame> => {
+      writer.write(frame);
+
+      const { value } = await reader.read();
+
+      if (value) {
+        return value;
+      }
+
+      return createEmptyFrame();
+    };
+  }
+
   let buffer: VideoFrame | undefined;
   // Lock stream for coalescing
   const reader = stream.getReader();
